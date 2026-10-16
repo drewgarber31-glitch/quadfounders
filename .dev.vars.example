@@ -1,0 +1,5 @@
+# Local development only. Copy to .dev.vars (which is git-ignored) if you want
+# real AI while running `npm run dev` on your own computer.
+# Leave it out to run in test mode with sample answers.
+# For the live site, use: npx wrangler secret put ANTHROPIC_API_KEY
+ANTHROPIC_API_KEY=

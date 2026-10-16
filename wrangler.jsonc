@@ -1,0 +1,33 @@
+{
+  // Quad Founders Cloudflare Worker config.
+  // See README.md for setup. Never put the Anthropic API key in this file:
+  // it is stored as a Cloudflare secret with `npx wrangler secret put ANTHROPIC_API_KEY`.
+  "name": "quadfounders",
+  "main": "src/index.js",
+  "compatibility_date": "2025-09-01",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "quadfounders",
+      // Replace with the id printed by `npx wrangler d1 create quadfounders`
+      "database_id": "REPLACE_WITH_YOUR_D1_DATABASE_ID",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    // Which AI provider to use. Only "anthropic" is implemented today.
+    "AI_PROVIDER": "anthropic",
+    // Everyday chat and follow-up questions.
+    "AI_MODEL_FAST": "claude-haiku-5-5",
+    // Business plan and website generation. Switch to "claude-sonnet-5-5" if quality isn't good enough.
+    "AI_MODEL_BUILD": "claude-haiku-5-5",
+    // Cost protection: max AI calls per visitor (IP) per day, and for the whole app per day.
+    "DAILY_AI_LIMIT_PER_VISITOR": "60",
+    "DAILY_AI_LIMIT_TOTAL": "2000"
+  }
+}
