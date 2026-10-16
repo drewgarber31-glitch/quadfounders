@@ -1,6 +1,6 @@
 /* Quad Founders UI
    Direction: dense, quiet, keyboard-friendly product UI. Neutral surfaces, 1px borders,
-   one brand accent (campus green) reserved for actions and completion. */
+   one brand accent (electric blue) reserved for actions and completion. */
 
 :root {
   --bg: #FCFCFC;
@@ -13,15 +13,15 @@
   --text: #18181B;
   --text-2: #55555E;
   --text-3: #8B8B94;
-  --accent: #2F7A55;
-  --accent-hover: #276848;
+  --accent: #2563EB;
+  --accent-hover: #1D4ED8;
   --accent-ink: #FFFFFF;
-  --accent-soft: rgba(47, 122, 85, .10);
+  --accent-soft: rgba(37, 99, 235, .10);
   --warn: #9A6700;
   --warn-soft: rgba(212, 160, 23, .14);
   --danger: #C2412D;
   --danger-soft: rgba(194, 65, 45, .10);
-  --ring: rgba(47, 122, 85, .35);
+  --ring: rgba(37, 99, 235, .35);
   --shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.06);
   --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --r-sm: 5px;
@@ -41,15 +41,15 @@
     --text: #EDEDEF;
     --text-2: #A6A6AF;
     --text-3: #72727B;
-    --accent: #5BBE8A;
-    --accent-hover: #6FCB9A;
-    --accent-ink: #08140E;
-    --accent-soft: rgba(91, 190, 138, .14);
+    --accent: #6B9BFF;
+    --accent-hover: #86AEFF;
+    --accent-ink: #0A1430;
+    --accent-soft: rgba(107, 155, 255, .16);
     --warn: #E3B341;
     --warn-soft: rgba(227, 179, 65, .14);
     --danger: #F07A66;
     --danger-soft: rgba(240, 122, 102, .12);
-    --ring: rgba(91, 190, 138, .4);
+    --ring: rgba(107, 155, 255, .4);
     --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.4);
     color-scheme: dark;
   }
@@ -82,8 +82,9 @@ svg { width: 16px; height: 16px; flex: none; stroke: currentColor; fill: none; s
 
 .sb-head { padding: 4px 8px 10px; }
 .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; font-weight: 600; font-size: 14px; }
-.mark { width: 18px; height: 18px; stroke: none; }
-.mark .m-a { fill: var(--accent); } .mark .m-b { fill: var(--text-2); opacity: .55; } .mark .m-c { fill: #E7C24A; }
+.mark { width: 20px; height: 20px; stroke: none; }
+.mark circle, .mark path { stroke: var(--accent); }
+.mark circle { stroke-linecap: butt; }
 .sb-new { display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 10px; margin: 0 0 12px; border: 1px solid var(--border); border-radius: var(--r); background: var(--panel); text-decoration: none; font-weight: 500; font-size: 13px; color: var(--text); box-shadow: 0 1px 1px rgba(0,0,0,.03); }
 .sb-new:hover { background: var(--hover); }
 .sb-nav { flex: 1; overflow-y: auto; display: grid; align-content: start; gap: 1px; }

@@ -27,7 +27,7 @@ const icons = {
   doc: '<svg viewBox="0 0 16 16"><path d="M4 2.5h5l3 3v8H4z"/><path d="M9 2.5v3h3"/></svg>',
   spark: '<svg viewBox="0 0 16 16"><path d="M8 2v3M8 11v3M2 8h3M11 8h3M4 4l2 2M10 10l2 2M12 4l-2 2M6 10l-2 2"/></svg>',
   download: '<svg viewBox="0 0 16 16"><path d="M8 2.5v8M4.5 7L8 10.5 11.5 7M3 13.5h10"/></svg>',
-  quad: (n) => `<svg viewBox="0 0 16 16" style="stroke:none">${[[2,2],[9,2],[2,9],[9,9]].map(([x,y],i) => `<rect x="${x}" y="${y}" width="5" height="5" rx="1.2" fill="${i === n ? "var(--accent)" : "currentColor"}" opacity="${i === n ? 1 : .35}"/>`).join("")}</svg>`,
+  quad: (n) => `<svg viewBox="0 0 16 16" style="stroke:none">${["M7 7V1A6 6 0 0 0 1 7Z", "M9 7h6A6 6 0 0 0 9 1Z", "M7 9H1A6 6 0 0 0 7 15Z", "M9 9v6A6 6 0 0 0 15 9Z"].map((d, i) => `<path d="${d}" fill="${i === n ? "var(--accent)" : "currentColor"}" opacity="${i === n ? 1 : .3}"/>`).join("")}</svg>`,
 };
 
 const store = {
