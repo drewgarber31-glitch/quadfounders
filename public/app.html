@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Quad Founders app</title>
+  <meta name="description" content="Turn your idea into a business between classes. A step-by-step plan, a guided co-pilot, and your own website in one place.">
+  <meta name="theme-color" content="#FAFAFA" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0A0A0A" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="/favicon.ico?v=2" sizes="48x48">
+  <link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml">
+  <link rel="icon" href="/favicon-32.png?v=2" type="image/png" sizes="32x32">
+  <link rel="icon" href="/favicon-192.png?v=2" type="image/png" sizes="192x192">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&display=swap">
+  <link rel="stylesheet" href="/base.css?v=3">
+  <link rel="stylesheet" href="/app.css?v=3">
+</head>
+<body>
+  <div class="shell" id="shell">
+    <aside class="sidebar" id="sidebar" aria-label="Navigation">
+      <div class="sb-head">
+        <a class="brand" href="/">
+          <svg class="mark" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="11" cy="11" r="7.5" fill="none" stroke-width="3.6" stroke-dasharray="9.78 2" stroke-dashoffset="1"/>
+            <path d="M16.5 16.5 21.5 21.5" stroke-width="3.6" stroke-linecap="round"/>
+          </svg>
+          <span>Quad Founders</span>
+        </a>
+      </div>
+      <a class="sb-new" href="#/"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>New idea</a>
+      <nav id="sbNav" class="sb-nav"></nav>
+      <div class="sb-foot">
+        <span class="mode" id="modeBadge" hidden>Test mode</span>
+        <p>Educational guidance only. Not legal, tax, or financial advice.</p>
+      </div>
+    </aside>
+    <div class="scrim" id="scrim" hidden></div>
+    <div class="main">
+      <header class="topbar">
+        <button class="icon-btn menu-btn" id="menuBtn" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/></svg>
+        </button>
+        <nav class="crumbs" id="crumbs" aria-label="Breadcrumb"></nav>
+        <div class="top-actions" id="topActions"></div>
+      </header>
+      <main id="view" tabindex="-1"></main>
+    </div>
+  </div>
+  <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+  <script src="/app.js?v=3" type="module"></script>
+</body>
+</html>

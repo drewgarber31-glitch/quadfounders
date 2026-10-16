@@ -102,6 +102,6 @@ src/ai.js         AI provider + test mode
 src/prompts.js    All AI instructions and safety rules
 src/sources.js    Verified official source library
 src/site.js       Student website renderer + .zip download
-public/           The app students use (index.html, app.css, app.js)
+public/           Landing page at / (index.html, landing.css, landing.js), app at /app (app.html, app.css, app.js), shared styles in base.css
 migrations/       Database tables
 ```

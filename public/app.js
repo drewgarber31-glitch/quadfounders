@@ -3,12 +3,20 @@
 const $ = (id) => document.getElementById(id);
 const view = $("view");
 const SECTIONS = [
-  { id: "customer", name: "Idea and customer" },
-  { id: "pricing", name: "Pricing and costs" },
-  { id: "marketing", name: "Marketing" },
-  { id: "legal", name: "Legal and registration" },
+  { id: "customer", name: "Idea and customer", short: "Customer" },
+  { id: "pricing", name: "Pricing and costs", short: "Pricing" },
+  { id: "marketing", name: "Marketing", short: "Marketing" },
+  { id: "legal", name: "Legal and registration", short: "Legal" },
 ];
 const NOVELTY = { new: "Brand-new idea", twist: "New twist", common: "Proven model" };
+const qc = (i) => `--c:var(--q${i})`; // quadrant color as an inline CSS var
+const EXAMPLES = [
+  "Airport ride matching for students leaving on the same day",
+  "Rent-a-fridge for dorms, delivered on move-in day",
+  "Lacrosse gear swap between club teams",
+  "Custom study playlists made from your syllabus",
+];
+const BUILD_LINES = ["Reading your answers", "Matching your idea to official guidance", "Drafting your four quadrants", "Writing small tasks that fit between classes", "Listing what has to be true"];
 let SOURCES = {};
 let project = null; // currently open project
 
@@ -27,6 +35,20 @@ const icons = {
   doc: '<svg viewBox="0 0 16 16"><path d="M4 2.5h5l3 3v8H4z"/><path d="M9 2.5v3h3"/></svg>',
   spark: '<svg viewBox="0 0 16 16"><path d="M8 2v3M8 11v3M2 8h3M11 8h3M4 4l2 2M10 10l2 2M12 4l-2 2M6 10l-2 2"/></svg>',
   download: '<svg viewBox="0 0 16 16"><path d="M8 2.5v8M4.5 7L8 10.5 11.5 7M3 13.5h10"/></svg>',
+  arrow: '<svg viewBox="0 0 16 16"><path d="M3 8h10M9 4l4 4-4 4"/></svg>',
+  plus: '<svg viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></svg>',
+  clock: '<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 1.5"/></svg>',
+  edit: '<svg viewBox="0 0 16 16"><path d="M10.5 3l2.5 2.5L6 12.5H3.5V10z"/></svg>',
+  redo: '<svg viewBox="0 0 16 16"><path d="M12.5 6.5A5 5 0 103 8.5"/><path d="M12.5 3v3.5H9"/></svg>',
+  shieldok: '<svg viewBox="0 0 16 16"><path d="M8 2l5 2v4c0 3-2.2 5.2-5 6-2.8-.8-5-3-5-6V4z"/><path d="M5.8 8l1.6 1.6L10.5 6.5"/></svg>',
+  // one icon per quadrant: customer, pricing, marketing, legal
+  q: [
+    '<svg viewBox="0 0 16 16"><circle cx="6" cy="5.5" r="2.5"/><path d="M1.5 13.5c.5-2.5 2.3-4 4.5-4s4 1.5 4.5 4M10.5 3.2a2.5 2.5 0 010 4.6M12.5 9.8c1.1.6 1.8 1.9 2 3.7"/></svg>',
+    '<svg viewBox="0 0 16 16"><path d="M2.5 8.5V3a.5.5 0 01.5-.5h5.5l5 5-6 6z"/><circle cx="5.5" cy="5.5" r="1"/></svg>',
+    '<svg viewBox="0 0 16 16"><path d="M2.5 6.5v3h2l5 3v-9l-5 3zM12 5.5a3.5 3.5 0 010 5"/></svg>',
+    '<svg viewBox="0 0 16 16"><path d="M8 2l5 2v4c0 3-2.2 5.2-5 6-2.8-.8-5-3-5-6V4z"/></svg>',
+  ],
+  mark: '<svg class="mark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7.5" fill="none" stroke-width="3.6" stroke-dasharray="9.78 2" stroke-dashoffset="1"/><path d="M16.5 16.5 21.5 21.5" stroke-width="3.6" stroke-linecap="round"/></svg>',
   quad: (n) => `<svg viewBox="0 0 16 16" style="stroke:none">${["M7 7V1A6 6 0 0 0 1 7Z", "M9 7h6A6 6 0 0 0 9 1Z", "M7 9H1A6 6 0 0 0 7 15Z", "M9 9v6A6 6 0 0 0 15 9Z"].map((d, i) => `<path d="${d}" fill="${i === n ? "var(--accent)" : "currentColor"}" opacity="${i === n ? 1 : .3}"/>`).join("")}</svg>`,
 };
 
@@ -62,6 +84,7 @@ function toast(msg, kind = "") {
 
 function render(html, { crumbs = [], actions = "" } = {}) {
   view.innerHTML = html;
+  view.firstElementChild?.classList.add("enter");
   $("crumbs").innerHTML = crumbs
     .map((c, i) => (i === crumbs.length - 1 ? `<span class="cur">${esc(c.label)}</span>` : `<a href="${c.href}">${esc(c.label)}</a><span class="sep">/</span>`))
     .join("");
@@ -71,7 +94,7 @@ function render(html, { crumbs = [], actions = "" } = {}) {
 }
 
 function skeleton(crumbs) {
-  render(`<div class="page"><div class="skel"><i class="h"></i><i></i><i class="s"></i><i></i><i class="s"></i></div></div>`, { crumbs });
+  render(`<div class="page"><div class="skel"><i class="box"></i><i class="h"></i><i></i><i class="s"></i><i></i><i class="s"></i></div></div>`, { crumbs });
 }
 
 function working(text) {
@@ -105,11 +128,15 @@ function sidebar(active) {
   let html = "";
   if (project?.plan) {
     const t = project.plan.tasks;
-    const c = (s) => `${t.filter((x) => x.quadrant === s && x.done).length}/${t.filter((x) => x.quadrant === s).length}`;
     html += `<div class="sb-label">${esc(project.title || "Current plan")}</div>
       <a class="sb-item" href="#/p/${project.id}" ${active === "overview" ? 'aria-current="page"' : ""}>${icons.grid}<span class="grow">Overview</span></a>
-      ${SECTIONS.map((s, i) => `<a class="sb-item" href="#/p/${project.id}/s/${s.id}" ${active === s.id ? 'aria-current="page"' : ""}>${icons.quad(i)}<span class="grow">${s.name}</span><span class="count">${c(s.id)}</span></a>`).join("")}
-      <a class="sb-item" href="#/p/${project.id}/site" ${active === "site" ? 'aria-current="page"' : ""}>${icons.globe}<span class="grow">Website</span></a>`;
+      ${SECTIONS.map((s, i) => {
+        const all = t.filter((x) => x.quadrant === s.id);
+        const done = all.filter((x) => x.done).length;
+        const pct = Math.round((done / Math.max(all.length, 1)) * 100);
+        return `<a class="sb-item" href="#/p/${project.id}/s/${s.id}" ${active === s.id ? 'aria-current="page"' : ""}><span class="dot" style="background:var(--q${i})"></span><span class="grow">${s.name}</span><span class="mini" title="${done} of ${all.length} done"><i style="width:${pct}%;background:var(--q${i})"></i></span></a>`;
+      }).join("")}
+      <a class="sb-item" href="#/p/${project.id}/site" ${active === "site" ? 'aria-current="page"' : ""}>${icons.globe}<span class="grow">Website</span>${project.site ? "" : '<span class="count">New</span>'}</a>`;
   }
   const others = plans.filter((p) => p.id !== project?.id);
   if (others.length) {
@@ -122,7 +149,6 @@ function sidebar(active) {
 function startScreen(mode = "idea") {
   project = null;
   sidebar();
-  const crumbs = [{ label: "New idea" }];
   const tabs = `<div class="seg" role="tablist">
       <button role="tab" aria-selected="${mode === "idea"}" data-mode="idea">I have an idea</button>
       <button role="tab" aria-selected="${mode === "find"}" data-mode="find">Help me find one</button>
@@ -130,48 +156,58 @@ function startScreen(mode = "idea") {
 
   if (mode === "idea") {
     render(`<section class="start">
-      <div style="display:grid;gap:8px"><h1>What do you want to build?</h1>
-      <p class="sub">Describe your idea, even if nothing like it exists yet. You'll get a plan built around it, a co-pilot for every step, and a website.</p></div>
+      <div class="start-hero">
+        <div class="orb">${icons.mark}</div>
+        <h1>What do you want to <span class="grad-text">build?</span></h1>
+        <p class="sub">Describe your idea, even if nothing like it exists yet. You'll get a plan built around it, a co-pilot for every step, and a website you own.</p>
+      </div>
       ${tabs}
-      <form id="ideaForm" class="composer-box">
-        <label class="label" for="idea" style="position:absolute;left:-9999px">Your idea</label>
-        <textarea id="idea" maxlength="2000" required placeholder="Example: An app that matches students who need a ride to the airport over break with others leaving at the same time."></textarea>
-        <div class="bar"><p class="help">A sentence is enough. You'll add details next.</p>
-          <button class="btn primary" type="submit">Build my plan <kbd>${MOD}↵</kbd></button></div>
-      </form>
-      <p class="err" id="ideaErr" hidden></p>
-      <ul class="points">
-        <li>${icons.check}<span>Plans are built around your idea, including ones nobody has tried yet.</span></li>
-        <li>${icons.check}<span>Every legal step links to the official source.</span></li>
-        <li>${icons.check}<span>AI drafts are labeled. Edit or redo anything.</span></li>
-      </ul>
-    </section>`, { crumbs });
+      <div style="display:grid;gap:12px">
+        <form id="ideaForm" class="composer-box">
+          <label class="sr" for="idea">Your idea</label>
+          <textarea id="idea" maxlength="2000" required placeholder="Describe it in a sentence or two. What is it, and who is it for?"></textarea>
+          <div class="bar"><p class="help">A sentence is enough. You'll add details next.</p>
+            <button class="btn primary lg" type="submit">Build my plan <kbd>${MOD}↵</kbd></button></div>
+        </form>
+        <p class="err" id="ideaErr" hidden></p>
+        <div class="chips" aria-label="Example ideas">${EXAMPLES.map((e, i) => `<button class="chip" type="button" data-ex="${i}"><i style="background:var(--q${i})"></i>${esc(e)}</button>`).join("")}</div>
+      </div>
+      <div class="feature-row">
+        <div class="feature"><span class="ic" style="background:var(--q0)">${icons.spark}</span><b>Built for new ideas</b><span>Plans for ideas nobody has tried, starting with what has to be true.</span></div>
+        <div class="feature"><span class="ic" style="background:var(--q1)">${icons.shieldok}</span><b>Sources you can check</b><span>Every legal step links to the official government page.</span></div>
+        <div class="feature"><span class="ic" style="background:var(--q2)">${icons.clock}</span><b>Fits between classes</b><span>Tasks take 15 to 60 minutes. AI drafts are labeled and editable.</span></div>
+      </div>
+    </section>`, { crumbs: [{ label: "New idea" }] });
     const form = $("ideaForm");
     const ta = $("idea");
     ta.focus();
     submitOnModEnter(ta, form);
+    view.querySelectorAll("[data-ex]").forEach((b) => b.addEventListener("click", () => { ta.value = EXAMPLES[Number(b.dataset.ex)]; ta.focus(); }));
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      await createProject(ta.value, form.querySelector("button"), $("ideaErr"));
+      await createProject(ta.value, form.querySelector("button[type=submit]"), $("ideaErr"));
     });
   } else {
     render(`<section class="start">
-      <div style="display:grid;gap:8px"><h1>Find an idea worth building</h1>
-      <p class="sub">The best ideas start with a problem you've actually run into. Tell us about yours and we'll suggest original directions to test.</p></div>
+      <div class="start-hero">
+        <div class="orb">${icons.spark}</div>
+        <h1>Find an idea <span class="grad-text">worth building</span></h1>
+        <p class="sub">The best ideas start with a problem you've actually run into. Tell us about yours and we'll suggest original directions to test.</p>
+      </div>
       ${tabs}
-      <form id="findForm" class="form-grid">
+      <form id="findForm" class="form-grid panel">
         <div><label class="label" for="problems">Problems you've noticed</label>
           <textarea id="problems" class="field" rows="3" maxlength="800" placeholder="Things that annoy you, your friends, or people in your major, club, or job."></textarea></div>
         <div><label class="label" for="skills">Skills and interests</label>
           <textarea id="skills" class="field" rows="2" maxlength="500" placeholder="What you're good at or could talk about for hours."></textarea></div>
         <div class="form-row">
-          <div><label class="label" for="major">Major</label><input id="major" class="field" maxlength="120" placeholder="Financial Technology"></div>
+          <div><label class="label" for="major">Major</label><input id="major" class="field" maxlength="120" placeholder="Example: Marketing"></div>
           <div><label class="label" for="hours">Hours per week</label>
             <select id="hours" class="field"><option value="">Not sure</option><option>Under 3 hours</option><option>3 to 6 hours</option><option>6 to 10 hours</option><option>10+ hours</option></select></div>
         </div>
         <div><label class="label" for="budget">Money to start</label>
           <select id="budget" class="field"><option value="">Not sure</option><option>$0</option><option>Under $50</option><option>$50 to $200</option><option>$200 to $500</option><option>$500+</option></select></div>
-        <div><button class="btn primary lg" type="submit">Suggest ideas</button></div>
+        <div><button class="btn primary lg" type="submit">${icons.spark}Suggest ideas</button></div>
         <p class="err" id="findErr" hidden></p>
       </form>
       <div id="ideaResults"></div>
@@ -202,34 +238,35 @@ async function createProject(text, btn, errEl) {
 
 async function findIdeas(e) {
   e.preventDefault();
-  const btn = e.target.querySelector("button");
+  const btn = e.target.querySelector("button[type=submit]");
   const err = $("findErr");
   const out = $("ideaResults");
   err.hidden = true;
   btn.disabled = true;
-  out.innerHTML = working("Thinking through your problems and skills. About 20 seconds.");
+  out.innerHTML = `<div class="working"><span class="spinner"></span>Thinking through your problems and skills. About 20 seconds.</div>`;
   try {
     const { ideas } = await api("ideas", { method: "POST", body: {
       problems: $("problems").value, skills: $("skills").value, major: $("major").value, hours: $("hours").value, budget: $("budget").value,
     } });
     out.innerHTML = `<div class="ideas">${ideas.map((i, n) => `
-      <details class="idea" ${n === 0 ? "open" : ""}>
-        <summary><h3>${esc(i.title)}</h3><p>${esc(i.oneLiner)}</p></summary>
+      <article class="idea" style="${qc(n % 4)};animation-delay:${n * 0.07}s">
+        <div class="hd"><span class="n">IDEA ${String(n + 1).padStart(2, "0")}</span><h3>${esc(i.title)}</h3><p>${esc(i.oneLiner)}</p></div>
         <dl>
-          <dt>Problem</dt><dd>${esc(i.problem)}</dd>
-          <dt>Who has it</dt><dd>${esc(i.customer)}</dd>
-          <dt>What's new</dt><dd>${esc(i.whatsNew)}</dd>
-          <dt>Test this week</dt><dd>${esc(i.firstTest)}</dd>
-          <dt>Why it fits you</dt><dd>${esc(i.fit)}</dd>
-          ${i.watchOut ? `<dt>Watch out</dt><dd><span class="tag warn">Check first</span> ${esc(i.watchOut)}</dd>` : ""}
+          <div><dt>Problem</dt><dd>${esc(i.problem)}</dd></div>
+          <div><dt>Who has it</dt><dd>${esc(i.customer)}</dd></div>
+          <div><dt>What's new</dt><dd>${esc(i.whatsNew)}</dd></div>
+          <div><dt>Test this week</dt><dd>${esc(i.firstTest)}</dd></div>
+          <div><dt>Why it fits you</dt><dd>${esc(i.fit)}</dd></div>
+          ${i.watchOut ? `<div><dt>Watch out</dt><dd><span class="tag warn">Check first</span> ${esc(i.watchOut)}</dd></div>` : ""}
         </dl>
-        <div class="foot"><button class="btn primary" data-idea="${n}">Build a plan for this</button></div>
-      </details>`).join("")}</div>
-      <p class="help" style="margin-top:12px">AI suggestions. Nothing here is checked against existing businesses, so look for similar ideas before you commit.</p>`;
+        <div class="foot"><button class="btn primary" data-idea="${n}">Build a plan for this ${icons.arrow}</button></div>
+      </article>`).join("")}</div>
+      <p class="help" style="margin-top:14px">AI suggestions. Nothing here is checked against existing businesses, so look for similar ideas before you commit.</p>`;
     out.querySelectorAll("[data-idea]").forEach((b) => b.addEventListener("click", () => {
       const i = ideas[Number(b.dataset.idea)];
       createProject(`${i.title}: ${i.oneLiner} Problem: ${i.problem} Customer: ${i.customer}. What's new: ${i.whatsNew}`, b, err);
     }));
+    out.scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (ex) {
     out.innerHTML = "";
     err.textContent = ex.message;
@@ -262,14 +299,14 @@ async function questionsScreen(id) {
     const q = qs[i];
     render(`<section class="q-step">
       <div class="steps" aria-hidden="true">${qs.map((_, n) => `<span class="${n <= i ? "on" : ""}"></span>`).join("")}</div>
-      <p class="k">Question ${i + 1} of ${qs.length}</p>
-      <form id="qForm" style="display:grid;gap:14px">
+      <p class="k">QUESTION ${i + 1} OF ${qs.length}</p>
+      <form id="qForm" style="display:grid;gap:18px">
         <h1 id="qLabel">${esc(q.text)}</h1>
         <div class="composer-box">
           <textarea id="ans" aria-labelledby="qLabel" maxlength="500" placeholder="${esc(q.hint ? "Example: " + q.hint : "")}">${esc(answers[q.id] || "")}</textarea>
           <div class="bar">
             <div style="display:flex;gap:4px">${i > 0 ? `<button class="btn ghost" type="button" id="prev">Back</button>` : ""}<button class="btn ghost" type="button" id="skip">Skip</button></div>
-            <button class="btn primary" type="submit">${i === qs.length - 1 ? "Build my plan" : "Next"} <kbd>${MOD}↵</kbd></button>
+            <button class="btn primary lg" type="submit">${i === qs.length - 1 ? "Build my plan" : "Next"} <kbd>${MOD}↵</kbd></button>
           </div>
         </div>
       </form>
@@ -284,11 +321,14 @@ async function questionsScreen(id) {
   };
 
   const build = async () => {
-    render(`<section class="q-step">${working("Building your plan. This takes about 20 seconds.")}</section>`, { crumbs: [{ label: project.title || "New idea" }, { label: "Building plan" }] });
+    render(buildingView("Building your plan"), { crumbs: [{ label: project.title || "New idea" }, { label: "Building plan" }] });
+    const stop = cycleLines();
     try {
       refresh(await api(`projects/${id}/plan`, { method: "POST", body: { answers } }));
+      stop();
       location.hash = `#/p/${id}`;
     } catch (e) {
+      stop();
       render(`<section class="q-step"><p class="err">${esc(e.message)}</p><div><button class="btn primary" id="retry">Try again</button></div></section>`);
       $("retry").addEventListener("click", build);
     }
@@ -296,28 +336,74 @@ async function questionsScreen(id) {
   step();
 }
 
+const arcPath = (cx, r, a0, a1) => {
+  const pt = (a) => [cx + r * Math.cos((a * Math.PI) / 180), cx + r * Math.sin((a * Math.PI) / 180)].map((n) => n.toFixed(2)).join(" ");
+  return `M${pt(a0)}A${r} ${r} 0 0 1 ${pt(a1)}`;
+};
+const QUARTERS = [0, 1, 2, 3].map((i) => arcPath(60, 46, -90 + i * 90 + 4, -90 + i * 90 + 86));
+function buildingView(title) {
+  return `<section class="building">
+    <div class="ring"><svg viewBox="0 0 120 120" aria-hidden="true">${QUARTERS.map((d, i) => `<path d="${d}" stroke="var(--q${i})"/>`).join("")}</svg></div>
+    <div style="display:grid;gap:6px"><h2>${esc(title)}</h2><p class="line" id="buildLine">${BUILD_LINES[0]}</p></div>
+    <p class="help">Usually about 20 seconds.</p>
+  </section>`;
+}
+function cycleLines() {
+  let n = 0;
+  const t = setInterval(() => {
+    const el = $("buildLine");
+    if (!el) return clearInterval(t);
+    n = (n + 1) % BUILD_LINES.length;
+    el.textContent = BUILD_LINES[n];
+    el.style.animation = "none"; void el.offsetWidth; el.style.animation = "";
+  }, 3200);
+  return () => clearInterval(t);
+}
+
+// Progress ring: one colored arc per quadrant.
+function qring(tasks) {
+  const R = 70, C = 2 * Math.PI * R, GAP = 7, SEG = C / 4 - GAP;
+  const arcs = SECTIONS.map((s, i) => {
+    const all = tasks.filter((t) => t.quadrant === s.id);
+    const frac = all.filter((t) => t.done).length / Math.max(all.length, 1);
+    const rot = -90 + i * 90 + (GAP / C) * 180;
+    return `<circle class="track" cx="84" cy="84" r="${R}" fill="none" stroke-dasharray="${SEG} ${C}" transform="rotate(${rot} 84 84)"/>
+      <circle class="arc" cx="84" cy="84" r="${R}" fill="none" stroke="var(--q${i})" stroke-dasharray="${SEG} ${C}" stroke-dashoffset="${SEG}" data-to="${SEG * (1 - frac)}" transform="rotate(${rot} 84 84)"/>`;
+  }).join("");
+  const done = tasks.filter((t) => t.done).length;
+  return `<div class="qring"><svg viewBox="0 0 168 168" role="img" aria-label="${done} of ${tasks.length} tasks done">${arcs}</svg>
+    <div class="center"><b class="num">${Math.round((done / Math.max(tasks.length, 1)) * 100)}%</b><span class="num">${done} of ${tasks.length} tasks</span></div></div>`;
+}
+function animateRing() {
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    view.querySelectorAll(".qring .arc").forEach((a) => a.setAttribute("stroke-dashoffset", a.dataset.to));
+  }));
+}
+
 // One plan section: summary card + task rows.
 function sectionBlock(s, idx, { showHeader = true } = {}) {
   const tasks = project.plan.tasks.filter((t) => t.quadrant === s.id);
   const done = tasks.filter((t) => t.done).length;
-  return `<section class="section" id="sec-${s.id}">
-    ${showHeader ? `<div class="section-head">${icons.quad(idx)}<h2><a href="#/p/${project.id}/s/${s.id}" style="text-decoration:none">${s.name}</a></h2><span class="count">${done}/${tasks.length}</span><span class="spacer"></span></div>` : ""}
+  return `<section class="section" id="sec-${s.id}" style="${qc(idx)}">
+    ${showHeader ? `<div class="section-head"><span class="ic">${icons.q[idx]}</span><h2><a href="#/p/${project.id}/s/${s.id}">${s.name}</a></h2><span class="count">${done}/${tasks.length}</span><span class="spacer"></span></div>` : ""}
     <div class="summary" id="sum-${s.id}">
       <p>${esc(project.plan.quadrants[s.id].summary)}</p>
       <div class="row"><span class="tag ai">AI draft</span>
-        <div class="acts"><button class="btn ghost" data-edit="${s.id}">Edit</button><button class="btn ghost" data-redo="${s.id}">Redo with feedback</button></div></div>
+        <div class="acts"><button class="btn ghost" data-edit="${s.id}">${icons.edit}Edit</button><button class="btn ghost" data-redo="${s.id}">${icons.redo}Redo with feedback</button></div></div>
     </div>
     <div class="list">${tasks.map(taskRow).join("")}</div>
   </section>`;
 }
 
+const SHORT_ORG = { "U.S. Small Business Administration": "SBA", "Internal Revenue Service": "IRS", "Federal Trade Commission": "FTC", "U.S. Patent and Trademark Office": "USPTO" };
 function taskRow(t) {
+  const org = t.sources?.[0] && SOURCES[t.sources[0]]?.org;
   return `<div class="rowi ${t.done ? "done" : ""}">
     <button class="status ${t.done ? "on" : ""}" data-toggle="${esc(t.id)}" aria-pressed="${t.done}" aria-label="${t.done ? "Mark not done" : "Mark done"}: ${esc(t.title)}">${t.done ? icons.done : icons.circle}</button>
     <a class="title" href="#/p/${project.id}/t/${esc(t.id)}" style="text-decoration:none">${esc(t.title)}</a>
-    ${t.sources?.[0] && SOURCES[t.sources[0]] ? `<span class="tag">${esc(SOURCES[t.sources[0]].org.replace("U.S. Small Business Administration", "SBA").replace("Internal Revenue Service", "IRS").replace("Federal Trade Commission", "FTC").replace("U.S. Patent and Trademark Office", "USPTO"))}</span>` : ""}
-    <span class="mins">${t.minutes}m</span>
-    <a class="chev" href="#/p/${project.id}/t/${esc(t.id)}" aria-hidden="true" tabindex="-1">${icons.chev}</a>
+    ${org ? `<span class="tag">${esc(SHORT_ORG[org] || org)}</span>` : ""}
+    <span class="mins">${t.minutes} min</span>
+    <span class="chev" aria-hidden="true">${icons.chev}</span>
   </div>`;
 }
 
@@ -326,21 +412,29 @@ function wirePlan(rerender) {
     const task = project.plan.tasks.find((t) => t.id === b.dataset.toggle);
     const next = !task.done;
     task.done = next; // optimistic
-    rerender();
+    rerender(true);
     try {
       refresh(await api(`projects/${project.id}/tasks/${task.id}`, { method: "PATCH", body: { done: next } }));
       sidebar(currentActive);
-      if (next) toast("Task done");
-    } catch (e) { task.done = !next; rerender(); toast(e.message, "error"); }
+      if (next) toast("Task done. Nice work.");
+    } catch (e) { task.done = !next; rerender(true); toast(e.message, "error"); }
   }));
   view.querySelectorAll("[data-edit]").forEach((b) => b.addEventListener("click", () => inlineEdit(b.dataset.edit, "edit", rerender)));
   view.querySelectorAll("[data-redo]").forEach((b) => b.addEventListener("click", () => inlineEdit(b.dataset.redo, "redo", rerender)));
 }
 
+// Re-render without the entrance animation or scroll jump (used after small updates).
+function quietRender(html, opts) {
+  const top = view.scrollTop;
+  render(html, opts);
+  view.firstElementChild?.classList.remove("enter");
+  view.scrollTop = top;
+}
+
 function inlineEdit(sec, mode, rerender) {
   const box = $(`sum-${sec}`);
   const val = mode === "edit" ? project.plan.quadrants[sec].summary : "";
-  box.innerHTML = `<form style="display:grid;gap:8px">
+  box.innerHTML = `<form style="display:grid;gap:10px">
     <label class="label" for="ed-${sec}" style="margin:0">${mode === "edit" ? "Edit summary" : "What should change?"}</label>
     <textarea id="ed-${sec}" class="field" maxlength="1200" placeholder="${mode === "redo" ? "Example: Focus on graduate students instead of undergrads." : ""}">${esc(val)}</textarea>
     <div style="display:flex;gap:6px;justify-content:flex-end"><button class="btn ghost" type="button">Cancel</button><button class="btn primary" type="submit">${mode === "edit" ? "Save" : "Redo"} <kbd>${MOD}↵</kbd></button></div>
@@ -349,7 +443,7 @@ function inlineEdit(sec, mode, rerender) {
   const ta = box.querySelector("textarea");
   ta.focus();
   submitOnModEnter(ta, form);
-  form.querySelector(".ghost").addEventListener("click", rerender);
+  form.querySelector(".ghost").addEventListener("click", () => rerender(true));
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const btn = form.querySelector(".primary");
@@ -359,7 +453,7 @@ function inlineEdit(sec, mode, rerender) {
       refresh(mode === "edit"
         ? await api(`projects/${project.id}/quadrants/${sec}`, { method: "PATCH", body: { summary: ta.value } })
         : await api(`projects/${project.id}/quadrants/${sec}/regenerate`, { method: "POST", body: { feedback: ta.value } }));
-      rerender();
+      rerender(true);
       toast(mode === "edit" ? "Summary saved" : "Summary rewritten");
     } catch (ex) { btn.disabled = false; btn.textContent = "Try again"; toast(ex.message, "error"); }
   });
@@ -372,43 +466,65 @@ async function overviewScreen(id) {
   try { await load(id); } catch (e) { return errorScreen(e.message); }
   if (!project.plan) { location.hash = `#/p/${id}/questions`; return; }
   currentActive = "overview";
-  const draw = () => {
+  const draw = (quiet) => {
     sidebar("overview");
     const t = project.plan.tasks;
-    const done = t.filter((x) => x.done).length;
-    const pct = Math.round((done / Math.max(t.length, 1)) * 100);
     const assumptions = project.plan.assumptions || [];
-    render(`<div class="page">
-      <header class="page-head">
-        <div class="meta"><span class="tag">${esc(NOVELTY[project.novelty] || "Plan")}</span>${(project.types || []).map((x) => `<span class="tag">${esc(x)}</span>`).join("")}</div>
-        <h1>${esc(project.title || "Your plan")}</h1>
-        <p class="sub">${esc(project.idea)}</p>
-        <div class="progress num"><div class="bar-track"><span style="width:${pct}%"></span></div>${done} of ${t.length} tasks done</div>
+    const confirmed = assumptions.filter((a) => a.status === "holds").length;
+    const html = `<div class="page">
+      <header class="hero-card">
+        <div class="info">
+          <div class="meta"><span class="tag novelty">${esc(NOVELTY[project.novelty] || "Plan")}</span>${(project.types || []).map((x) => `<span class="tag">${esc(x)}</span>`).join("")}</div>
+          <h1>${esc(project.title || "Your plan")}</h1>
+          <p class="sub">${esc(project.idea)}</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+            ${nextTaskLink(t)}
+            <a class="btn" href="#/p/${id}/site">${icons.globe}${project.site ? "Your website" : "Build website"}</a>
+          </div>
+        </div>
+        ${qring(t)}
       </header>
-      ${assumptions.length ? `<section class="section" style="margin-top:8px">
-        <div class="section-head">${icons.spark}<h2>What has to be true</h2><span class="count">${assumptions.filter((a) => a.status === "holds").length}/${assumptions.length} confirmed</span></div>
-        <div class="list">${assumptions.map((a) => `<div class="assume"><div class="top"><p class="t">${esc(a.text)}</p>
-          <select class="field" data-assume="${a.id}" aria-label="Status of: ${esc(a.text)}">
+      <div class="quad-grid">${SECTIONS.map((s, i) => {
+        const all = t.filter((x) => x.quadrant === s.id);
+        const done = all.filter((x) => x.done).length;
+        const next = all.find((x) => !x.done);
+        return `<a class="qtile" href="#sec-${s.id}" data-jump="${s.id}" style="${qc(i)}">
+          <div class="top"><span class="ic">${icons.q[i]}</span><h3>${s.name}</h3><span class="cnt">${done}/${all.length}</span></div>
+          <div class="bar"><i style="width:${Math.round((done / Math.max(all.length, 1)) * 100)}%"></i></div>
+          <p class="next">${next ? `<b>Next:</b> ${esc(next.title)}` : "All done here"}</p>
+        </a>`;
+      }).join("")}</div>
+      ${assumptions.length ? `<section class="assume-card">
+        <div class="hd"><span class="ic">${icons.spark}</span><div class="grow"><h2>What has to be true</h2><p>Test these before you spend money. Update each one as you learn.</p></div><span class="count">${confirmed}/${assumptions.length} confirmed</span></div>
+        ${assumptions.map((a) => `<div class="assume"><p class="t">${esc(a.text)}</p>
+          <select class="field" data-assume="${a.id}" data-s="${a.status}" aria-label="Status of: ${esc(a.text)}">
             <option value="untested" ${a.status === "untested" ? "selected" : ""}>Untested</option>
             <option value="holds" ${a.status === "holds" ? "selected" : ""}>Confirmed</option>
             <option value="wrong" ${a.status === "wrong" ? "selected" : ""}>Proven wrong</option>
-          </select></div><p class="how">Test: ${esc(a.test)}</p></div>`).join("")}</div>
+          </select><p class="how"><b>Test</b><span>${esc(a.test)}</span></p></div>`).join("")}
       </section>` : ""}
       ${SECTIONS.map((s, i) => sectionBlock(s, i)).join("")}
-    </div>`, {
-      crumbs: [{ label: project.title || "Plan" }],
-      actions: `<a class="btn" href="#/p/${id}/site">${icons.globe}${project.site ? "Website" : "Build website"}</a>`,
-    });
+    </div>`;
+    const opts = { crumbs: [{ label: project.title || "Plan" }] };
+    quiet ? quietRender(html, opts) : render(html, opts);
+    animateRing();
     wirePlan(draw);
+    view.querySelectorAll("[data-jump]").forEach((a) => a.addEventListener("click", (e) => { e.preventDefault(); $(`sec-${a.dataset.jump}`).scrollIntoView({ behavior: "smooth" }); }));
     view.querySelectorAll("[data-assume]").forEach((sel) => sel.addEventListener("change", async () => {
+      sel.dataset.s = sel.value;
       try {
         refresh(await api(`projects/${id}/assumptions/${sel.dataset.assume}`, { method: "PATCH", body: { status: sel.value } }));
         toast(sel.value === "wrong" ? "Marked wrong. Ask the co-pilot how to adjust." : "Updated");
-        if (sel.value === "wrong") draw();
+        draw(true);
       } catch (e) { toast(e.message, "error"); }
     }));
   };
   draw();
+}
+
+function nextTaskLink(tasks) {
+  const next = tasks.find((x) => !x.done);
+  return next ? `<a class="btn primary" href="#/p/${project.id}/t/${esc(next.id)}">Start next task ${icons.arrow}</a>` : `<span class="pill">${icons.check} Every task done</span>`;
 }
 
 async function sectionScreen(id, sec) {
@@ -417,17 +533,25 @@ async function sectionScreen(id, sec) {
   const idx = SECTIONS.findIndex((s) => s.id === sec);
   if (!project.plan || idx < 0) { location.hash = `#/p/${id}`; return; }
   currentActive = sec;
-  const draw = () => {
+  const draw = (quiet) => {
     sidebar(sec);
-    render(`<div class="page">
-      <header class="page-head"><h1>${SECTIONS[idx].name}</h1></header>
+    const all = project.plan.tasks.filter((x) => x.quadrant === sec);
+    const done = all.filter((x) => x.done).length;
+    const html = `<div class="page" style="${qc(idx)}">
+      <header class="page-head">
+        <span class="eyebrow">Quadrant ${idx + 1} of 4 · ${done}/${all.length} done</span>
+        <h1>${SECTIONS[idx].name}</h1>
+      </header>
       ${sectionBlock(SECTIONS[idx], idx, { showHeader: false })}
-    </div>`, { crumbs: [{ label: project.title || "Plan", href: `#/p/${id}` }, { label: SECTIONS[idx].name }] });
+    </div>`;
+    const opts = { crumbs: [{ label: project.title || "Plan", href: `#/p/${id}` }, { label: SECTIONS[idx].name }] };
+    quiet ? quietRender(html, opts) : render(html, opts);
     wirePlan(draw);
   };
   draw();
 }
 
+const CHAT_STARTERS = ["Break this into steps for me", "What should I do first?", "What could go wrong?"];
 async function taskScreen(id, taskId) {
   skeleton([{ label: "Plan" }]);
   let msgs;
@@ -437,48 +561,55 @@ async function taskScreen(id, taskId) {
   } catch (e) { return errorScreen(e.message); }
   const task = project.plan?.tasks.find((t) => t.id === taskId);
   if (!task) return errorScreen("That task doesn't exist.");
-  const sec = SECTIONS.find((s) => s.id === task.quadrant);
+  const idx = SECTIONS.findIndex((s) => s.id === task.quadrant);
+  const sec = SECTIONS[idx];
   currentActive = task.quadrant;
   sidebar(task.quadrant);
+  const aiAvatar = `<span class="avatar ai">${icons.mark}</span>`;
 
-  const draw = () => {
-    render(`<div class="page">
+  const draw = (quiet) => {
+    const html = `<div class="page" style="${qc(idx)}">
       <header class="task-head">
-        <div class="meta"><span class="tag num">About ${task.minutes} min</span>${(task.sources || []).map(srcTag).join("")}${task.basis ? `<span class="tag">Based on: ${esc(task.basis)}</span>` : ""}</div>
+        <div class="meta"><span class="qchip">${sec.short}</span><span class="tag num">${icons.clock}About ${task.minutes} min</span>${(task.sources || []).map(srcTag).join("")}${task.basis ? `<span class="tag">Based on: ${esc(task.basis)}</span>` : ""}</div>
         <h1>${esc(task.title)}</h1>
         <p class="why">${esc(task.why)}</p>
       </header>
       <div class="thread" id="thread">
         ${msgs.length ? msgs.map((m) => m.role === "user"
-          ? `<div class="msg"><span class="avatar">You</span><div><p class="who"><b>You</b></p><div class="body">${esc(m.content).replace(/\n/g, "<br>")}</div></div></div>`
-          : `<div class="msg"><span class="avatar ai">QF</span><div><p class="who"><b>Co-pilot</b>AI</p><div class="body">${md(m.content)}</div></div></div>`).join("")
-          : `<p class="empty">The co-pilot will walk you through this task step by step. Start by asking it to break the task down, or describe where you're stuck.</p>`}
+          ? `<div class="msg"><span class="avatar">You</span><div><p class="who"><b>You</b></p><div class="bubble">${esc(m.content).replace(/\n/g, "<br>")}</div></div></div>`
+          : `<div class="msg ai">${aiAvatar}<div><p class="who"><b>Co-pilot</b><span class="tag ai">AI</span></p><div class="bubble">${md(m.content)}</div></div></div>`).join("")
+          : `<div class="empty-chat">${aiAvatar}<h3>Your co-pilot for this task</h3><p>It breaks the task into small steps, cites official sources for any rule, and asks before it assumes.</p>
+              <div class="chips">${CHAT_STARTERS.map((c) => `<button class="chip" type="button" data-start="${esc(c)}">${esc(c)}</button>`).join("")}</div></div>`}
       </div>
       <form class="reply" id="chatForm">
         <div class="composer-box">
-          <label for="msg" style="position:absolute;left:-9999px">Message the co-pilot</label>
-          <textarea id="msg" maxlength="1500" placeholder="Break this into steps for me."></textarea>
+          <label for="msg" class="sr">Message the co-pilot</label>
+          <textarea id="msg" maxlength="1500" placeholder="Ask anything about this task."></textarea>
           <div class="bar"><p class="help">Educational guidance, not legal or tax advice.</p><button class="btn primary" type="submit">Send <kbd>${MOD}↵</kbd></button></div>
         </div>
       </form>
-    </div>`, {
+    </div>`;
+    const opts = {
       crumbs: [{ label: project.title || "Plan", href: `#/p/${id}` }, { label: sec.name, href: `#/p/${id}/s/${sec.id}` }, { label: task.title }],
       actions: `<button class="btn ${task.done ? "" : "primary"}" id="doneBtn">${task.done ? icons.done + "Done" : icons.check + "Mark done"}</button>`,
-    });
+    };
+    quiet ? quietRender(html, opts) : render(html, opts);
     const form = $("chatForm");
     const ta = $("msg");
     submitOnModEnter(ta, form);
+    view.querySelectorAll("[data-start]").forEach((b) => b.addEventListener("click", () => { ta.value = b.dataset.start; form.requestSubmit(); }));
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const text = ta.value.trim() || "Break this into steps for me.";
       const btn = form.querySelector(".primary");
       btn.disabled = true;
       ta.disabled = true;
-      $("thread").insertAdjacentHTML("beforeend", `<div class="msg"><span class="avatar">You</span><div><p class="who"><b>You</b></p><div class="body">${esc(text)}</div></div></div><div class="msg" id="pending"><span class="avatar ai">QF</span><div>${working("Thinking")}</div></div>`);
+      view.querySelector(".empty-chat")?.remove();
+      $("thread").insertAdjacentHTML("beforeend", `<div class="msg"><span class="avatar">You</span><div><p class="who"><b>You</b></p><div class="bubble">${esc(text)}</div></div></div><div class="msg ai" id="pending">${aiAvatar}<div><p class="who"><b>Co-pilot</b></p><div class="typing" aria-label="Co-pilot is typing"><i></i><i></i><i></i></div></div></div>`);
       view.scrollTop = view.scrollHeight;
       try {
         msgs = (await api(`projects/${id}/tasks/${taskId}/messages`, { method: "POST", body: { message: text } })).messages;
-        draw();
+        draw(true);
         view.scrollTop = view.scrollHeight;
         $("msg").focus();
       } catch (ex) { $("pending")?.remove(); btn.disabled = false; ta.disabled = false; toast(ex.message, "error"); }
@@ -488,8 +619,8 @@ async function taskScreen(id, taskId) {
         refresh(await api(`projects/${id}/tasks/${taskId}`, { method: "PATCH", body: { done: !task.done } }));
         task.done = !task.done;
         sidebar(task.quadrant);
-        draw();
-        toast(task.done ? "Task done" : "Marked not done");
+        draw(true);
+        toast(task.done ? "Task done. Nice work." : "Marked not done");
       } catch (e) { toast(e.message, "error"); }
     });
   };
@@ -508,38 +639,52 @@ async function siteScreen(id) {
   const crumbs = [{ label: project.title || "Plan", href: `#/p/${id}` }, { label: "Website" }];
 
   const generate = async () => {
-    render(`<div class="page">${working("Writing your website from your plan. About 20 seconds.")}</div>`, { crumbs });
-    try { refresh(await api(`projects/${id}/site`, { method: "POST" })); draw(); toast("Website ready"); }
-    catch (e) { render(`<div class="page"><p class="err">${esc(e.message)}</p><button class="btn primary" id="retry">Try again</button></div>`, { crumbs }); $("retry").addEventListener("click", generate); }
+    render(buildingView("Designing your website"), { crumbs });
+    const stop = cycleLines();
+    try { refresh(await api(`projects/${id}/site`, { method: "POST" })); stop(); sidebar("site"); draw(); toast("Website ready"); }
+    catch (e) { stop(); render(`<div class="page"><p class="err">${esc(e.message)}</p><button class="btn primary" id="retry">Try again</button></div>`, { crumbs }); $("retry").addEventListener("click", generate); }
   };
 
-  const draw = () => {
+  const draw = (quiet) => {
     if (!project.site) {
-      render(`<div class="page"><header class="page-head"><h1>Website</h1>
-        <p class="sub">Create a 4-page site (Home, About, Services, Contact) from your plan. Nothing is made up: no fake reviews, licenses, emails, or phone numbers. You can change everything after.</p></header>
-        <button class="btn primary lg" id="gen">${icons.globe}Create my website</button></div>`, { crumbs });
+      render(`<div class="page wide" style="max-width:1040px"><section class="site-empty">
+        <div>
+          <span class="eyebrow">Website</span>
+          <h1 style="margin-top:8px">A real website for <span class="grad-text">${esc(project.title || "your business")}</span></h1>
+          <p class="sub">Four pages written from your plan. Preview it, change anything by asking, then download it and publish it to your own account.</p>
+          <ul>
+            <li>${icons.check}Home, About, Services, and Contact pages</li>
+            <li>${icons.check}No made-up reviews, licenses, emails, or phone numbers</li>
+            <li>${icons.check}You own the files and the account it lives on</li>
+          </ul>
+          <button class="btn primary xl" id="gen">${icons.spark}Create my website</button>
+        </div>
+        <div class="mini-site" aria-hidden="true"><div class="bar"><i></i><i></i><i></i></div>
+          <div class="body"><div class="l" style="width:30%"></div><div class="h"></div><div class="l" style="width:85%"></div><div class="l" style="width:65%"></div><div class="b"></div><div class="cards"><i></i><i></i><i></i></div></div></div>
+      </section></div>`, { crumbs });
       $("gen").addEventListener("click", generate);
       return;
     }
     const c = project.site.pages.contact;
-    render(`<div class="page wide">
+    const slug = (project.site.businessName || "your-site").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    const html = `<div class="page wide">
       <div class="site-grid">
         <div>
           <div class="toolbar">
             <div class="seg" role="tablist" aria-label="Page">${["home", "about", "services", "contact"].map((p) => `<button role="tab" aria-selected="${p === page}" data-page="${p}">${p[0].toUpperCase() + p.slice(1)}</button>`).join("")}</div>
             <div class="seg" aria-label="Device">${["desktop", "phone"].map((d) => `<button aria-pressed="${d === device}" data-device="${d}">${d[0].toUpperCase() + d.slice(1)}</button>`).join("")}</div>
           </div>
-          <div class="frame ${device}"><div class="chrome"><i></i><i></i><i></i><span>${esc(project.site.businessName)} / ${page}</span></div>
+          <div class="frame ${device}"><div class="chrome"><i></i><i></i><i></i><span>${esc(slug)}${page === "home" ? "" : "/" + page}</span></div>
             <iframe title="Website preview" sandbox src="/preview/${id}/${page}?v=${Date.now()}"></iframe></div>
         </div>
         <aside class="inspector">
           <form class="card" id="editForm">
-            <h3>Change something</h3>
+            <h3>${icons.spark}Change something</h3>
             <textarea id="instr" class="field" rows="3" maxlength="500" placeholder="Shorten the home headline and add a team discount service."></textarea>
             <div style="display:flex;justify-content:flex-end"><button class="btn primary" type="submit">Update site <kbd>${MOD}↵</kbd></button></div>
           </form>
           <form class="card" id="contactForm">
-            <h3>Contact info</h3>
+            <h3>${icons.q[0]}Contact info</h3>
             <p class="help">Only what you enter here appears on your site.</p>
             <div><label class="label" for="cEmail">Email</label><input id="cEmail" class="field" type="email" maxlength="120" value="${esc(c.email)}" placeholder="hello@yourbusiness.com"></div>
             <div><label class="label" for="cIg">Instagram</label><input id="cIg" class="field" maxlength="40" value="${esc(c.instagram)}" placeholder="yourbusiness"></div>
@@ -547,18 +692,20 @@ async function siteScreen(id) {
             <div style="display:flex;justify-content:flex-end"><button class="btn" type="submit">Save</button></div>
           </form>
           <div class="card">
-            <h3>Publish</h3>
+            <h3>${icons.download}Publish</h3>
             <p class="help">Download your 4 pages. One-click publishing to your own Cloudflare account is coming next.</p>
-            <div style="display:flex;gap:6px;flex-wrap:wrap"><a class="btn" href="/api/projects/${id}/site.zip">${icons.download}Download .zip</a>
+            <div style="display:flex;gap:6px;flex-wrap:wrap"><a class="btn dark" href="/api/projects/${id}/site.zip">${icons.download}Download .zip</a>
             <button class="btn ghost" id="reset">${confirmReset ? "Click again to start over" : "Start over"}</button></div>
           </div>
         </aside>
       </div>
-    </div>`, { crumbs, actions: `<a class="btn ghost" href="/preview/${id}/home" target="_blank" rel="noopener">Open preview</a>` });
+    </div>`;
+    const opts = { crumbs, actions: `<a class="btn" href="/preview/${id}/home" target="_blank" rel="noopener">Open preview ${icons.arrow}</a>` };
+    quiet ? quietRender(html, opts) : render(html, opts);
 
-    view.querySelectorAll("[data-page]").forEach((b) => b.addEventListener("click", () => { page = b.dataset.page; draw(); }));
-    view.querySelectorAll("[data-device]").forEach((b) => b.addEventListener("click", () => { device = b.dataset.device; draw(); }));
-    $("reset").addEventListener("click", () => { if (confirmReset) { confirmReset = false; generate(); } else { confirmReset = true; draw(); } });
+    view.querySelectorAll("[data-page]").forEach((b) => b.addEventListener("click", () => { page = b.dataset.page; draw(true); }));
+    view.querySelectorAll("[data-device]").forEach((b) => b.addEventListener("click", () => { device = b.dataset.device; draw(true); }));
+    $("reset").addEventListener("click", () => { if (confirmReset) { confirmReset = false; generate(); } else { confirmReset = true; draw(true); } });
     const ef = $("editForm");
     submitOnModEnter($("instr"), ef);
     ef.addEventListener("submit", async (e) => {
@@ -566,14 +713,14 @@ async function siteScreen(id) {
       const btn = ef.querySelector(".primary");
       btn.disabled = true;
       btn.innerHTML = `<span class="spinner"></span> Updating`;
-      try { refresh(await api(`projects/${id}/site/edit`, { method: "POST", body: { instruction: $("instr").value } })); draw(); toast("Site updated"); }
+      try { refresh(await api(`projects/${id}/site/edit`, { method: "POST", body: { instruction: $("instr").value } })); draw(true); toast("Site updated"); }
       catch (ex) { btn.disabled = false; btn.textContent = "Update site"; toast(ex.message, "error"); }
     });
     $("contactForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       try {
         refresh(await api(`projects/${id}/site/contact`, { method: "PATCH", body: { email: $("cEmail").value, instagram: $("cIg").value, location: $("cLoc").value } }));
-        page = "contact"; draw(); toast("Contact info saved");
+        page = "contact"; draw(true); toast("Contact info saved");
       } catch (ex) { toast(ex.message, "error"); }
     });
   };

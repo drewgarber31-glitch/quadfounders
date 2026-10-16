@@ -3,52 +3,343 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Quad Founders</title>
-  <meta name="description" content="Turn your idea into a business between classes. A step-by-step plan, a guided co-pilot, and your own website in one place.">
-  <meta name="theme-color" content="#FCFCFC" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#111113" media="(prefers-color-scheme: dark)">
+  <title>Quad Founders: turn your idea into a business between classes</title>
+  <meta name="description" content="Describe your idea in a sentence. Quad Founders builds a plan around it, gives you a co-pilot for every step, and writes a website you own. Built for college students.">
+  <meta name="theme-color" content="#FAFAFA" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0A0A0A" media="(prefers-color-scheme: dark)">
+  <meta property="og:title" content="Quad Founders">
+  <meta property="og:description" content="Turn your idea into a real business. Between classes.">
   <link rel="icon" href="/favicon.ico?v=2" sizes="48x48">
   <link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml">
   <link rel="icon" href="/favicon-32.png?v=2" type="image/png" sizes="32x32">
-  <link rel="icon" href="/favicon-192.png?v=2" type="image/png" sizes="192x192">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&display=swap">
-  <link rel="stylesheet" href="/app.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&display=swap">
+  <link rel="stylesheet" href="/base.css?v=3">
+  <link rel="stylesheet" href="/landing.css?v=3">
+  <script>document.documentElement.classList.add("js")</script>
 </head>
 <body>
-  <div class="shell" id="shell">
-    <aside class="sidebar" id="sidebar" aria-label="Navigation">
-      <div class="sb-head">
-        <a class="brand" href="#/">
-          <svg class="mark" viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="11" cy="11" r="7.5" fill="none" stroke-width="3.6" stroke-dasharray="9.78 2" stroke-dashoffset="1"/>
-            <path d="M16.5 16.5 21.5 21.5" stroke-width="3.6" stroke-linecap="round"/>
-          </svg>
-          <span>Quad Founders</span>
-        </a>
-      </div>
-      <a class="sb-new" href="#/"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>New idea</a>
-      <nav id="sbNav" class="sb-nav"></nav>
-      <div class="sb-foot">
-        <span class="mode" id="modeBadge" hidden>Test mode</span>
-        <p>Educational guidance only. Not legal, tax, or financial advice.</p>
-      </div>
-    </aside>
-    <div class="scrim" id="scrim" hidden></div>
-    <div class="main">
-      <header class="topbar">
-        <button class="icon-btn menu-btn" id="menuBtn" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false">
-          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/></svg>
-        </button>
-        <nav class="crumbs" id="crumbs" aria-label="Breadcrumb"></nav>
-        <div class="top-actions" id="topActions"></div>
-      </header>
-      <main id="view" tabindex="-1"></main>
+
+<header class="nav" id="nav">
+  <div class="wrap">
+    <a class="brand" href="/" aria-label="Quad Founders home">
+      <svg class="mark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7.5" fill="none" stroke-width="3.6" stroke-dasharray="9.78 2" stroke-dashoffset="1"/><path d="M16.5 16.5 21.5 21.5" stroke-width="3.6" stroke-linecap="round"/></svg>
+      Quad Founders
+    </a>
+    <nav class="links" aria-label="Sections">
+      <a href="#how">How it works</a>
+      <a href="#plan">The plan</a>
+      <a href="#features">Features</a>
+      <a href="#new-ideas">New ideas</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <div class="right">
+      <a class="btn ghost" href="/app">Open app</a>
+      <a class="btn dark" href="/app#/">Start your plan</a>
     </div>
   </div>
-  <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
-  <script src="/app.js" type="module"></script>
+</header>
+
+<main>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="bg" aria-hidden="true"><div class="grid"></div><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+    <div class="wrap">
+      <a class="announce reveal" href="#new-ideas"><b>New</b>Plans for ideas nobody has tried yet<svg viewBox="0 0 16 16"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>
+      <h1 class="reveal d1">Turn your idea into a <span class="grad-text">real business.</span> Between classes.</h1>
+      <p class="lede reveal d2">Describe your idea in a sentence. Quad Founders builds a step-by-step plan around it, gives you a co-pilot for every task, and writes a website you own.</p>
+      <form class="hero-input reveal d3" id="heroForm">
+        <label class="sr" for="heroIdea">Your idea</label>
+        <input id="heroIdea" maxlength="2000" autocomplete="off" placeholder="An app that matches students flying home on the same day">
+        <button class="btn primary xl" type="submit">Build my plan</button>
+      </form>
+      <p class="err" id="heroErr" hidden></p>
+      <div class="hero-under reveal d3">
+        <span><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></svg>No account needed</span>
+        <span><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></svg>Official sources linked</span>
+        <span><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></svg>You own your website</span>
+        <span>No idea yet? <a href="/app#/find">Help me find one</a></span>
+      </div>
+
+      <!-- Product mockup (illustration of the app; sample content) -->
+      <div class="stage reveal" id="stage" aria-hidden="true">
+        <div class="float f1">
+          <span class="k">What has to be true</span>
+          <div class="row"><span>Students would pay $5 to split a ride</span><span class="st">Confirmed</span></div>
+        </div>
+        <div class="float f2">
+          <span class="k">Sources for this step</span>
+          <span class="src">IRS</span><span class="src">SBA</span><span class="src">NC Sec. of State</span>
+        </div>
+        <div class="float f3">
+          <div class="bub"><span class="av"><svg class="mark" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7.5" fill="none" stroke-width="3.6" stroke-dasharray="9.78 2" stroke-dashoffset="1"/><path d="M16.5 16.5 21.5 21.5" stroke-width="3.6" stroke-linecap="round"/></svg></span>
+          <span>Let's break this into 3 small steps. First, who have you already talked to?</span></div>
+        </div>
+        <div class="window">
+          <div class="titlebar"><i></i><i></i><i></i><span>quadfounders / airport rides</span></div>
+          <div class="app">
+            <div class="side">
+              <span class="brand"><svg class="mark" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7.5" fill="none" stroke-width="3.6" stroke-dasharray="9.78 2" stroke-dashoffset="1"/><path d="M16.5 16.5 21.5 21.5" stroke-width="3.6" stroke-linecap="round"/></svg>Quad Founders</span>
+              <span class="new"><svg viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></svg>New idea</span>
+              <span class="lbl">Airport rides</span>
+              <span class="it on"><svg viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="9" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="2.5" y="9" width="4.5" height="4.5" rx="1"/><rect x="9" y="9" width="4.5" height="4.5" rx="1"/></svg>Overview</span>
+              <span class="it"><i class="d" style="background:var(--q0)"></i>Idea and customer<span class="m"><b style="width:66%;background:var(--q0)"></b></span></span>
+              <span class="it"><i class="d" style="background:var(--q1)"></i>Pricing and costs<span class="m"><b style="width:33%;background:var(--q1)"></b></span></span>
+              <span class="it"><i class="d" style="background:var(--q2)"></i>Marketing<span class="m"><b style="width:25%;background:var(--q2)"></b></span></span>
+              <span class="it"><i class="d" style="background:var(--q3)"></i>Legal and registration<span class="m"><b style="width:10%;background:var(--q3)"></b></span></span>
+              <span class="it"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2c1.8 1.7 2.6 3.7 2.6 6S9.8 12.3 8 14M8 2C6.2 3.7 5.4 5.7 5.4 8S6.2 12.3 8 14"/></svg>Website</span>
+            </div>
+            <div class="mainp">
+              <div class="mock-hero">
+                <div class="t">
+                  <div class="tags"><span class="tg g">Brand-new idea</span><span class="tg">service</span><span class="tg">online</span></div>
+                  <h3>Airport ride matching</h3>
+                  <p>An app that matches students flying out on the same day so they can split a ride to the airport.</p>
+                  <div class="cta"><span class="p">Start next task →</span><span>Build website</span></div>
+                </div>
+                <div class="ring">
+                  <svg viewBox="0 0 168 168" id="mockRing"></svg>
+                  <div class="c"><b>31%</b><span>5 of 16 tasks</span></div>
+                </div>
+              </div>
+              <div class="tiles">
+                <div class="tile" style="--c:var(--q0)"><div class="h"><i><svg viewBox="0 0 16 16"><circle cx="6" cy="5.5" r="2.5"/><path d="M1.5 13.5c.5-2.5 2.3-4 4.5-4s4 1.5 4.5 4"/></svg></i>Idea and customer<span>2/3</span></div><div class="bar"><b data-w="66%"></b></div><p class="n">Next: Ask 10 students how they get to the airport now</p></div>
+                <div class="tile" style="--c:var(--q1)"><div class="h"><i><svg viewBox="0 0 16 16"><path d="M2.5 8.5V3a.5.5 0 01.5-.5h5.5l5 5-6 6z"/></svg></i>Pricing and costs<span>1/3</span></div><div class="bar"><b data-w="33%"></b></div><p class="n">Next: Test two prices with real riders</p></div>
+                <div class="tile" style="--c:var(--q2)"><div class="h"><i><svg viewBox="0 0 16 16"><path d="M2.5 6.5v3h2l5 3v-9l-5 3z"/></svg></i>Marketing<span>1/4</span></div><div class="bar"><b data-w="25%"></b></div><p class="n">Next: Post in two class group chats before break</p></div>
+                <div class="tile" style="--c:var(--q3)"><div class="h"><i><svg viewBox="0 0 16 16"><path d="M8 2l5 2v4c0 3-2.2 5.2-5 6-2.8-.8-5-3-5-6V4z"/></svg></i>Legal and registration<span>1/6</span></div><div class="bar"><b data-w="16%"></b></div><p class="n">Next: Check which licenses and permits apply to you</p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="help" style="margin-top:14px;text-align:center;font-size:12px;color:var(--text-3)">Example plan. Your plan is written for your idea.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SOURCES -->
+  <section class="sources">
+    <div class="wrap">
+      <p class="k reveal">Guidance and legal steps link to official sources, including</p>
+      <div class="marquee reveal d1" aria-label="Official sources used">
+        <div class="track">
+          <span>U.S. Small Business Administration</span><span>Internal Revenue Service</span><span>Federal Trade Commission</span><span>U.S. Patent and Trademark Office</span><span>NC Secretary of State</span><span>NC Department of Revenue</span><span>NC State Extension</span><span>NSF I-Corps</span><span>SCORE</span>
+          <span aria-hidden="true">U.S. Small Business Administration</span><span aria-hidden="true">Internal Revenue Service</span><span aria-hidden="true">Federal Trade Commission</span><span aria-hidden="true">U.S. Patent and Trademark Office</span><span aria-hidden="true">NC Secretary of State</span><span aria-hidden="true">NC Department of Revenue</span><span aria-hidden="true">NC State Extension</span><span aria-hidden="true">NSF I-Corps</span><span aria-hidden="true">SCORE</span>
+        </div>
+      </div>
+      <p class="fine reveal d2">Quad Founders is not affiliated with or endorsed by any of these organizations.</p>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="sec" id="how">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="kicker">How it works</span>
+        <h2>From one sentence to a business you can start this week.</h2>
+        <p>No business background needed. Each step is small enough to do between classes.</p>
+      </div>
+      <div class="steps4">
+        <article class="step reveal" style="--c:var(--q0)">
+          <div class="ill"><div class="typing">A ride app for students</div></div>
+          <span class="no">01</span><h3>Describe your idea</h3><p>A sentence is enough, even if nothing like it exists yet.</p>
+        </article>
+        <article class="step reveal d1" style="--c:var(--q1)">
+          <div class="ill"><div class="qs"><i></i><i></i><i></i></div></div>
+          <span class="no">02</span><h3>Answer a few questions</h3><p>Three to five quick questions about your customers, time, and budget.</p>
+        </article>
+        <article class="step reveal d2" style="--c:var(--q2)">
+          <div class="ill"><div class="quadmini"><i style="background:var(--q0)"></i><i style="background:var(--q1)"></i><i style="background:var(--q2)"></i><i style="background:var(--q3)"></i></div></div>
+          <span class="no">03</span><h3>Get your plan</h3><p>Four quadrants, small tasks, and a co-pilot that walks you through each one.</p>
+        </article>
+        <article class="step reveal d3" style="--c:var(--q3)">
+          <div class="ill"><div class="browser"><b></b><em></em><u></u></div></div>
+          <span class="no">04</span><h3>Launch your site</h3><p>A four-page website written from your plan. Download it and publish it on your own account.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLAN EXPLORER -->
+  <section class="sec" id="plan" style="padding-top:20px">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="kicker">The plan</span>
+        <h2>Every business, in four quadrants.</h2>
+        <p>Your plan is split into the four things every new business has to figure out. Click a quadrant to see the kind of tasks you'll get.</p>
+      </div>
+      <div class="quad-x">
+        <div class="qwheel reveal">
+          <div class="glow"></div>
+          <svg viewBox="0 0 400 400" id="wheel" aria-hidden="true"></svg>
+          <div class="hub"><b id="hubN">01</b><span id="hubL">Customer</span></div>
+        </div>
+        <div class="qtabs reveal d1" role="tablist" aria-label="Plan quadrants">
+          <button class="qtab" role="tab" aria-selected="true" data-q="0" style="--c:var(--q0)">
+            <span class="ic"><svg viewBox="0 0 16 16"><circle cx="6" cy="5.5" r="2.5"/><path d="M1.5 13.5c.5-2.5 2.3-4 4.5-4s4 1.5 4.5 4M10.5 3.2a2.5 2.5 0 010 4.6M12.5 9.8c1.1.6 1.8 1.9 2 3.7"/></svg></span>
+            <h3>Idea and customer</h3><p>Who has the problem, and will they pay to solve it?</p>
+            <ul><li>Talk to 5 possible customers<em>45 min</em></li><li>List how people solve this today<em>30 min</em></li><li>Write one sentence about who it's for<em>15 min</em></li></ul>
+          </button>
+          <button class="qtab" role="tab" aria-selected="false" data-q="1" style="--c:var(--q1)">
+            <span class="ic"><svg viewBox="0 0 16 16"><path d="M2.5 8.5V3a.5.5 0 01.5-.5h5.5l5 5-6 6z"/><circle cx="5.5" cy="5.5" r="1"/></svg></span>
+            <h3>Pricing and costs</h3><p>What it costs to start, and what to charge.</p>
+            <ul><li>List your startup costs<em>30 min</em></li><li>Find your break-even point<em>30 min</em></li><li>Test two prices with real people<em>45 min</em></li></ul>
+          </button>
+          <button class="qtab" role="tab" aria-selected="false" data-q="2" style="--c:var(--q2)">
+            <span class="ic"><svg viewBox="0 0 16 16"><path d="M2.5 6.5v3h2l5 3v-9l-5 3zM12 5.5a3.5 3.5 0 010 5"/></svg></span>
+            <h3>Marketing</h3><p>How your first customers find you.</p>
+            <ul><li>Pick one place your customers already are<em>15 min</em></li><li>Write your first post<em>30 min</em></li><li>Learn the FTC rules for reviews and endorsements<em>20 min</em></li></ul>
+          </button>
+          <button class="qtab" role="tab" aria-selected="false" data-q="3" style="--c:var(--q3)">
+            <span class="ic"><svg viewBox="0 0 16 16"><path d="M8 2l5 2v4c0 3-2.2 5.2-5 6-2.8-.8-5-3-5-6V4z"/></svg></span>
+            <h3>Legal and registration</h3><p>The official steps, each linked to the source.</p>
+            <ul><li>Choose a business structure<em>30 min</em></li><li>Decide whether you need a free EIN from the IRS<em>15 min</em></li><li>Check which licenses and permits apply to you<em>30 min</em></li></ul>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="sec" id="features" style="padding-top:20px">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="kicker">Features</span>
+        <h2>Everything you need to start. Nothing you don't.</h2>
+      </div>
+      <div class="bento">
+        <article class="cell span2 reveal" style="--c:var(--q1)">
+          <h3>A co-pilot for every task</h3>
+          <p>Open any task and get walked through it step by step. It cites official sources for rules and asks before it assumes.</p>
+          <div class="demo"><div class="chat">
+            <div class="me">How do I figure out what to charge?</div>
+            <div class="ai"><span class="av"><svg class="mark" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7.5" fill="none" stroke-width="3.6" stroke-dasharray="9.78 2" stroke-dashoffset="1"/><path d="M16.5 16.5 21.5 21.5" stroke-width="3.6" stroke-linecap="round"/></svg></span>
+              <div>Let's do it in three small steps:<ol><li>Add up what each ride costs you</li><li>Ask 10 students what they pay now</li><li>Test two prices this week</li></ol><span class="src">SBA</span></div></div>
+          </div></div>
+        </article>
+        <article class="cell reveal d1" style="--c:var(--q0)">
+          <h3>What has to be true</h3>
+          <p>Every plan lists the assumptions your business depends on, with a cheap way to test each one.</p>
+          <div class="demo"><div class="alist">
+            <div>Students fly out on the same days<b class="ok">Confirmed</b></div>
+            <div>They'd share a car with strangers<b class="un">Untested</b></div>
+            <div>Word of mouth is enough<b class="no">Proven wrong</b></div>
+          </div></div>
+        </article>
+        <article class="cell reveal" style="--c:var(--q3)">
+          <h3>Sources you can check</h3>
+          <p>Legal steps are a fixed checklist, not AI guesses. Each one links to the official page.</p>
+          <div class="demo"><div class="srcs">
+            <span style="--c:var(--q0)"><i></i>SBA</span><span style="--c:var(--q1)"><i></i>IRS</span><span style="--c:var(--q2)"><i></i>FTC</span><span style="--c:var(--q3)"><i></i>USPTO</span><span style="--c:var(--q0)"><i></i>NC Sec. of State</span><span style="--c:var(--q1)"><i></i>NC Revenue</span>
+          </div></div>
+        </article>
+        <article class="cell span2 reveal d1" style="--c:var(--q2)">
+          <h3>A website, written for you</h3>
+          <p>Four pages written from your plan. Change anything by asking. No made-up reviews, licenses, or contact info. Download the files and publish them on your own account.</p>
+          <div class="demo"><div class="site-demo"><div class="b"><i></i><i></i><i></i></div>
+            <div class="c"><div class="nm">Gate Mates <em>Home · How it works · Contact</em></div><h4>Split your ride<br>to the airport.</h4><p>Find students flying out the same day as you.</p><u>See how it works</u></div></div></div>
+        </article>
+        <article class="cell span2 reveal">
+          <h3>Stuck on an idea? Start from a problem.</h3>
+          <p>Tell it what annoys you, what you're good at, and how much time you have. You get four original directions, each with a test for this week.</p>
+          <div class="demo"><div class="ideas-fan">
+            <div><em>IDEA 01</em><b>Club gear tracker</b>Stop losing shared equipment every season.</div>
+            <div><em>IDEA 02</em><b>Lab report swaps</b>Trade feedback on drafts before they're due.</div>
+            <div><em>IDEA 03</em><b>Move-out pickup</b>Store your stuff over summer, close to campus.</div>
+          </div></div>
+        </article>
+        <article class="cell reveal d1" style="--c:var(--q1)">
+          <h3>Fits between classes</h3>
+          <p>Tasks are sized for real student schedules. Do one before lunch.</p>
+          <div class="demo"><div class="times"><span style="--c:var(--q0)"><i></i>15 min</span><span style="--c:var(--q1)"><i></i>30 min</span><span style="--c:var(--q2)"><i></i>45 min</span><span style="--c:var(--q3)"><i></i>60 min</span></div></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- NEW IDEAS BAND -->
+  <section class="band" id="new-ideas">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="kicker">Built for new ideas</span>
+        <h2>Nobody has done it yet? Good. Here's how you start.</h2>
+        <p>A brand-new idea has no template to copy. So instead of guessing, your plan starts with what has to be true and the cheapest way to find out.</p>
+      </div>
+      <div class="flow">
+        <div class="reveal"><span class="n">01</span><h3>Name the assumptions</h3><p>The few things that must be true for your idea to work.</p><div class="eg">Students fly out on the same days.</div></div>
+        <div class="reveal d1"><span class="n">02</span><h3>Test the riskiest first</h3><p>Talk to people who have the problem before you spend money.</p><div class="eg">Ask 10 people how they got to the airport last break.</div></div>
+        <div class="reveal d2"><span class="n">03</span><h3>Mark what you learned</h3><p>Confirmed or proven wrong. Both are progress.</p><div class="eg">Confirmed: 7 of 10 left the same week.</div></div>
+        <div class="reveal d3"><span class="n">04</span><h3>Adjust the plan</h3><p>Ask the co-pilot what to change when an assumption breaks.</p><div class="eg">Focus on the Friday before break.</div></div>
+      </div>
+      <p class="note reveal">This customer discovery approach comes from guidance published by the NSF I-Corps program. Quad Founders can't promise any idea will work. It helps you find out quickly and cheaply.</p>
+    </div>
+  </section>
+
+  <!-- HONEST -->
+  <section class="sec">
+    <div class="wrap">
+      <div class="sec-head center reveal">
+        <span class="kicker">Straight answers</span>
+        <h2>What Quad Founders is, and isn't.</h2>
+      </div>
+      <div class="isnt">
+        <div class="yes reveal">
+          <h3><i><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></svg></i>It is</h3>
+          <ul>
+            <li><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></svg>A step-by-step plan built around your idea</li>
+            <li><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></svg>Educational guidance that links to official sources</li>
+            <li><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></svg>A website you download and own</li>
+            <li><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></svg>AI drafts that are clearly labeled and fully editable</li>
+          </ul>
+        </div>
+        <div class="no reveal d1">
+          <h3><i><svg viewBox="0 0 16 16"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/></svg></i>It isn't</h3>
+          <ul>
+            <li><svg viewBox="0 0 16 16"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/></svg>A lawyer, accountant, or financial advisor</li>
+            <li><svg viewBox="0 0 16 16"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/></svg>A promise that your business will make money</li>
+            <li><svg viewBox="0 0 16 16"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/></svg>A place to enter ID, bank, or card numbers</li>
+            <li><svg viewBox="0 0 16 16"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/></svg>A host for your website. It lives on your own account.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="sec" id="faq" style="padding-top:20px">
+    <div class="wrap">
+      <div class="sec-head center reveal"><span class="kicker">FAQ</span><h2>Questions, answered.</h2></div>
+      <div class="faq">
+        <details class="reveal"><summary>Is this legal or tax advice?</summary><p>No. Quad Founders gives educational guidance only. Legal and tax steps link to the official government source so you can read the rules yourself. For your specific situation, check with a qualified professional. Free mentors are available through SCORE.</p></details>
+        <details class="reveal"><summary>Does it work outside North Carolina?</summary><p>The registration and state tax steps are written for North Carolina right now. Federal guidance, like the IRS, FTC, and USPTO pages, applies everywhere. If you're in another state, the co-pilot will say when it doesn't have verified information and point you to the closest official source.</p></details>
+        <details class="reveal"><summary>What if nobody has done my idea before?</summary><p>That's what it's built for. Your plan is shaped around your idea instead of a template, and it starts with the assumptions that have to be true and a cheap way to test each one.</p></details>
+        <details class="reveal"><summary>Do I need to know how to code?</summary><p>No. You describe your idea, answer a few questions, and ask for changes in plain English. The website is written for you.</p></details>
+        <details class="reveal"><summary>Who owns my website?</summary><p>You do. You download the files and publish them on your own account. Quad Founders doesn't host your site.</p></details>
+        <details class="reveal"><summary>Is my idea private?</summary><p>Your plan is saved so you can come back to it. Anyone with your plan's link can open it, so only share the link with people you trust. Your idea and answers are sent to an AI provider to write your plan. Never enter personal details like ID, bank, or card numbers.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="final">
+    <div class="wrap">
+      <div class="big reveal"><svg class="mark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7.5" fill="none" stroke-width="3.6" stroke-dasharray="9.78 2" stroke-dashoffset="1"/><path d="M16.5 16.5 21.5 21.5" stroke-width="3.6" stroke-linecap="round"/></svg></div>
+      <h2 class="reveal d1">Your idea deserves<br><span class="grad-text">a real shot.</span></h2>
+      <p class="reveal d2">Start with one sentence. Your plan, your co-pilot, and your website come next.</p>
+      <div class="btns reveal d3"><a class="btn primary xl" href="/app#/">Start your plan</a><a class="btn xl" href="/app#/find">Help me find an idea</a></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <a class="brand" href="/"><svg class="mark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7.5" fill="none" stroke-width="3.6" stroke-dasharray="9.78 2" stroke-dashoffset="1"/><path d="M16.5 16.5 21.5 21.5" stroke-width="3.6" stroke-linecap="round"/></svg>Quad Founders</a>
+    <nav aria-label="Footer"><a href="/app#/">Start a plan</a><a href="/app#/find">Find an idea</a><a href="#how">How it works</a><a href="#faq">FAQ</a></nav>
+    <p class="legal">© <span id="yr">2026</span> Quad Founders. Educational guidance only. Not legal, tax, or financial advice. Quad Founders is not affiliated with or endorsed by any government agency or organization it links to.</p>
+  </div>
+</footer>
+
+<script src="/landing.js?v=3" type="module"></script>
 </body>
 </html>
