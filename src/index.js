@@ -2,6 +2,7 @@
 import { callAI, callAIJson, isTestMode, AIError } from "./ai.js";
 import {
   followUpPrompt,
+  ideaFinderPrompt,
   planPrompt,
   regenerateQuadrantPrompt,
   taskChatSystem,
@@ -43,6 +44,34 @@ async function api(request, env, url) {
   if (parts[0] === "sources" && method === "GET") {
     return json({ sources: SOURCES });
   }
+  // POST /api/ideas  -> original idea suggestions from the student's own inputs
+  if (parts[0] === "ideas" && parts.length === 1 && method === "POST") {
+    const b = await body(request);
+    const input = {
+      problems: clean(b.problems, 800),
+      skills: clean(b.skills, 500),
+      major: clean(b.major, 120),
+      hours: clean(b.hours, 40),
+      budget: clean(b.budget, 40),
+    };
+    if ((input.problems + input.skills + input.major).length < 10) {
+      throw new HttpError(400, "Tell us at least one problem you've noticed or something you're good at.");
+    }
+    await useQuota(request, env);
+    const out = await callAIJson(env, { kind: "ideas", build: true, maxTokens: 2500, ...ideaFinderPrompt(input) });
+    const ideas = (out.ideas || []).slice(0, 4).map((i) => ({
+      title: clean(i.title, 60),
+      oneLiner: clean(i.oneLiner, 240),
+      problem: clean(i.problem, 300),
+      customer: clean(i.customer, 200),
+      whatsNew: clean(i.whatsNew, 300),
+      firstTest: clean(i.firstTest, 300),
+      fit: clean(i.fit, 300),
+      watchOut: clean(i.watchOut, 300),
+    }));
+    return json({ ideas });
+  }
+
   if (parts[0] !== "projects") throw new HttpError(404, "Not found.");
 
   // POST /api/projects  -> new project + follow-up questions
@@ -58,12 +87,13 @@ async function api(request, env, url) {
       hint: clean(q.hint, 120),
     }));
     const types = cleanTypes(out.types);
+    const novelty = ["common", "twist", "new"].includes(out.novelty) ? out.novelty : "common";
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
     await env.DB.prepare(
       "INSERT INTO projects (id, created_at, updated_at, idea, questions) VALUES (?, ?, ?, ?, ?)"
-    ).bind(id, now, now, JSON.stringify({ text, title: clean(out.title, 60), types }), JSON.stringify(questions)).run();
-    return json({ id, title: clean(out.title, 60), types, questions }, 201);
+    ).bind(id, now, now, JSON.stringify({ text, title: clean(out.title, 60), types, novelty }), JSON.stringify(questions)).run();
+    return json({ id, title: clean(out.title, 60), types, novelty, questions }, 201);
   }
 
   const id = parts[1];
@@ -83,7 +113,7 @@ async function api(request, env, url) {
       kind: "plan",
       build: true,
       maxTokens: 3000,
-      ...planPrompt(project.idea, project.types, project.questions, cleanAnswers),
+      ...planPrompt(project.idea, project.types, project.questions, cleanAnswers, project.novelty),
     });
     const plan = normalizePlan(out, project.types);
     await save(env, id, { answers: cleanAnswers, plan });
@@ -109,6 +139,17 @@ async function api(request, env, url) {
       if (!s) throw new HttpError(400, "The summary can't be empty.");
       project.plan.quadrants[q].summary = s;
     } else throw new HttpError(405, "Not allowed.");
+    await save(env, id, { plan: project.plan });
+    return json(publicProject(project));
+  }
+
+  // PATCH /api/projects/:id/assumptions/:aid  {status: untested|holds|wrong}
+  if (parts[2] === "assumptions" && parts.length === 4 && method === "PATCH") {
+    const a = project.plan?.assumptions?.find((x) => x.id === parts[3]);
+    if (!a) throw new HttpError(404, "Assumption not found.");
+    const { status } = await body(request);
+    if (!["untested", "holds", "wrong"].includes(status)) throw new HttpError(400, "Pick untested, confirmed, or proven wrong.");
+    a.status = status;
     await save(env, id, { plan: project.plan });
     return json(publicProject(project));
   }
@@ -264,7 +305,13 @@ function normalizePlan(out, types = []) {
       done: false,
     });
   }
-  return { quadrants, tasks };
+  const assumptions = (Array.isArray(out?.assumptions) ? out.assumptions : []).slice(0, 5).map((a, i) => ({
+    id: `a${i + 1}`,
+    text: clean(a?.text, 240),
+    test: clean(a?.test, 240),
+    status: "untested",
+  })).filter((a) => a.text);
+  return { quadrants, tasks, assumptions };
 }
 
 function normalizeSite(out, previous) {
@@ -337,6 +384,7 @@ async function loadProject(env, id) {
     idea: idea.text,
     title: idea.title,
     types: idea.types || [],
+    novelty: idea.novelty || "common",
     questions: row.questions ? JSON.parse(row.questions) : [],
     answers: row.answers ? JSON.parse(row.answers) : null,
     plan: row.plan ? JSON.parse(row.plan) : null,
@@ -346,7 +394,7 @@ async function loadProject(env, id) {
 }
 
 function publicProject(p) {
-  return { id: p.id, idea: p.idea, title: p.title, types: p.types || [], questions: p.questions, answers: p.answers, plan: p.plan, site: p.site };
+  return { id: p.id, idea: p.idea, title: p.title, types: p.types || [], novelty: p.novelty || "common", questions: p.questions, answers: p.answers, plan: p.plan, site: p.site };
 }
 
 async function save(env, id, fields) {

@@ -14,6 +14,7 @@ export const BUSINESS_TYPES = {
   food: "Food or drinks made at home to sell (baked goods, candy, jams, snacks)",
   digital: "Digital products or tech (apps, websites, templates, content, social media services)",
   beauty: "Hair, nails, makeup, lashes, skincare, or other personal-care services",
+  invention: "A new invention, product, or technology that doesn't really exist yet",
 };
 
 export const KNOWLEDGE = [
@@ -54,6 +55,20 @@ export const KNOWLEDGE = [
       "The lean plan has nine parts: key partnerships, key activities, key resources, value proposition, customer relationships, customer segments, channels, cost structure, and revenue streams.",
       "Customer segments should describe a specific target market, because the business won't serve everyone.",
       "The value proposition is a clear statement of the unique value the business offers.",
+    ],
+  },
+
+  {
+    id: "k_customer_discovery",
+    title: "Customer discovery for new ideas",
+    types: ["all"],
+    quadrant: "customer",
+    source: "icorps_discovery",
+    points: [
+      "Customer discovery is the process of understanding customers' needs, then using what you learn to change the product or the target customer.",
+      "Test your assumptions by interviewing potential customers and people in the industry before building much.",
+      "In the NSF I-Corps Hub program at the University of Alaska Fairbanks, each team must conduct a minimum of 20 interviews over the 6- to 7-week program. That's one program's requirement, not a universal rule.",
+      "For a brand-new idea, the most important early question is whether people actually have the problem and how they solve it today.",
     ],
   },
 
@@ -242,6 +257,31 @@ export const KNOWLEDGE = [
     source: "sba_insurance",
     points: [
       "SBA lists product liability insurance for businesses that make, distribute, or sell products; it covers losses when a defective product causes injury.",
+    ],
+  },
+  {
+    id: "k_ip_types",
+    title: "Trademarks, patents, and copyrights",
+    types: ["invention", "digital", "product"],
+    quadrant: "legal",
+    source: "uspto_ip_types",
+    points: [
+      "A trademark is a word, phrase, or design that identifies your goods or services and distinguishes them from others.",
+      "A patent covers technical inventions that are new, unique, and usable in some industry. It protects against others making, using, or selling the invention without the inventor's consent.",
+      "A copyright covers original creative works (artistic, literary, or other created works) that exist in a tangible form.",
+    ],
+  },
+  {
+    id: "k_provisional_patent",
+    title: "Provisional patent applications",
+    types: ["invention"],
+    quadrant: "legal",
+    source: "uspto_provisional",
+    points: [
+      "A provisional patent application sets an official U.S. filing date and allows \"Patent Pending\" for 12 months. It is not examined and won't become a patent unless a full (nonprovisional) application follows within 12 months. The 12 months can't be extended.",
+      "USPTO warns that publicly disclosing an invention can cost you rights. Students should be careful about posting or pitching an invention's details publicly before getting advice.",
+      "USPTO warns that some invention promotion firms misuse the provisional process and leave inventors with no patent.",
+      "Fees change yearly. Patent questions should go to the USPTO or a registered patent attorney or agent.",
     ],
   },
   {

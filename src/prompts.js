@@ -32,17 +32,19 @@ export function followUpPrompt(idea) {
     system: `${GUARDRAILS}
 
 Task: The student just described a business idea.
-1. Classify it into 1 to 3 of these business types (use the ids exactly):
+1. Classify it into 1 to 3 of these business types (use the ids exactly). If it doesn't fit any well, pick the closest; the plan will still be built around the idea itself:
 ${TYPE_LIST}
-2. Ask the 3 to 5 most useful follow-up questions to build a plan. Questions must be short, answerable in a sentence, and about the business: customers, what exactly they'll sell, pricing, time available, budget, where they'll operate, and anything the business type makes important (for example, for food: what foods and whether they have pets at home; for online: how they'll ship). Never ask for personal identifying information.
+   Also rate how new it is as "novelty": "common" (many similar businesses exist), "twist" (a known business with a meaningful new angle), or "new" (the student believes nothing like it exists yet). Judge from the description only; never claim something definitely does or doesn't exist.
+2. Ask the 3 to 5 most useful follow-up questions to build a plan. Questions must be short, answerable in a sentence, and about the business: customers, what exactly they'll sell, pricing, time available, budget, where they'll operate, and anything the business type makes important (for example, for food: what foods and whether they have pets at home; for online: how they'll ship; for a new invention or new idea: how people deal with this problem today, who has the problem most, what has to be true for it to work, and whether they've shared details publicly).
+For "new" or "twist" ideas, at least 2 questions must dig into the problem and how people handle it today, not just logistics. Never ask for personal identifying information.
 
 Respond with ONLY valid JSON in this exact shape:
-{"title": "short name for the idea, max 6 words", "types": ["service"], "questions": [{"id": "q1", "text": "question", "hint": "short example answer"}]}`,
+{"title": "short name for the idea, max 6 words", "types": ["service"], "novelty": "twist", "questions": [{"id": "q1", "text": "question", "hint": "short example answer"}]}`,
     messages: [{ role: "user", content: `My idea: ${idea}` }],
   };
 }
 
-export function planPrompt(idea, types, questions, answers) {
+export function planPrompt(idea, types, questions, answers, novelty = "common") {
   const qa = (questions || [])
     .map((q) => `Q: ${q.text}\nA: ${(answers && answers[q.id]) || "(skipped)"}`)
     .join("\n\n");
@@ -51,6 +53,7 @@ export function planPrompt(idea, types, questions, answers) {
     system: `${GUARDRAILS}
 
 Business types for this idea: ${types.join(", ") || "unknown"}
+How new the idea is: ${novelty}
 
 ${library(types)}
 
@@ -58,6 +61,16 @@ Official sources (ids you may cite):
 ${sourceList()}
 
 Task: Write a starter business plan as four quadrants plus a checklist, grounded in the knowledge library above and specific to this student's idea and answers.
+
+Build the plan around THIS idea, even if it's unusual or has never been done. Do not force it into a generic template.
+${novelty === "common" ? "This is a common kind of business: focus on standing out from existing competitors." : `This idea is ${novelty === "new" ? "brand new" : "a new twist"}, so:
+- There may be no direct competitors. Look at how people solve the problem today (indirect competitors and workarounds).
+- The biggest risk is that a key assumption is wrong. List the assumptions that must be true and order early tasks to test the riskiest ones first, cheaply, through customer discovery, before spending money or building much.
+- Pricing has nothing to copy: plan to learn willingness to pay from real potential customers.
+- If rules for this kind of business aren't covered in the library, say so and point to the closest official source or a SCORE mentor.
+- If it's an invention, include protecting the idea and caution about public disclosure.`}
+
+Also list 3 to 5 key "assumptions": things that must be true for this business to work, each with a cheap way to test it this month. Never state an assumption as already proven.
 
 Quadrants (each "summary" is 2-4 short sentences, specific to this idea):
 1. customer: the idea, target customer, and how to validate demand (use market research and competition guidance)
@@ -83,9 +96,41 @@ Respond with ONLY valid JSON in this exact shape:
  ],
  "legal": [
    {"id": "legal-ein", "applies": true, "why": "one sentence"}
+ ],
+ "assumptions": [
+   {"text": "People in my dorm would pay to ...", "test": "Ask 10 of them this week ..."}
  ]
 }`,
     messages: [{ role: "user", content: `Idea: ${idea}\n\n${qa}` }],
+  };
+}
+
+export function ideaFinderPrompt(input) {
+  return {
+    system: `${GUARDRAILS}
+
+${library(["invention"], "customer")}
+
+Task: Help a college student come up with ORIGINAL business ideas from their own life.
+Use only what they tell you: problems they've noticed, their skills and interests, their major, and their time and budget.
+
+Rules for the ideas:
+- Each idea must start from a specific problem the student described (or a clear problem inside their skills or major), not from a generic business template.
+- Avoid generic, overdone ideas (reselling, dropshipping, generic tutoring, generic cleaning, print-on-demand shirts, generic social media management) unless the idea has a genuinely new twist tied to their problem.
+- Ideas must fit their stated hours per week and budget. Prefer ideas they can test within a week for little or no money.
+- Never invent market sizes, statistics, competitor names, or claims that something "doesn't exist." Say what to check instead.
+- If an idea would need a license or special rules (food from home, hair or beauty services, alcohol, childcare, health), say so plainly in "watchOut".
+- Each "firstTest" must be a concrete customer-discovery step from the knowledge library (talking to people who have the problem), doable in under a week.
+
+Respond with ONLY valid JSON:
+{"ideas": [{"title": "max 6 words", "oneLiner": "one sentence", "problem": "the problem, in their words where possible", "customer": "who has it most", "whatsNew": "what's different about this approach", "firstTest": "first test this week", "fit": "why it fits their skills, time, and budget", "watchOut": "licenses, rules, or risks, or empty string"}]}
+Give exactly 4 ideas, each meaningfully different.`,
+    messages: [
+      {
+        role: "user",
+        content: `Problems I've noticed: ${input.problems || "(none given)"}\nSkills and interests: ${input.skills || "(none given)"}\nMajor: ${input.major || "(none given)"}\nHours per week: ${input.hours || "(not sure)"}\nBudget to start: ${input.budget || "(not sure)"}`,
+      },
+    ],
   };
 }
 
@@ -120,6 +165,8 @@ Official sources (ids you may cite, written like [source:irs_ein]):
 ${sourceList()}
 
 The student's business idea: ${project.idea}
+How new the idea is: ${project.novelty || "common"}${project.novelty && project.novelty !== "common" ? " (there may be no direct competitors or rules written for it; test assumptions before spending money, and say plainly when official guidance doesn't cover something)" : ""}
+Key assumptions still to test: ${(project.plan.assumptions || []).filter((a) => a.status !== "holds").map((a) => a.text).join("; ") || "none listed"}
 Their plan summary for this area: ${project.plan.quadrants[task.quadrant]?.summary || ""}
 
 You are walking them through ONE task: "${task.title}"

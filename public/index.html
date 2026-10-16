@@ -5,33 +5,48 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Quad Founders</title>
   <meta name="description" content="Turn your idea into a business between classes. A step-by-step plan, a guided co-pilot, and your own website in one place.">
-  <meta name="theme-color" content="#F7F8F6" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#10161C" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#FCFCFC" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#111113" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&display=swap">
   <link rel="stylesheet" href="/app.css">
 </head>
 <body>
-  <a class="skip" href="#main">Skip to content</a>
-  <header class="topbar">
-    <a class="logo" href="#/" aria-label="Quad Founders home">
-      <svg class="mark" viewBox="0 0 28 28" aria-hidden="true">
-        <rect x="1" y="1" width="12" height="12" rx="3" class="m1"/>
-        <rect x="15" y="1" width="12" height="12" rx="3" class="m2"/>
-        <rect x="1" y="15" width="12" height="12" rx="3" class="m2"/>
-        <rect x="15" y="15" width="12" height="12" rx="3" class="m3"/>
-      </svg>
-      <span>Quad Founders</span>
-    </a>
-    <a class="toplink" href="#/projects" id="myProjectsLink" hidden>My plans</a>
-  </header>
-  <div id="testBanner" class="banner" hidden>Test mode: AI answers are samples until the API key is added in Cloudflare.</div>
-  <main id="main" tabindex="-1"></main>
-  <footer class="foot">
-    <p>Educational guidance only. Not legal, tax, or financial advice. Never enter your Social Security number, ID, or bank details.</p>
-  </footer>
+  <div class="shell" id="shell">
+    <aside class="sidebar" id="sidebar" aria-label="Navigation">
+      <div class="sb-head">
+        <a class="brand" href="#/">
+          <svg class="mark" viewBox="0 0 16 16" aria-hidden="true">
+            <rect x="1" y="1" width="6.5" height="6.5" rx="1.6" class="m-a"/>
+            <rect x="8.5" y="1" width="6.5" height="6.5" rx="1.6" class="m-b"/>
+            <rect x="1" y="8.5" width="6.5" height="6.5" rx="1.6" class="m-b"/>
+            <rect x="8.5" y="8.5" width="6.5" height="6.5" rx="1.6" class="m-c"/>
+          </svg>
+          <span>Quad Founders</span>
+        </a>
+      </div>
+      <a class="sb-new" href="#/"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>New idea</a>
+      <nav id="sbNav" class="sb-nav"></nav>
+      <div class="sb-foot">
+        <span class="mode" id="modeBadge" hidden>Test mode</span>
+        <p>Educational guidance only. Not legal, tax, or financial advice.</p>
+      </div>
+    </aside>
+    <div class="scrim" id="scrim" hidden></div>
+    <div class="main">
+      <header class="topbar">
+        <button class="icon-btn menu-btn" id="menuBtn" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/></svg>
+        </button>
+        <nav class="crumbs" id="crumbs" aria-label="Breadcrumb"></nav>
+        <div class="top-actions" id="topActions"></div>
+      </header>
+      <main id="view" tabindex="-1"></main>
+    </div>
+  </div>
+  <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
   <script src="/app.js" type="module"></script>
 </body>
 </html>

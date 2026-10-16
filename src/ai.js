@@ -91,6 +91,7 @@ function mockReply({ kind, messages }) {
       return JSON.stringify({
         title: "Campus sneaker cleaning",
         types: ["service"],
+        novelty: "twist",
         questions: [
           { id: "q1", text: "Who would your first 10 customers be?", hint: "Friends in my dorm and on my club team" },
           { id: "q2", text: "What would you charge, roughly?", hint: "$15 to $25 a pair" },
@@ -123,6 +124,20 @@ function mockReply({ kind, messages }) {
           { id: "legal-licenses", applies: true, why: "Check if your county or city requires a license." },
           { id: "legal-taxes", applies: true, why: "Earnings from your own business can be taxed differently." },
           { id: "legal-mentor", applies: true, why: "A free mentor can sanity-check your plan." },
+        ],
+        assumptions: [
+          { text: "TEST MODE: Students in my dorm care enough about clean sneakers to pay for it.", test: "Ask 10 dorm-mates what they'd pay and whether they've ever paid for it." },
+          { text: "TEST MODE: I can clean a pair in under 30 minutes.", test: "Time yourself cleaning 3 pairs." },
+          { text: "TEST MODE: Word of mouth will bring the first 10 customers.", test: "Post before-and-after photos and count messages in a week." },
+        ],
+      });
+    case "ideas":
+      return JSON.stringify({
+        ideas: [
+          { title: "Lab report peer review swaps", oneLiner: "TEST MODE: A scheduled swap where STEM students trade feedback on lab report drafts.", problem: "Lab reports get marked down for formatting and clarity, not the science.", customer: "First- and second-year STEM students", whatsNew: "Trades feedback between peers in the same course instead of paid editing.", firstTest: "Ask 10 classmates how they check lab reports today and whether they'd swap drafts.", fit: "Uses your writing skills and fits 4 hours a week with no startup cost.", watchOut: "Check your professors' rules on collaboration before launching." },
+          { title: "Club gear return tracker", oneLiner: "TEST MODE: A simple check-out system for club teams' shared gear.", problem: "Club teams lose shared equipment every season.", customer: "Club sports officers", whatsNew: "Built for student-run clubs instead of big athletic departments.", firstTest: "Interview 5 club officers about how they track gear now.", fit: "Uses your coding skills; free to prototype.", watchOut: "" },
+          { title: "Dorm move-out swap day", oneLiner: "TEST MODE: Organized swaps so move-out items go to incoming students.", problem: "Good furniture gets thrown away at move-out.", customer: "Students moving out and moving in", whatsNew: "Matches items to next year's students before move-out week.", firstTest: "Ask 10 students what they threw away last move-out.", fit: "Mostly organizing, low budget.", watchOut: "Check campus rules on events and selling on university property." },
+          { title: "Study-abroad packing check", oneLiner: "TEST MODE: A checklist service for students before study abroad.", problem: "Students forget documents and adapters before going abroad.", customer: "Students departing for study abroad", whatsNew: "Personal checklist tied to their destination.", firstTest: "Talk to 5 students who just got back about what they forgot.", fit: "Fits a few hours a week.", watchOut: "Don't give legal or medical advice about visas or medication." },
         ],
       });
     case "quadrant":
