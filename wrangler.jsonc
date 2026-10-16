@@ -15,7 +15,7 @@
       "binding": "DB",
       "database_name": "quadfounders",
       // Replace with the id printed by `npx wrangler d1 create quadfounders`
-      "database_id": "REPLACE_WITH_YOUR_D1_DATABASE_ID",
+      "database_id": "88810e3b-3a48-4884-b4e7-b2f0609fb3c0",
       "migrations_dir": "migrations"
     }
   ],
