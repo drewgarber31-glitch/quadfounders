@@ -90,6 +90,7 @@ function mockReply({ kind, messages }) {
     case "followup":
       return JSON.stringify({
         title: "Campus sneaker cleaning",
+        types: ["service"],
         questions: [
           { id: "q1", text: "Who would your first 10 customers be?", hint: "Friends in my dorm and on my club team" },
           { id: "q2", text: "What would you charge, roughly?", hint: "$15 to $25 a pair" },
@@ -106,9 +107,9 @@ function mockReply({ kind, messages }) {
           legal: { summary: "TEST MODE: Educational only. Check which registrations apply to a small service business in North Carolina using the official links below." },
         },
         tasks: [
-          { quadrant: "customer", title: "Talk to 5 possible customers", why: "Learn what they'd actually pay for.", minutes: 45 },
+          { quadrant: "customer", title: "Talk to 5 possible customers", why: "Learn what they'd actually pay for.", basis: "Market research basics", minutes: 45 },
           { quadrant: "customer", title: "Write a one-sentence description of your customer", why: "Keeps every decision focused.", minutes: 15 },
-          { quadrant: "pricing", title: "List your startup supplies and their costs", why: "You need this to set a price.", minutes: 30 },
+          { quadrant: "pricing", title: "List your startup supplies and their costs", why: "You need this to set a price.", basis: "Startup costs", minutes: 30 },
           { quadrant: "pricing", title: "Pick a test price and a backup price", why: "Testing beats guessing.", minutes: 20 },
           { quadrant: "marketing", title: "Take before-and-after photos of your own shoes", why: "Proof that your work is good.", minutes: 30 },
           { quadrant: "marketing", title: "Ask 3 friends to share your first post", why: "Your first customers come from people who know you.", minutes: 15 },
@@ -119,6 +120,8 @@ function mockReply({ kind, messages }) {
           { id: "legal-register", applies: true, why: "Read whether a small service business like yours needs to register." },
           { id: "legal-ein", applies: true, why: "Learn when an EIN is needed. It's free from the IRS." },
           { id: "legal-sales-tax", applies: true, why: "Check whether your service is taxable in NC." },
+          { id: "legal-licenses", applies: true, why: "Check if your county or city requires a license." },
+          { id: "legal-taxes", applies: true, why: "Earnings from your own business can be taxed differently." },
           { id: "legal-mentor", applies: true, why: "A free mentor can sanity-check your plan." },
         ],
       });

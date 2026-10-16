@@ -198,7 +198,7 @@ async function planScreen(id) {
         ${tasks.map((t) => `
         <li class="task${t.done ? " done" : ""}">
           <input type="checkbox" data-done="${esc(t.id)}" ${t.done ? "checked" : ""} aria-label="Mark ${esc(t.title)} done">
-          <a href="#/p/${id}/task/${esc(t.id)}"><span class="t">${esc(t.title)}</span><span class="mins">About ${t.minutes} min${t.sources?.length ? " · official source" : ""}</span></a>
+          <a href="#/p/${id}/task/${esc(t.id)}"><span class="t">${esc(t.title)}</span><span class="mins">About ${t.minutes} min${t.quadrant === "legal" && t.sources?.length ? " · official source" : ""}</span></a>
         </li>`).join("")}
       </ul>
     </article>`;
@@ -259,6 +259,7 @@ async function taskScreen(id, taskId) {
         <p class="count">${QUAD[task.quadrant]} · about ${task.minutes} min</p>
         <h1 style="font-size:clamp(30px,6vw,44px)">${esc(task.title)}</h1>
         <p>${esc(task.why)}</p>
+        ${task.basis ? `<p class="hint">Based on: ${esc(task.basis)}</p>` : ""}
         ${task.sources?.length ? `<div class="sources">${sourceChips(task.sources)}</div>` : ""}
       </div>
       <div class="chat" id="chat" aria-live="polite">

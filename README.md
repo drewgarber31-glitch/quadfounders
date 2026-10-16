@@ -72,6 +72,21 @@ There are no logins, so the daily limits are what stop a stranger from running u
 - **Safe student sites.** All AI text is escaped. Previews run with no scripts.
 - **Students own their sites.** They download the files and publish on their own account and domain.
 
+## Knowledge library (how the co-pilot is grounded)
+
+The AI model itself isn't retrained. Instead, every plan and co-pilot answer is given a **verified knowledge library** (`src/knowledge.js`) and told to base any rule, fee, requirement or number on it, citing the source.
+
+- **For every business:** market research, competitive analysis, lean business plan, startup costs, break-even, funding, marketing plan, FTC rules on reviews and influencer disclosures, business structure, trademarks, licenses, self-employment taxes, banking and insurance (SBA, IRS, USPTO, FTC).
+- **Business-type rules:** the co-pilot detects the type (service, product, online, food, digital, beauty) and adds matching rules:
+  - **Food:** NC home food rules (NC State Extension on NCDA&CS)
+  - **Online:** FTC shipping and refund rule
+  - **Beauty:** NC cosmetic art licensing law (G.S. 88B-22)
+  - **Products:** product liability insurance
+- **If the library doesn't cover something,** the co-pilot says so and points to the official source, a local office, or a free SCORE mentor. It doesn't guess.
+- **To add knowledge:** read the official page yourself, add the source to `src/sources.js` with the date you checked it, then add a card to `src/knowledge.js` containing only what that page says.
+
+**Gaps to fill next:** no type-specific cards yet for service or digital businesses, county and city rules, or states other than NC.
+
 ## Known limits (honest list)
 
 - **No logins.** A plan is reachable by anyone with its link (a random ID). Plans are listed only on the device that made them.

@@ -1,4 +1,5 @@
-import { sourceList, LEGAL_STEPS } from "./sources.js";
+import { sourceList, legalStepsFor } from "./sources.js";
+import { BUSINESS_TYPES, knowledgeFor, knowledgeText } from "./knowledge.js";
 
 // Rules every AI call follows. These encode the product's no-liability rules.
 export const GUARDRAILS = `You are the Quad Founders startup co-pilot for college students in North Carolina.
@@ -9,7 +10,9 @@ Hard rules (never break these):
 - Never promise results, income, or savings ("you will make $X" is not allowed).
 - Never ask for or accept Social Security numbers, ID numbers, bank or card numbers, or passwords. If a user shares one, tell them not to and do not repeat it.
 - Never offer to manage or negotiate debt.
-- Only cite official sources from the list you are given, by their id. Never invent links, statistics, laws, fees, or deadlines. If you are unsure, say so and point to the closest listed source or suggest a free SCORE mentor.
+- Any rule, law, requirement, fee, deadline, tax threshold, or statistic you state MUST come from the KNOWLEDGE LIBRARY you are given, cited with its source id like [source:sba_structure]. Never invent links, laws, fees, numbers, or deadlines.
+- If the library doesn't cover something the student needs, say plainly that you don't have verified information on it, and point them to the closest listed source, their county or city office, or a free SCORE mentor [source:score_mentoring]. Do not guess.
+- You may share practical, common-sense business ideas (how to word a flyer, how to approach a customer), but never present them as rules or facts.
 - For anything that depends on a student's specific legal or tax situation, tell them to confirm with the official source or a qualified professional.
 - Respect school: students have classes. Keep tasks small (about 15-60 minutes).
 
@@ -18,40 +21,53 @@ Style:
 - Short and scannable: short paragraphs, bullet points, bold only the key words.
 - Ask a question when you need information instead of guessing.`;
 
+const TYPE_LIST = Object.entries(BUSINESS_TYPES).map(([id, d]) => `- ${id}: ${d}`).join("\n");
+
+function library(types, quadrant) {
+  return `KNOWLEDGE LIBRARY (verified official guidance; base your answer on this):\n\n${knowledgeText(knowledgeFor(types, quadrant))}`;
+}
+
 export function followUpPrompt(idea) {
   return {
     system: `${GUARDRAILS}
 
-Task: The student just described a business idea. Ask the 3 to 5 most useful follow-up questions to build a plan. Questions must be short, answerable in a sentence, and about the business (customers, product, pricing, time available, budget, location). Never ask for personal identifying information.
+Task: The student just described a business idea.
+1. Classify it into 1 to 3 of these business types (use the ids exactly):
+${TYPE_LIST}
+2. Ask the 3 to 5 most useful follow-up questions to build a plan. Questions must be short, answerable in a sentence, and about the business: customers, what exactly they'll sell, pricing, time available, budget, where they'll operate, and anything the business type makes important (for example, for food: what foods and whether they have pets at home; for online: how they'll ship). Never ask for personal identifying information.
 
 Respond with ONLY valid JSON in this exact shape:
-{"title": "short name for the idea, max 6 words", "questions": [{"id": "q1", "text": "question", "hint": "short example answer"}]}`,
+{"title": "short name for the idea, max 6 words", "types": ["service"], "questions": [{"id": "q1", "text": "question", "hint": "short example answer"}]}`,
     messages: [{ role: "user", content: `My idea: ${idea}` }],
   };
 }
 
-export function planPrompt(idea, questions, answers) {
+export function planPrompt(idea, types, questions, answers) {
   const qa = (questions || [])
     .map((q) => `Q: ${q.text}\nA: ${(answers && answers[q.id]) || "(skipped)"}`)
     .join("\n\n");
-  const legal = LEGAL_STEPS.map((s) => `- ${s.id}: ${s.title}`).join("\n");
+  const legal = legalStepsFor(types).map((s) => `- ${s.id}: ${s.title}`).join("\n");
   return {
     system: `${GUARDRAILS}
 
-Official sources you may cite (by id only):
+Business types for this idea: ${types.join(", ") || "unknown"}
+
+${library(types)}
+
+Official sources (ids you may cite):
 ${sourceList()}
 
-Task: Write a starter business plan as four quadrants plus a checklist.
+Task: Write a starter business plan as four quadrants plus a checklist, grounded in the knowledge library above and specific to this student's idea and answers.
 
 Quadrants (each "summary" is 2-4 short sentences, specific to this idea):
-1. customer: the idea and target customer
-2. pricing: pricing and costs (give ranges and how to test them, never promise income)
-3. marketing: marketing and first customers
+1. customer: the idea, target customer, and how to validate demand (use market research and competition guidance)
+2. pricing: pricing and costs (startup costs, break-even, how to test prices; give no income promises)
+3. marketing: marketing plan and first customers (include honest-review and disclosure rules if social media or influencers come up)
 4. legal: legal and registration steps, educational only
 
 Tasks:
-- For customer, pricing, and marketing: write 3 to 5 concrete tasks each, each doable in 15-60 minutes.
-- For legal: choose which of these fixed steps apply and explain why in one sentence each. Use these exact ids:
+- For customer, pricing, and marketing: 3 to 5 concrete tasks each, each doable in 15-60 minutes, ordered so earlier tasks come first. Each task should follow a best practice from the library and name it in "basis" by its card title.
+- For legal: choose which of these fixed steps apply and explain why in one sentence each, using this idea's details. Use these exact ids:
 ${legal}
 
 Respond with ONLY valid JSON in this exact shape:
@@ -63,7 +79,7 @@ Respond with ONLY valid JSON in this exact shape:
    "legal": {"summary": "..."}
  },
  "tasks": [
-   {"quadrant": "customer", "title": "...", "why": "one sentence", "minutes": 30}
+   {"quadrant": "customer", "title": "...", "why": "one sentence", "basis": "card title", "minutes": 30}
  ],
  "legal": [
    {"id": "legal-ein", "applies": true, "why": "one sentence"}
@@ -77,7 +93,11 @@ export function regenerateQuadrantPrompt(project, quadrant, feedback) {
   return {
     system: `${GUARDRAILS}
 
-Task: Rewrite only the "${quadrant}" quadrant summary of this student's plan using their feedback. 2-4 short sentences.
+Business types: ${(project.types || []).join(", ") || "unknown"}
+
+${library(project.types || [], quadrant)}
+
+Task: Rewrite only the "${quadrant}" quadrant summary of this student's plan using their feedback and the knowledge library. 2-4 short sentences.
 Respond with ONLY valid JSON: {"summary": "..."}`,
     messages: [
       {
@@ -89,20 +109,27 @@ Respond with ONLY valid JSON: {"summary": "..."}`,
 }
 
 export function taskChatSystem(project, task) {
-  const sourceIds = task.sources && task.sources.length ? task.sources : undefined;
+  const types = project.types || [];
   return `${GUARDRAILS}
 
-Official sources you may cite (by id only, written like [source:irs_ein]):
-${sourceList(sourceIds)}
+Business types: ${types.join(", ") || "unknown"}
+
+${library(types, task.quadrant)}
+
+Official sources (ids you may cite, written like [source:irs_ein]):
+${sourceList()}
 
 The student's business idea: ${project.idea}
 Their plan summary for this area: ${project.plan.quadrants[task.quadrant]?.summary || ""}
 
 You are walking them through ONE task: "${task.title}"
 Why it matters: ${task.why || ""}
+${task.basis ? `Best practice this task is based on: ${task.basis}` : ""}
+${task.sources?.length ? `Official sources for this task: ${task.sources.join(", ")}` : ""}
 
 How to help:
 - Start by breaking the task into 2-4 small steps, then help with the first one.
+- Ground every step in the knowledge library and cite sources for any rule or requirement.
 - Ask for what you need. Encourage them to push back and edit anything you suggest.
 - When they finish, tell them they can mark the task done.
 - Keep replies under about 150 words unless they ask for more.`;
@@ -125,9 +152,10 @@ export function sitePrompt(project) {
     system: `${GUARDRAILS}
 
 Task: Write the content for this student's 4-page business website (home, about, services, contact).
-- Use their real idea, answers, and plan. Do not invent facts like awards, years in business, reviews, or testimonials.
+- Use their real idea, answers, and plan. Do not invent facts like awards, years in business, reviews, testimonials, certifications, or licenses.
 - Leave contact fields empty strings unless the student provided them. Never invent an email or phone number.
 - Prices only if they appear in the plan; otherwise use an empty string.
+- Don't make health, safety, or income claims about the product or service.
 - 2-4 highlights and 2-6 services.
 
 Respond with ONLY valid JSON in this exact shape:
@@ -145,7 +173,7 @@ export function siteEditPrompt(project, instruction) {
   return {
     system: `${GUARDRAILS}
 
-Task: Update this website content JSON based on the student's request. Change only what they asked. Keep the same shape. Do not invent facts, reviews, emails, or phone numbers.
+Task: Update this website content JSON based on the student's request. Change only what they asked. Keep the same shape. Do not invent facts, reviews, testimonials, licenses, emails, or phone numbers.
 Respond with ONLY the full updated JSON in this shape:
 ${SITE_SHAPE}`,
     messages: [

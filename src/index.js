@@ -8,7 +8,8 @@ import {
   sitePrompt,
   siteEditPrompt,
 } from "./prompts.js";
-import { SOURCES, LEGAL_STEPS } from "./sources.js";
+import { SOURCES, legalStepsFor } from "./sources.js";
+import { cleanTypes, KNOWLEDGE } from "./knowledge.js";
 import { renderPage, siteFiles, makeZip, PAGES } from "./site.js";
 
 const QUADRANTS = ["customer", "pricing", "marketing", "legal"];
@@ -56,12 +57,13 @@ async function api(request, env, url) {
       text: clean(q.text, 200),
       hint: clean(q.hint, 120),
     }));
+    const types = cleanTypes(out.types);
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
     await env.DB.prepare(
       "INSERT INTO projects (id, created_at, updated_at, idea, questions) VALUES (?, ?, ?, ?, ?)"
-    ).bind(id, now, now, JSON.stringify({ text, title: clean(out.title, 60) }), JSON.stringify(questions)).run();
-    return json({ id, title: clean(out.title, 60), questions }, 201);
+    ).bind(id, now, now, JSON.stringify({ text, title: clean(out.title, 60), types }), JSON.stringify(questions)).run();
+    return json({ id, title: clean(out.title, 60), types, questions }, 201);
   }
 
   const id = parts[1];
@@ -81,9 +83,9 @@ async function api(request, env, url) {
       kind: "plan",
       build: true,
       maxTokens: 3000,
-      ...planPrompt(project.idea, project.questions, cleanAnswers),
+      ...planPrompt(project.idea, project.types, project.questions, cleanAnswers),
     });
-    const plan = normalizePlan(out);
+    const plan = normalizePlan(out, project.types);
     await save(env, id, { answers: cleanAnswers, plan });
     return json(publicProject({ ...project, answers: cleanAnswers, plan }));
   }
@@ -226,7 +228,7 @@ async function preview(env, url) {
 
 // ---------------- Helpers ----------------
 
-function normalizePlan(out) {
+function normalizePlan(out, types = []) {
   const quadrants = {};
   for (const q of QUADRANTS) {
     quadrants[q] = { summary: clean(out?.quadrants?.[q]?.summary, LIMITS.summary) || "Ask the co-pilot to fill this in." };
@@ -242,13 +244,14 @@ function normalizePlan(out) {
       quadrant: t.quadrant,
       title: clean(t.title, 120),
       why: clean(t.why, 240),
+      basis: clean(t.basis, 80),
       minutes: clampMinutes(t.minutes),
-      sources: [],
+      sources: basisSources(t.basis),
       done: false,
     });
   }
   const legalAI = new Map((out?.legal || []).map((l) => [l.id, l]));
-  for (const step of LEGAL_STEPS) {
+  for (const step of legalStepsFor(types)) {
     const ai = legalAI.get(step.id);
     if (ai && ai.applies === false) continue;
     tasks.push({
@@ -308,6 +311,14 @@ function sanitizeSources(text) {
   return String(text).replace(/\[source:([a-z0-9_]+)\]/gi, (m, sid) => (SOURCES[sid] ? `[source:${sid}]` : ""));
 }
 
+function basisSources(basis) {
+  const b = String(basis || "").toLowerCase().trim();
+  if (!b) return [];
+  const card = KNOWLEDGE.find((k) => k.title.toLowerCase() === b) ||
+    KNOWLEDGE.find((k) => b.includes(k.title.toLowerCase()) || k.title.toLowerCase().includes(b));
+  return card ? [card.source] : [];
+}
+
 function clampMinutes(m) {
   const n = Math.round(Number(m) || 30);
   return Math.min(90, Math.max(10, n));
@@ -325,6 +336,7 @@ async function loadProject(env, id) {
     id: row.id,
     idea: idea.text,
     title: idea.title,
+    types: idea.types || [],
     questions: row.questions ? JSON.parse(row.questions) : [],
     answers: row.answers ? JSON.parse(row.answers) : null,
     plan: row.plan ? JSON.parse(row.plan) : null,
@@ -334,7 +346,7 @@ async function loadProject(env, id) {
 }
 
 function publicProject(p) {
-  return { id: p.id, idea: p.idea, title: p.title, questions: p.questions, answers: p.answers, plan: p.plan, site: p.site };
+  return { id: p.id, idea: p.idea, title: p.title, types: p.types || [], questions: p.questions, answers: p.answers, plan: p.plan, site: p.site };
 }
 
 async function save(env, id, fields) {
