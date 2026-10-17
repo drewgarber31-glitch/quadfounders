@@ -523,7 +523,58 @@ export const LEGAL_STEPS = [
 
 // Steps that are business coaching, not legal topics. Every other fixed step is a legal topic.
 const NOT_LEGAL = new Set(["legal-mentor", "fixed-lean-plan", "fixed-waitlist", "app-concierge", "app-nocode"]);
-for (const step of LEGAL_STEPS) step.legal = !NOT_LEGAL.has(step.id);
+
+// Legal topics are a fixed library: the SAME list and the SAME text for every student.
+// No AI writes, picks, or explains them. `about` says only what the source covers.
+export const LEGAL_GROUPS = ["Every business", "If anyone will help you", "If you're an international student", "If you sell food made at home", "If you offer hair, nail, or beauty services", "If you make or sell products", "If you sell online", "If you build an app or website", "Free help"];
+const LEGAL_INFO = {
+  "legal-structure": ["Every business", "Covers common business structures, such as sole proprietorship, partnership, and LLC, and how each one treats personal liability."],
+  "legal-name": ["Every business", "Covers searching existing trademarks and state business records for names like yours."],
+  "legal-dba": ["Every business", "Covers assumed business names (DBAs): names a business uses that are different from the owner's legal name."],
+  "legal-register": ["Every business", "Covers when and how businesses register with the state."],
+  "legal-licenses": ["Every business", "Covers federal, state, and local licenses and permits. The source says what's needed depends on a business's activities and location."],
+  "legal-zoning": ["Every business", "Covers zoning, which is usually set locally. The source notes zoning can apply to home-based businesses too."],
+  "legal-local": ["Every business", "City, county, and campus rules can be different from state and federal ones. Places to look include your city or county office and your school's student handbook or student activities office."],
+  "legal-trademark": ["Every business", "Covers what a trademark is, the TM symbol, and trademark registration."],
+  "legal-ein": ["Every business", "Covers Employer Identification Numbers (EINs), a federal tax ID that is free to get."],
+  "legal-sales-tax": ["Every business", "Covers state sales tax registration."],
+  "legal-taxes": ["Every business", "Covers federal self-employment taxes and the difference between a hobby and a business."],
+  "legal-bank": ["Every business", "Covers business bank accounts and keeping business and personal money separate."],
+  "legal-insurance": ["Every business", "Covers common types of business insurance."],
+  "legal-annual": ["Every business", "Covers ongoing filings, such as annual reports, for LLCs and corporations."],
+  "fixed-records": ["Every business", "Covers federal recordkeeping for business income and expenses."],
+  "fixed-ads": ["Every business", "Covers federal rules that ads and claims be truthful and backed up."],
+  "fixed-email": ["Every business", "Covers the federal CAN-SPAM rules for marketing emails."],
+  "fixed-reviews": ["Every business", "Covers federal rules for reviews, endorsements, and paid posts."],
+  "fixed-access": ["Every business", "Covers federal guidance on making websites accessible to people with disabilities."],
+  "fixed-data": ["Every business", "Covers federal guidance on protecting customer information."],
+  "legal-hiring": ["If anyone will help you", "Covers the difference between employees and independent contractors."],
+  "legal-intl": ["If you're an international student", "Covers how starting a business relates to work rules for international students on F-1 visas."],
+  "legal-food": ["If you sell food made at home", "Covers rules for selling food made at home to the public."],
+  "legal-beauty": ["If you offer hair, nail, or beauty services", "Covers licensing for paid hair, nail, skin, and similar services."],
+  "legal-cosmetics": ["If you make or sell products", "Covers federal guidance for small businesses that make or sell cosmetics."],
+  "legal-children": ["If you make or sell products", "Covers federal safety and certification rules for products made for children 12 and under."],
+  "legal-textile": ["If you make or sell products", "Covers federal labeling rules for clothing and other textile products."],
+  "legal-made-usa": ["If you make or sell products", "Covers the federal standard for \"Made in USA\" claims."],
+  "legal-ip": ["If you make or sell products", "Covers the differences between patents, trademarks, and copyrights, and provisional patent applications."],
+  "legal-shipping": ["If you sell online", "Covers the federal rule on shipping times for orders placed online, by mail, or by phone."],
+  "legal-marketplace": ["If you sell online", "Covers what online marketplaces must collect from high-volume sellers."],
+  "legal-coppa": ["If you build an app or website", "Covers federal rules for websites and apps that collect personal information from children under 13."],
+  "app-payments": ["If you build an app or website", "Covers card security standards, payment options that keep card data off your own site, and age rules for payment accounts."],
+  "app-privacy": ["If you build an app or website", "Covers privacy policies and app store privacy requirements for apps that collect user data."],
+  "app-accounts": ["If you build an app or website", "Covers password security and app store rules on deleting accounts."],
+  "app-ownership": ["If you build an app or website", "Covers who owns code someone else writes, and how copyright ownership is transferred in writing."],
+  "app-meetups": ["If you build an app or website", "Covers business insurance, for services where people meet in person."],
+  "legal-clinic": ["Free help", "Covers free legal help options in North Carolina listed by the state, including university legal clinics."],
+};
+for (const step of LEGAL_STEPS) {
+  step.legal = !NOT_LEGAL.has(step.id);
+  if (!step.legal) continue;
+  const info = LEGAL_INFO[step.id];
+  if (!info) throw new Error(`Legal topic ${step.id} needs a group and description`);
+  [step.group, step.about] = info;
+  step.quadrant = "legal"; // every legal topic lives in the legal list
+}
 
 /**
  * Fixed steps for an idea's business types and state.
@@ -537,7 +588,8 @@ export function legalStepsFor(types = [], state = "NC", stSources = {}) {
   const set = new Set(types);
   const out = [];
   for (const step of LEGAL_STEPS) {
-    if (!(step.types.includes("all") || step.types.some((t) => set.has(t)))) continue;
+    // Legal topics: the same full list for everyone. Business steps: matched to the business type.
+    if (!step.legal && !(step.types.includes("all") || step.types.some((t) => set.has(t)))) continue;
     if (state === "NC" || !("other" in step)) { out.push(step); continue; }
     if (!step.other) continue;
     const sources = step.other.sources.filter((id) => SOURCES[id] || stSources[id]);

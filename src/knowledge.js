@@ -714,12 +714,17 @@ export const KNOWLEDGE = [
   },
 ];
 /** Cards relevant to a set of business types (and optionally one quadrant). */
-/** Cards relevant to a set of business types, one quadrant (optional), and a state. */
+// Legal-topic cards are NEVER given to the AI. Legal topics are a fixed library students read
+// themselves (see LEGAL_STEPS in sources.js), so the AI can't tailor legal or regulatory guidance.
+const LEGAL_CARD_IDS = new Set(["k_endorsements", "k_truth_ads", "k_canspam", "k_web_access", "k_protect_data", "k_records", "k_pci", "k_stripe_age"]);
+export const isLegalCard = (k) => k.quadrant === "legal" || LEGAL_CARD_IDS.has(k.id);
+
+/** Business (non-legal) cards for a set of business types, one quadrant (optional), and a state. */
 export function knowledgeFor(types = [], quadrant, state = "NC") {
   const set = new Set(types);
   const nc = /\b(NC|North Carolina)\b/;
   return KNOWLEDGE.filter(
-    (k) => (k.types.includes("all") || k.types.some((t) => set.has(t))) && (!quadrant || k.quadrant === quadrant) && (!k.state || k.state === state)
+    (k) => !isLegalCard(k) && (k.types.includes("all") || k.types.some((t) => set.has(t))) && (!quadrant || k.quadrant === quadrant) && (!k.state || k.state === state)
   ).map((k) => (state === "NC" ? k : { ...k, points: k.points.filter((p) => !nc.test(p)) })).filter((k) => k.points.length);
 }
 

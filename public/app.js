@@ -6,7 +6,7 @@ const SECTIONS = [
   { id: "customer", name: "Idea and customer", short: "Customer" },
   { id: "pricing", name: "Pricing and costs", short: "Pricing" },
   { id: "marketing", name: "Marketing", short: "Marketing" },
-  { id: "legal", name: "Legal and registration", short: "Legal" },
+  { id: "legal", name: "Legal topics to look into", short: "Legal" },
 ];
 const NOVELTY = { new: "Brand-new idea", twist: "New twist", common: "Proven model" };
 const TYPE_LABEL = { service: "Service", product: "Product", online: "Online store", food: "Home food", digital: "Digital", beauty: "Beauty", invention: "Invention", app: "Needs an app" };
@@ -154,6 +154,56 @@ function md(text) {
   }).join("");
 }
 
+// ---------- time estimates ----------
+// Estimates start as a labeled first guess. When a student marks a step done, we ask how long it
+// really took. After 2 answers, every estimate in the plan is scaled to their own pace (median ratio).
+const fmtMin = (m) => {
+  if (m < 60) return `${Math.max(5, Math.round(m / 5) * 5)} min`;
+  const h = Math.round((m / 60) * 2) / 2;
+  return `${h} hr${h === 1 ? "" : "s"}`;
+};
+function pace() {
+  const timed = (project?.plan?.tasks || []).filter((t) => t.actual && t.minutes);
+  if (timed.length < 2) return null;
+  const r = timed.map((t) => t.actual / t.minutes).sort((a, b) => a - b);
+  const mid = Math.floor(r.length / 2);
+  return { factor: r.length % 2 ? r[mid] : (r[mid - 1] + r[mid]) / 2, n: timed.length };
+}
+function timeLabel(t, long = false) {
+  if (t.done && t.actual) return long ? `Took you ${fmtMin(t.actual)}` : fmtMin(t.actual);
+  const p = pace();
+  if (p) return long ? `About ${fmtMin(t.minutes * p.factor)} at your pace` : `~${fmtMin(t.minutes * p.factor)}`;
+  const lo = fmtMin(t.minutes), hi = fmtMin(t.minutes * 2);
+  if (long) return `First guess: ${lo} to ${hi}`;
+  return lo.endsWith(" min") && hi.endsWith(" min") ? `${lo.replace(" min", "")}–${hi}` : `${lo}–${hi}`;
+}
+const timeTitle = () => { const p = pace(); return p ? `Based on how long your last ${p.n} steps took` : "A first guess. Tell us how long steps take and estimates adjust to your pace."; };
+
+// Asks how long a finished step took. Resolves to minutes, or null if skipped.
+function askTime(task) {
+  return new Promise((resolve) => {
+    const opts = [[15, "15 min"], [30, "30 min"], [45, "45 min"], [60, "1 hr"], [90, "1.5 hrs"], [120, "2 hrs"], [180, "3 hrs"], [240, "4+ hrs"]];
+    const wrap = document.createElement("div");
+    wrap.className = "modal-wrap";
+    wrap.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="tq">
+      <h2 id="tq">About how long did that take?</h2>
+      <p class="help">${esc(task.title)}. Your answers make every time estimate in this plan fit your pace.</p>
+      <div class="time-opts">${opts.map(([m, l]) => `<button class="btn" data-m="${m}">${l}</button>`).join("")}</div>
+      <div style="display:flex;justify-content:flex-end"><button class="btn ghost" data-m="">Skip</button></div>
+    </div>`;
+    const done = (v) => { wrap.remove(); document.removeEventListener("keydown", onKey); resolve(v); };
+    const onKey = (e) => { if (e.key === "Escape") done(null); };
+    wrap.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-m]");
+      if (b) done(b.dataset.m ? Number(b.dataset.m) : null);
+      else if (e.target === wrap) done(null);
+    });
+    document.addEventListener("keydown", onKey);
+    document.body.append(wrap);
+    wrap.querySelector("[data-m]").focus();
+  });
+}
+
 // ---------- sidebar ----------
 function sidebar(active) {
   const plans = store.list();
@@ -207,7 +257,7 @@ function startScreen(mode = "idea") {
       <div class="feature-row">
         <div class="feature"><span class="ic" style="background:var(--q0)">${icons.spark}</span><b>Built for new ideas</b><span>Plans for ideas nobody has tried, starting with what has to be true.</span></div>
         <div class="feature"><span class="ic" style="background:var(--q1)">${icons.shieldok}</span><b>Sources you can check</b><span>Every legal step links to its official source.</span></div>
-        <div class="feature"><span class="ic" style="background:var(--q2)">${icons.clock}</span><b>Fits between classes</b><span>Tasks are sized at about 15 to 60 minutes. AI drafts are labeled and editable.</span></div>
+        <div class="feature"><span class="ic" style="background:var(--q2)">${icons.clock}</span><b>Estimates that learn</b><span>Tell it how long steps really take and time estimates adjust to your pace.</span></div>
       </div>
     </section>`, { crumbs: [{ label: "New idea" }] });
     const form = $("ideaForm");
@@ -417,10 +467,25 @@ function animateRing() {
   }));
 }
 
+// Legal topics are shown as one fixed list, grouped under plain headings (same for every student).
+const LEGAL_GROUPS = ["Every business", "If anyone will help you", "If you're an international student", "If you sell food made at home", "If you offer hair, nail, or beauty services", "If you make or sell products", "If you sell online", "If you build an app or website", "Free help"];
+function legalList(tasks) {
+  const groups = new Map(LEGAL_GROUPS.map((g) => [g, []]));
+  for (const t of tasks) (groups.get(t.group) || groups.get("Free help")).push(t);
+  return [...groups].filter(([, list]) => list.length).map(([g, list]) => `<h3 class="lg-h">${esc(g)}</h3><div class="list">${list.map(taskRow).join("")}</div>`).join("");
+}
+
 // One plan section: summary card + task rows.
 function sectionBlock(s, idx, { showHeader = true } = {}) {
   const tasks = project.plan.tasks.filter((t) => t.quadrant === s.id);
   const done = tasks.filter((t) => t.done).length;
+  if (s.id === "legal") {
+    return `<section class="section" id="sec-${s.id}" style="${qc(idx)}">
+    ${showHeader ? `<div class="section-head"><span class="ic">${icons.q[idx]}</span><h2><a href="#/p/${project.id}/s/${s.id}">${s.name}</a></h2><span class="count">${done}/${tasks.length}</span><span class="spacer"></span></div>` : ""}
+    ${stateNote()}
+    ${legalList(tasks)}
+  </section>`;
+  }
   return `<section class="section" id="sec-${s.id}" style="${qc(idx)}">
     ${showHeader ? `<div class="section-head"><span class="ic">${icons.q[idx]}</span><h2><a href="#/p/${project.id}/s/${s.id}">${s.name}</a></h2><span class="count">${done}/${tasks.length}</span><span class="spacer"></span></div>` : ""}
     <div class="summary" id="sum-${s.id}">
@@ -437,11 +502,10 @@ function sectionBlock(s, idx, { showHeader = true } = {}) {
 function stateNote() {
   const code = project.state || "NC";
   const name = project.stateName || code;
-  if (code === "NC") return `<p class="state-note">${icons.shieldok}<span>These are topics to look into, not legal advice. They're written for <b>North Carolina</b>, and federal pages cover every state. Your city, county, and campus may have their own rules too. Confirm anything that affects you with the official office or a licensed professional. ${INDEPENDENT}</span></p>`;
-  const KIND = { st_reg: "Register your business", st_tax: "State taxes", st_lic: "Licenses and permits", st_help: "Free business help", st_sba: "Small business district office", st_irs: "Federal list of your state's business sites" };
-  const links = Object.entries(project.stateSources || {});
-  return `<div class="state-note">${icons.shieldok}<div><span>These are topics to look into, not legal advice. They link to <b>${esc(name)}</b>'s official offices. Quad Founders has not checked ${esc(name)}'s specific rules, so confirm what applies to you with these offices. Federal pages cover every state, and your city, county, and campus may have their own rules too. ${INDEPENDENT}</span>
-    ${links.length ? `<ul class="st-links">${links.map(([k, l]) => `<li><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(KIND[k] || topicOf(l))}</a><span>${esc(domainOf(l.url))}</span></li>`).join("")}</ul>` : ""}</div></div>`;
+  const KIND = { st_reg: "Business registration", st_tax: "State taxes", st_lic: "Licenses and permits", st_help: "Free business help", st_sba: "Small business district office", st_irs: "Federal list of your state's business sites" };
+  const links = code === "NC" ? [] : Object.entries(project.stateSources || {});
+  return `<div class="state-note">${icons.shieldok}<div><span><b>A fixed list, the same for every student.</b> Quad Founders doesn't pick which topics apply to you or explain the rules, and the co-pilot doesn't cover legal topics. Read each official page, and take questions about your situation to the office listed there or a licensed professional. Your city, county, and campus may have their own rules too. ${INDEPENDENT}</span>
+    ${links.length ? `<p class="st-h">Official office directory for ${esc(name)}</p><ul class="st-links">${links.map(([k, l]) => `<li><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(KIND[k] || topicOf(l))}</a><span>${esc(domainOf(l.url))}</span></li>`).join("")}</ul>` : ""}</div></div>`;
 }
 
 function taskRow(t) {
@@ -450,7 +514,7 @@ function taskRow(t) {
     <button class="status ${t.done ? "on" : ""}" data-toggle="${esc(t.id)}" aria-pressed="${t.done}" aria-label="${t.done ? "Mark not done" : "Mark done"}: ${esc(t.title)}">${t.done ? icons.done : icons.circle}</button>
     <a class="title" href="#/p/${project.id}/t/${esc(t.id)}" style="text-decoration:none">${esc(t.title)}</a>
     ${n ? `<span class="srcs-n">${n} source${n > 1 ? "s" : ""}</span>` : ""}
-    <span class="mins">${t.minutes} min</span>
+    <span class="mins" title="${esc(timeTitle())}">${esc(timeLabel(t))}</span>
     <span class="chev" aria-hidden="true">${icons.chev}</span>
   </div>`;
 }
@@ -459,10 +523,12 @@ function wirePlan(rerender) {
   view.querySelectorAll("[data-toggle]").forEach((b) => b.addEventListener("click", async () => {
     const task = project.plan.tasks.find((t) => t.id === b.dataset.toggle);
     const next = !task.done;
+    const actual = next ? await askTime(task) : undefined;
     task.done = next; // optimistic
     rerender(true);
     try {
-      refresh(await api(`projects/${project.id}/tasks/${task.id}`, { method: "PATCH", body: { done: next } }));
+      refresh(await api(`projects/${project.id}/tasks/${task.id}`, { method: "PATCH", body: { done: next, ...(actual ? { actual } : {}) } }));
+      rerender(true); // estimates may now reflect the student's pace
       sidebar(currentActive);
       if (next) toast("Task done. Nice work.");
     } catch (e) { task.done = !next; rerender(true); toast(e.message, "error"); }
@@ -593,7 +659,7 @@ function launchCard() {
   if (!isApp) {
     return `<section class="launch off">
       <div class="hd"><span class="ic">${icons.spark}</span><div class="grow"><h2>Does your idea need a real app?</h2>
-        <p>Your test site shows your idea and collects sign-ups. It can't run logins, match people, or take payments. If your idea needs those, add the launch path: steps to take and topics to look into, in order, each linked to its source.</p></div>
+        <p>Your test site shows your idea and collects sign-ups. It can't run logins, match people, or take payments. If your idea needs those, add the launch path: business steps to go from test site to a first version.</p></div>
         <button class="btn" data-app="on">${icons.plus}Add launch path</button></div>
     </section>`;
   }
@@ -603,9 +669,10 @@ function launchCard() {
   const done = steps.filter((x) => x.done).length;
   return `<section class="launch">
     <div class="hd"><span class="ic">${icons.spark}</span><div class="grow"><h2>Launch path</h2>
-      <p>Your idea needs a real app, and Quad Founders doesn't build apps. Your test site proves people want it first. Then follow these steps in order. Quad Founders never handles payments.</p></div>
+      <p>Your idea needs a real app, and Quad Founders doesn't build apps. Your test site proves people want it first. Then follow these steps in order.</p></div>
       <span class="count">${done}/${steps.length} done</span></div>
-    <ol class="lp">${steps.map((x, i) => `<li class="${x.done ? "done" : ""}"><span class="n">${x.done ? icons.check : i + 1}</span><a href="#/p/${project.id}/t/${esc(x.id)}">${esc(x.title)}</a><span class="mins">${x.minutes} min</span></li>`).join("")}</ol>
+    <ol class="lp">${steps.map((x, i) => `<li class="${x.done ? "done" : ""}"><span class="n">${x.done ? icons.check : i + 1}</span><a href="#/p/${project.id}/t/${esc(x.id)}">${esc(x.title)}</a><span class="mins" title="${esc(timeTitle())}">${esc(timeLabel(x))}</span></li>`).join("")}</ol>
+    <p class="lp-note">Payments, privacy, user accounts, code ownership, and insurance are legal topics, so they're in your <a href="#/p/${project.id}/s/legal">legal topics list</a> under "If you build an app or website".</p>
     <div class="ft"><a class="btn" href="#/p/${project.id}/site">${icons.globe}${project.site ? "Your test site" : "Build your test site"}</a><button class="btn ghost" data-app="off">My idea doesn't need an app</button></div>
   </section>`;
 }
@@ -651,14 +718,14 @@ async function sectionScreen(id, sec) {
 }
 
 const CHAT_STARTERS = ["I'm stuck", "Explain it more simply", "Give me an example"];
-// Legal topics: the co-pilot only helps find what to look into, so the starters say that.
-const LEGAL_STARTERS = ["Explain the source simply", "Where on the page do I look?", "What should I ask the office?"];
 async function taskScreen(id, taskId) {
   skeleton([{ label: "Plan" }]);
   let msgs;
   try {
     await load(id);
-    msgs = (await api(`projects/${id}/tasks/${taskId}/messages`)).messages;
+    const t0 = project.plan?.tasks.find((t) => t.id === taskId);
+    // Legal topics never use the co-pilot, so there are no messages to load.
+    msgs = t0?.legal ? [] : (await api(`projects/${id}/tasks/${taskId}/messages`)).messages;
   } catch (e) { return errorScreen(e.message); }
   let task = project.plan?.tasks.find((t) => t.id === taskId);
   if (!task) return errorScreen("That task doesn't exist.");
@@ -671,11 +738,11 @@ async function taskScreen(id, taskId) {
   let guideError = "";
 
   const head = () => `<header class="task-head">
-      <div class="meta"><span class="qchip">${sec.short}</span><span class="tag num">${icons.clock}About ${task.minutes} min</span>${task.basis ? `<span class="tag">Based on: ${esc(task.basis)}</span>` : ""}</div>
+      <div class="meta"><span class="qchip">${sec.short}</span><span class="tag num" title="${esc(timeTitle())}">${icons.clock}${esc(timeLabel(task, true))}</span>${task.basis ? `<span class="tag">Based on: ${esc(task.basis)}</span>` : ""}</div>
       <h1>${esc(task.title)}</h1>
       <div class="why">${md(task.why)}</div>
       ${sourceList(task.sources)}
-      ${task.legal ? `<p class="state-note legal-note">${icons.shieldok}<span><b>Legal topic: something to look into, not advice.</b> Quad Founders can show you what the official source says and help you list questions. It can't tell you whether this applies to you or what to do, and it can't write legal documents. For that, ask the official office or a licensed professional.</span></p>` : ""}
+      ${task.legal ? `<p class="state-note legal-note">${icons.shieldok}<span><b>Legal topic: something to look into, not advice.</b> This topic and its description are the same for every student. Quad Founders doesn't decide whether it applies to you, and the co-pilot doesn't cover legal topics. Read the official pages above, and take questions about your situation to the office listed there or a licensed professional.</span></p>` : ""}
     </header>`;
 
   const walkthrough = () => {
@@ -707,13 +774,30 @@ async function taskScreen(id, taskId) {
       : `<div class="msg ai">${aiAvatar}<div><p class="who"><b>Co-pilot</b><span class="tag ai">AI</span></p><div class="bubble">${md(m.content)}</div></div></div>`).join("")
     : "";
 
+  const legalSteps = () => `<section class="guide">
+      <div class="g-hd"><div class="grow"><span class="eyebrow">How to look into it</span><h2>The same three steps for every legal topic</h2></div></div>
+      <ol class="g-steps">
+        <li class="g-step"><span class="num lnum">1</span><div class="g-body"><p class="g-t">Open each official page above and read it.</p></div></li>
+        <li class="g-step"><span class="num lnum">2</span><div class="g-body"><p class="g-t">Write down any questions it raises about your business.</p></div></li>
+        <li class="g-step"><span class="num lnum">3</span><div class="g-body"><p class="g-t">Ask the office listed on that page, or a licensed professional, before you decide anything.</p></div></li>
+      </ol>
+      <p class="help" style="margin:0">When you've looked into it, mark this step done.</p>
+    </section>`;
+
   const draw = (quiet) => {
+    if (task.legal) {
+      const html = `<div class="page" style="${qc(idx)}">${head()}${legalSteps()}</div>`;
+      const opts = { crumbs, actions: `<button class="btn ${task.done ? "" : "primary"}" id="doneBtn">${task.done ? icons.done + "Done" : icons.check + "Mark done"}</button>` };
+      quiet ? quietRender(html, opts) : render(html, opts);
+      $("doneBtn").addEventListener("click", () => setTaskDone(!task.done));
+      return;
+    }
     const html = `<div class="page" style="${qc(idx)}">
       ${head()}
       ${walkthrough()}
       <div class="thread" id="thread">${thread()}</div>
       <form class="reply" id="chatForm">
-        ${task.guide ? `<div class="chips" style="margin-bottom:10px">${(task.legal ? LEGAL_STARTERS : CHAT_STARTERS).map((c) => `<button class="chip" type="button" data-start="${esc(c)}">${esc(c)}</button>`).join("")}</div>` : ""}
+        ${task.guide ? `<div class="chips" style="margin-bottom:10px">${CHAT_STARTERS.map((c) => `<button class="chip" type="button" data-start="${esc(c)}">${esc(c)}</button>`).join("")}</div>` : ""}
         <div class="composer-box">
           <label for="msg" class="sr">Message the co-pilot</label>
           <textarea id="msg" maxlength="1500" placeholder="Answer the co-pilot or ask anything about this step."></textarea>
@@ -743,8 +827,9 @@ async function taskScreen(id, taskId) {
   };
 
   const setTaskDone = async (val) => {
+    const actual = val ? await askTime(task) : undefined;
     try {
-      refresh(await api(`projects/${id}/tasks/${taskId}`, { method: "PATCH", body: { done: val } }));
+      refresh(await api(`projects/${id}/tasks/${taskId}`, { method: "PATCH", body: { done: val, ...(actual ? { actual } : {}) } }));
       task = project.plan.tasks.find((t) => t.id === taskId);
       sidebar(task.quadrant);
       draw(true);
@@ -790,7 +875,7 @@ async function taskScreen(id, taskId) {
   }
 
   draw();
-  if (!task.guide) startGuide();
+  if (!task.guide && !task.legal) startGuide();
 }
 
 async function siteScreen(id) {
