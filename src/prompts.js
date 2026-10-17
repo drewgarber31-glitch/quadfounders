@@ -155,6 +155,42 @@ Respond with ONLY valid JSON: {"summary": "..."}`,
   };
 }
 
+export function guidePrompt(project, task) {
+  const types = project.types || [];
+  const qa = (project.questions || []).map((q) => `Q: ${q.text}\nA: ${(project.answers || {})[q.id] || "(skipped)"}`).join("\n");
+  return {
+    system: `${GUARDRAILS}
+
+Business types: ${types.join(", ") || "unknown"}
+How new the idea is: ${project.novelty || "common"}
+
+${library(types, task.quadrant)}
+
+Official sources (ids you may cite, written like [source:irs_ein]):
+${sourceList()}
+
+Task: Build a short walkthrough for ONE task in this student's plan, then write the co-pilot's opening message.
+
+The task: "${task.title}"
+Why it matters: ${task.why || ""}
+${task.basis ? `Best practice it is based on: ${task.basis}` : ""}
+${task.sources?.length ? `Official sources for this task: ${task.sources.join(", ")}` : ""}
+
+Walkthrough rules:
+- 3 to 5 sub-steps, in order. Each one is a concrete action the student can finish in about 5 to 20 minutes.
+- Make every sub-step specific to THIS idea and the student's answers, not generic.
+- Any rule, requirement, fee, or number must come from the knowledge library and be cited like [source:id]. If the task depends on rules the library doesn't cover, make a sub-step to read the official source or ask the right office, instead of stating the rule.
+- For legal and registration tasks, sub-steps should walk them through opening the official source, finding the part that applies to them, and writing down what they decide. Never decide for them.
+- "how" is 1 to 3 short sentences telling them exactly what to do.
+
+The opening message (under 90 words): say in one line what you'll do together, then start sub-step 1 by asking ONE specific question about their situation. Don't repeat the whole list.
+
+Respond with ONLY valid JSON:
+{"steps": [{"title": "short imperative title", "how": "what to do"}], "opening": "message"}`,
+    messages: [{ role: "user", content: `My idea: ${project.idea}\n\nMy answers:\n${qa}\n\nPlan summary for this area: ${project.plan?.quadrants?.[task.quadrant]?.summary || ""}` }],
+  };
+}
+
 export function taskChatSystem(project, task) {
   const types = project.types || [];
   return `${GUARDRAILS}
@@ -176,8 +212,12 @@ Why it matters: ${task.why || ""}
 ${task.basis ? `Best practice this task is based on: ${task.basis}` : ""}
 ${task.sources?.length ? `Official sources for this task: ${task.sources.join(", ")}` : ""}
 
+${task.guide?.steps?.length ? `Walkthrough for this task (the student checks sub-steps off as they finish):
+${task.guide.steps.map((st, i) => `${i + 1}. [${st.done ? "done" : "not done"}] ${st.title}: ${st.how}`).join("\n")}
+Focus on the first sub-step that isn't done. When the student seems to have finished a sub-step, tell them to check it off and move to the next. When all are done, tell them they can mark the whole task done.
+` : ""}
 How to help:
-- Start by breaking the task into 2-4 small steps, then help with the first one.
+- If there is no walkthrough, break the task into 2-4 small steps, then help with the first one.
 - Ground every step in the knowledge library and cite sources for any rule or requirement.
 - Ask for what you need. Encourage them to push back and edit anything you suggest.
 - When they finish, tell them they can mark the task done.

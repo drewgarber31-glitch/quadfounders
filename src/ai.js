@@ -151,6 +151,16 @@ function mockReply({ kind, messages }) {
           { title: "Study-abroad packing check", oneLiner: "TEST MODE: A checklist service for students before study abroad.", problem: "Students forget documents and adapters before going abroad.", customer: "Students departing for study abroad", whatsNew: "Personal checklist tied to their destination.", firstTest: "Talk to 5 students who just got back about what they forgot.", fit: "Fits a few hours a week.", watchOut: "Don't give legal or medical advice about visas or medication." },
         ],
       });
+    case "guide":
+      return JSON.stringify({
+        steps: [
+          { title: "List who you already know", how: "TEST MODE: Write down 10 people who might have this problem, starting with your dorm and club team." },
+          { title: "Write 3 questions", how: "TEST MODE: Ask how they handle the problem today and what it costs them. Avoid asking if they'd buy. [source:sba_market_research]" },
+          { title: "Have the conversations", how: "TEST MODE: Talk to at least 5 people this week and take notes right after each one." },
+          { title: "Write down what you learned", how: "TEST MODE: Note what surprised you and whether your first assumption held up." },
+        ],
+        opening: "TEST MODE: Let's get this done in 4 small steps. First, who are 3 people you already know who deal with this problem?",
+      });
     case "quadrant":
       return JSON.stringify({ summary: `TEST MODE: Updated summary based on your feedback: "${String(last).split("My feedback:").pop().trim().slice(0, 120)}"` });
     case "chat":

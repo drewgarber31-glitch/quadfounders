@@ -6,6 +6,7 @@ import {
   planPrompt,
   regenerateQuadrantPrompt,
   taskChatSystem,
+  guidePrompt,
   sitePrompt,
   siteEditPrompt,
 } from "./prompts.js";
@@ -165,6 +166,38 @@ async function api(request, env, url) {
       await save(env, id, { plan: project.plan });
       return json(publicProject(project));
     }
+    // POST /api/projects/:id/tasks/:taskId/guide  -> build the walkthrough once and start the chat
+    if (parts[4] === "guide" && parts.length === 5 && method === "POST") {
+      if (!task.guide) {
+        await useQuota(request, env);
+        const out = await callAIJson(env, { kind: "guide", maxTokens: 1500, ...guidePrompt(project, task) });
+        const steps = (Array.isArray(out.steps) ? out.steps : []).slice(0, 5).map((st, i) => ({
+          id: `s${i + 1}`,
+          title: clean(st?.title, 100),
+          how: sanitizeSources(clean(st?.how, 400)),
+          done: false,
+        })).filter((st) => st.title);
+        if (!steps.length) throw new AIError("The co-pilot couldn't set up this step. Try again.");
+        task.guide = { steps };
+        const opening = sanitizeSources(clean(out.opening, 800));
+        const already = await history(env, id, task.id);
+        const stmts = [env.DB.prepare("UPDATE projects SET plan = ?, updated_at = ? WHERE id = ?").bind(JSON.stringify(project.plan), new Date().toISOString(), id)];
+        if (opening && !already.length) {
+          stmts.push(env.DB.prepare("INSERT INTO messages (project_id, task_id, role, content, created_at) VALUES (?, ?, 'assistant', ?, ?)").bind(id, task.id, opening, new Date().toISOString()));
+        }
+        await env.DB.batch(stmts);
+      }
+      return json({ project: publicProject(project), messages: await history(env, id, task.id) });
+    }
+    // PATCH /api/projects/:id/tasks/:taskId/guide/:stepId  {done}
+    if (parts[4] === "guide" && parts.length === 6 && method === "PATCH") {
+      const st = task.guide?.steps?.find((x) => x.id === parts[5]);
+      if (!st) throw new HttpError(404, "Step not found.");
+      const { done } = await body(request);
+      st.done = Boolean(done);
+      await save(env, id, { plan: project.plan });
+      return json(publicProject(project));
+    }
     if (parts[4] === "messages" && method === "GET") {
       return json({ messages: await history(env, id, task.id) });
     }
@@ -178,6 +211,8 @@ async function api(request, env, url) {
         role: m.role,
         content: m.content,
       }));
+      // The co-pilot speaks first in a walkthrough, but the API needs the first turn to be the student's.
+      if (messages[0].role !== "user") messages.unshift({ role: "user", content: "Walk me through this task." });
       const reply = sanitizeSources(
         await callAI(env, { kind: "chat", system: taskChatSystem(project, task), messages, maxTokens: 1000 })
       );

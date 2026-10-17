@@ -552,7 +552,7 @@ async function sectionScreen(id, sec) {
   draw();
 }
 
-const CHAT_STARTERS = ["Break this into steps for me", "What should I do first?", "What could go wrong?"];
+const CHAT_STARTERS = ["I'm stuck", "Explain it more simply", "Give me an example"];
 async function taskScreen(id, taskId) {
   skeleton([{ label: "Plan" }]);
   let msgs;
@@ -560,72 +560,135 @@ async function taskScreen(id, taskId) {
     await load(id);
     msgs = (await api(`projects/${id}/tasks/${taskId}/messages`)).messages;
   } catch (e) { return errorScreen(e.message); }
-  const task = project.plan?.tasks.find((t) => t.id === taskId);
+  let task = project.plan?.tasks.find((t) => t.id === taskId);
   if (!task) return errorScreen("That task doesn't exist.");
   const idx = SECTIONS.findIndex((s) => s.id === task.quadrant);
   const sec = SECTIONS[idx];
   currentActive = task.quadrant;
   sidebar(task.quadrant);
   const aiAvatar = `<span class="avatar ai">${icons.mark}</span>`;
+  const crumbs = [{ label: project.title || "Plan", href: `#/p/${id}` }, { label: sec.name, href: `#/p/${id}/s/${sec.id}` }, { label: task.title }];
+  let guideError = "";
+
+  const head = () => `<header class="task-head">
+      <div class="meta"><span class="qchip">${sec.short}</span><span class="tag num">${icons.clock}About ${task.minutes} min</span>${(task.sources || []).map(srcTag).join("")}${task.basis ? `<span class="tag">Based on: ${esc(task.basis)}</span>` : ""}</div>
+      <h1>${esc(task.title)}</h1>
+      <div class="why">${md(task.why)}</div>
+    </header>`;
+
+  const walkthrough = () => {
+    const steps = task.guide?.steps || [];
+    if (!steps.length) {
+      return guideError
+        ? `<section class="guide"><p class="err">${esc(guideError)}</p><button class="btn primary" id="retryGuide">Try again</button></section>`
+        : `<section class="guide loading"><div class="g-hd"><span class="avatar ai">${icons.mark}</span><div><b>Setting up your walkthrough</b><p class="help" style="margin:0">Your co-pilot is breaking this step into small pieces for your idea.</p></div></div>
+            <div class="skel"><i></i><i class="s"></i><i></i></div></section>`;
+    }
+    const done = steps.filter((s) => s.done).length;
+    const next = steps.findIndex((s) => !s.done);
+    return `<section class="guide">
+      <div class="g-hd"><div class="grow"><span class="eyebrow">Walkthrough</span><h2>${done === steps.length ? "All sub-steps done" : `Step ${next + 1} of ${steps.length}`}</h2></div>
+        <span class="count num">${done}/${steps.length}</span></div>
+      <div class="g-bar"><i style="width:${Math.round((done / steps.length) * 100)}%"></i></div>
+      <ol class="g-steps">${steps.map((st, i) => `<li class="g-step ${st.done ? "done" : ""} ${i === next ? "cur" : ""}">
+          <button class="status ${st.done ? "on" : ""}" data-sub="${st.id}" aria-pressed="${st.done}" aria-label="${st.done ? "Mark not done" : "Mark done"}: ${esc(st.title)}">${st.done ? icons.done : icons.circle}</button>
+          <div class="g-body"><p class="g-t"><span class="num">${i + 1}.</span> ${esc(st.title)}${i === next ? ' <span class="tag up">Up next</span>' : ""}</p>
+            <div class="g-how">${md(st.how)}</div>
+            ${st.done ? "" : `<button class="btn ghost sm" data-help="${i}">${icons.spark}Help me with this</button>`}</div>
+        </li>`).join("")}</ol>
+      ${done === steps.length && !task.done ? `<div class="g-finish"><span>${icons.check}You finished every sub-step.</span><button class="btn primary" id="finishTask">Mark this task done</button></div>` : ""}
+    </section>`;
+  };
+
+  const thread = () => msgs.length ? msgs.map((m) => m.role === "user"
+      ? `<div class="msg"><span class="avatar">You</span><div><p class="who"><b>You</b></p><div class="bubble">${esc(m.content).replace(/\n/g, "<br>")}</div></div></div>`
+      : `<div class="msg ai">${aiAvatar}<div><p class="who"><b>Co-pilot</b><span class="tag ai">AI</span></p><div class="bubble">${md(m.content)}</div></div></div>`).join("")
+    : "";
 
   const draw = (quiet) => {
     const html = `<div class="page" style="${qc(idx)}">
-      <header class="task-head">
-        <div class="meta"><span class="qchip">${sec.short}</span><span class="tag num">${icons.clock}About ${task.minutes} min</span>${(task.sources || []).map(srcTag).join("")}${task.basis ? `<span class="tag">Based on: ${esc(task.basis)}</span>` : ""}</div>
-        <h1>${esc(task.title)}</h1>
-        <div class="why">${md(task.why)}</div>
-      </header>
-      <div class="thread" id="thread">
-        ${msgs.length ? msgs.map((m) => m.role === "user"
-          ? `<div class="msg"><span class="avatar">You</span><div><p class="who"><b>You</b></p><div class="bubble">${esc(m.content).replace(/\n/g, "<br>")}</div></div></div>`
-          : `<div class="msg ai">${aiAvatar}<div><p class="who"><b>Co-pilot</b><span class="tag ai">AI</span></p><div class="bubble">${md(m.content)}</div></div></div>`).join("")
-          : `<div class="empty-chat">${aiAvatar}<h3>Your co-pilot for this task</h3><p>It breaks the task into small steps, cites official sources for any rule, and asks before it assumes.</p>
-              <div class="chips">${CHAT_STARTERS.map((c) => `<button class="chip" type="button" data-start="${esc(c)}">${esc(c)}</button>`).join("")}</div></div>`}
-      </div>
+      ${head()}
+      ${walkthrough()}
+      <div class="thread" id="thread">${thread()}</div>
       <form class="reply" id="chatForm">
+        ${task.guide ? `<div class="chips" style="margin-bottom:10px">${CHAT_STARTERS.map((c) => `<button class="chip" type="button" data-start="${esc(c)}">${esc(c)}</button>`).join("")}</div>` : ""}
         <div class="composer-box">
           <label for="msg" class="sr">Message the co-pilot</label>
-          <textarea id="msg" maxlength="1500" placeholder="Ask anything about this task."></textarea>
+          <textarea id="msg" maxlength="1500" placeholder="Answer the co-pilot or ask anything about this step."></textarea>
           <div class="bar"><p class="help">Educational guidance, not legal or tax advice.</p><button class="btn primary" type="submit">Send <kbd>${MOD}↵</kbd></button></div>
         </div>
       </form>
     </div>`;
-    const opts = {
-      crumbs: [{ label: project.title || "Plan", href: `#/p/${id}` }, { label: sec.name, href: `#/p/${id}/s/${sec.id}` }, { label: task.title }],
-      actions: `<button class="btn ${task.done ? "" : "primary"}" id="doneBtn">${task.done ? icons.done + "Done" : icons.check + "Mark done"}</button>`,
-    };
+    const opts = { crumbs, actions: `<button class="btn ${task.done ? "" : "primary"}" id="doneBtn">${task.done ? icons.done + "Done" : icons.check + "Mark done"}</button>` };
     quiet ? quietRender(html, opts) : render(html, opts);
+    wire();
+  };
+
+  const send = async (text) => {
+    const form = $("chatForm");
+    const ta = $("msg");
+    const btn = form.querySelector("button[type=submit]");
+    btn.disabled = true;
+    ta.disabled = true;
+    $("thread").insertAdjacentHTML("beforeend", `<div class="msg"><span class="avatar">You</span><div><p class="who"><b>You</b></p><div class="bubble">${esc(text)}</div></div></div><div class="msg ai" id="pending">${aiAvatar}<div><p class="who"><b>Co-pilot</b></p><div class="typing" aria-label="Co-pilot is typing"><i></i><i></i><i></i></div></div></div>`);
+    $("pending").scrollIntoView({ behavior: "smooth", block: "end" });
+    try {
+      msgs = (await api(`projects/${id}/tasks/${taskId}/messages`, { method: "POST", body: { message: text } })).messages;
+      draw(true);
+      view.querySelector("#thread .msg:last-child")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      $("msg").focus();
+    } catch (ex) { $("pending")?.remove(); btn.disabled = false; ta.disabled = false; toast(ex.message, "error"); }
+  };
+
+  const setTaskDone = async (val) => {
+    try {
+      refresh(await api(`projects/${id}/tasks/${taskId}`, { method: "PATCH", body: { done: val } }));
+      task = project.plan.tasks.find((t) => t.id === taskId);
+      sidebar(task.quadrant);
+      draw(true);
+      toast(task.done ? "Task done. Nice work." : "Marked not done");
+    } catch (e) { toast(e.message, "error"); }
+  };
+
+  function wire() {
     const form = $("chatForm");
     const ta = $("msg");
     submitOnModEnter(ta, form);
-    view.querySelectorAll("[data-start]").forEach((b) => b.addEventListener("click", () => { ta.value = b.dataset.start; form.requestSubmit(); }));
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const text = ta.value.trim() || "Break this into steps for me.";
-      const btn = form.querySelector(".primary");
-      btn.disabled = true;
-      ta.disabled = true;
-      view.querySelector(".empty-chat")?.remove();
-      $("thread").insertAdjacentHTML("beforeend", `<div class="msg"><span class="avatar">You</span><div><p class="who"><b>You</b></p><div class="bubble">${esc(text)}</div></div></div><div class="msg ai" id="pending">${aiAvatar}<div><p class="who"><b>Co-pilot</b></p><div class="typing" aria-label="Co-pilot is typing"><i></i><i></i><i></i></div></div></div>`);
-      view.scrollTop = view.scrollHeight;
+    form.addEventListener("submit", (e) => { e.preventDefault(); const t = ta.value.trim(); if (!t) { ta.focus(); return; } send(t); });
+    view.querySelectorAll("[data-start]").forEach((b) => b.addEventListener("click", () => send(b.dataset.start)));
+    view.querySelectorAll("[data-help]").forEach((b) => b.addEventListener("click", () => {
+      const st = task.guide.steps[Number(b.dataset.help)];
+      send(`Help me with step ${Number(b.dataset.help) + 1}: ${st.title}`);
+    }));
+    view.querySelectorAll("[data-sub]").forEach((b) => b.addEventListener("click", async () => {
+      const st = task.guide.steps.find((x) => x.id === b.dataset.sub);
+      st.done = !st.done; // optimistic
+      draw(true);
       try {
-        msgs = (await api(`projects/${id}/tasks/${taskId}/messages`, { method: "POST", body: { message: text } })).messages;
-        draw(true);
-        view.scrollTop = view.scrollHeight;
-        $("msg").focus();
-      } catch (ex) { $("pending")?.remove(); btn.disabled = false; ta.disabled = false; toast(ex.message, "error"); }
-    });
-    $("doneBtn").addEventListener("click", async () => {
-      try {
-        refresh(await api(`projects/${id}/tasks/${taskId}`, { method: "PATCH", body: { done: !task.done } }));
-        task.done = !task.done;
-        sidebar(task.quadrant);
-        draw(true);
-        toast(task.done ? "Task done. Nice work." : "Marked not done");
-      } catch (e) { toast(e.message, "error"); }
-    });
-  };
+        refresh(await api(`projects/${id}/tasks/${taskId}/guide/${st.id}`, { method: "PATCH", body: { done: st.done } }));
+        task = project.plan.tasks.find((t) => t.id === taskId);
+      } catch (e) { st.done = !st.done; draw(true); toast(e.message, "error"); }
+    }));
+    $("finishTask")?.addEventListener("click", () => setTaskDone(true));
+    $("retryGuide")?.addEventListener("click", startGuide);
+    $("doneBtn").addEventListener("click", () => setTaskDone(!task.done));
+  }
+
+  // Build the walkthrough the first time this task is opened. The co-pilot speaks first.
+  async function startGuide() {
+    guideError = "";
+    draw(true);
+    try {
+      const out = await api(`projects/${id}/tasks/${taskId}/guide`, { method: "POST" });
+      refresh(out.project);
+      task = project.plan.tasks.find((t) => t.id === taskId);
+      msgs = out.messages;
+      draw(true);
+    } catch (e) { guideError = e.message; draw(true); }
+  }
+
   draw();
+  if (!task.guide) startGuide();
 }
 
 async function siteScreen(id) {
