@@ -9,6 +9,7 @@ const SECTIONS = [
   { id: "legal", name: "Legal and registration", short: "Legal" },
 ];
 const NOVELTY = { new: "Brand-new idea", twist: "New twist", common: "Proven model" };
+const TYPE_LABEL = { service: "Service", product: "Product", online: "Online store", food: "Home food", digital: "Digital", beauty: "Beauty", invention: "Invention", app: "Needs an app" };
 const qc = (i) => `--c:var(--q${i})`; // quadrant color as an inline CSS var
 const EXAMPLES = [
   "Airport ride matching for students leaving on the same day",
@@ -69,6 +70,9 @@ const icons = {
 
 const store = {
   list() { try { return JSON.parse(localStorage.getItem("qf.projects") || "[]"); } catch { return []; } },
+  remove(id) {
+    try { localStorage.setItem("qf.projects", JSON.stringify(store.list().filter((p) => p.id !== id))); } catch { /* fine */ }
+  },
   add(id, title) {
     try {
       const l = store.list().filter((p) => p.id !== id);
@@ -151,7 +155,7 @@ function sidebar(active) {
         const pct = Math.round((done / Math.max(all.length, 1)) * 100);
         return `<a class="sb-item" href="#/p/${project.id}/s/${s.id}" ${active === s.id ? 'aria-current="page"' : ""}><span class="dot" style="background:var(--q${i})"></span><span class="grow">${s.name}</span><span class="mini" title="${done} of ${all.length} done"><i style="width:${pct}%;background:var(--q${i})"></i></span></a>`;
       }).join("")}
-      <a class="sb-item" href="#/p/${project.id}/site" ${active === "site" ? 'aria-current="page"' : ""}>${icons.globe}<span class="grow">Website</span>${project.site ? "" : '<span class="count">New</span>'}</a>`;
+      <a class="sb-item" href="#/p/${project.id}/site" ${active === "site" ? 'aria-current="page"' : ""}>${icons.globe}<span class="grow">Test site</span>${project.site ? "" : '<span class="count">New</span>'}</a>`;
   }
   const others = plans.filter((p) => p.id !== project?.id);
   if (others.length) {
@@ -174,7 +178,7 @@ function startScreen(mode = "idea") {
       <div class="start-hero">
         <div class="orb">${icons.mark}</div>
         <h1>What do you want to <span class="grad-text">build?</span></h1>
-        <p class="sub">Describe your idea, even if nothing like it exists yet. You'll get a plan built around it, a co-pilot for every step, and a website you own.</p>
+        <p class="sub">Describe your idea, even if nothing like it exists yet. You'll get a plan built around it, a co-pilot for every step, and a test site that collects sign-ups.</p>
       </div>
       ${tabs}
       <div style="display:grid;gap:12px">
@@ -500,6 +504,7 @@ async function overviewScreen(id) {
   try { await load(id); } catch (e) { return errorScreen(e.message); }
   if (!project.plan) { location.hash = `#/p/${id}/questions`; return; }
   currentActive = "overview";
+  let confirmDelete = false;
   const draw = (quiet) => {
     sidebar("overview");
     const t = project.plan.tasks;
@@ -508,12 +513,12 @@ async function overviewScreen(id) {
     const html = `<div class="page">
       <header class="hero-card">
         <div class="info">
-          <div class="meta"><span class="tag novelty" title="Based on how you described it. Not checked against existing businesses.">${esc(NOVELTY[project.novelty] || "Plan")}</span>${(project.types || []).map((x) => `<span class="tag">${esc(x)}</span>`).join("")}</div>
+          <div class="meta"><span class="tag novelty" title="Based on how you described it. Not checked against existing businesses.">${esc(NOVELTY[project.novelty] || "Plan")}</span>${(project.types || []).map((x) => `<span class="tag">${esc(TYPE_LABEL[x] || x)}</span>`).join("")}</div>
           <h1>${esc(project.title || "Your plan")}</h1>
           <p class="sub">${esc(project.idea)}</p>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
             ${nextTaskLink(t)}
-            <a class="btn" href="#/p/${id}/site">${icons.globe}${project.site ? "Your website" : "Build website"}</a>
+            <a class="btn" href="#/p/${id}/site">${icons.globe}${project.site ? "Your test site" : "Build test site"}</a>
           </div>
         </div>
         ${qring(t)}
@@ -537,12 +542,28 @@ async function overviewScreen(id) {
             <option value="wrong" ${a.status === "wrong" ? "selected" : ""}>Proven wrong</option>
           </select><div class="how"><b>Test</b><span>${md(a.test)}</span></div></div>`).join("")}
       </section>` : ""}
+      ${launchCard()}
       ${SECTIONS.map((s, i) => sectionBlock(s, i)).join("")}
+      <section class="danger">
+        <div><h3>Delete this plan</h3><p>Permanently deletes this plan, its co-pilot chats, its test site, and every sign-up. This can't be undone.</p></div>
+        <button class="btn danger-btn" id="delPlan">${confirmDelete ? "Click again to delete for good" : "Delete plan"}</button>
+      </section>
     </div>`;
     const opts = { crumbs: [{ label: project.title || "Plan" }] };
     quiet ? quietRender(html, opts) : render(html, opts);
     animateRing();
     wirePlan(draw);
+    wireLaunch(() => draw(true));
+    $("delPlan").addEventListener("click", async () => {
+      if (!confirmDelete) { confirmDelete = true; draw(true); return; }
+      try {
+        await api(`projects/${id}`, { method: "DELETE" });
+        store.remove(id);
+        project = null;
+        toast("Plan deleted");
+        location.hash = "#/";
+      } catch (e) { toast(e.message, "error"); }
+    });
     view.querySelectorAll("[data-jump]").forEach((a) => a.addEventListener("click", (e) => { e.preventDefault(); $(`sec-${a.dataset.jump}`).scrollIntoView({ behavior: "smooth" }); }));
     view.querySelectorAll("[data-assume]").forEach((sel) => sel.addEventListener("change", async () => {
       sel.dataset.s = sel.value;
@@ -554,6 +575,40 @@ async function overviewScreen(id) {
     }));
   };
   draw();
+}
+
+// The launch path: for ideas that need a real app, the order to go from test site to a working first version.
+function launchCard() {
+  const isApp = (project.types || []).includes("app");
+  if (!isApp) {
+    return `<section class="launch off">
+      <div class="hd"><span class="ic">${icons.spark}</span><div class="grow"><h2>Does your idea need a real app?</h2>
+        <p>Your test site shows your idea and collects sign-ups. It can't run logins, match people, or take payments. If your idea needs those, add the launch path: official, step-by-step guidance for getting there.</p></div>
+        <button class="btn" data-app="on">${icons.plus}Add launch path</button></div>
+    </section>`;
+  }
+  const t = project.plan.tasks;
+  const wait = t.find((x) => x.id === "fixed-waitlist");
+  const steps = [...(wait ? [wait] : []), ...t.filter((x) => x.launch).sort((a, b) => a.launch - b.launch)];
+  const done = steps.filter((x) => x.done).length;
+  return `<section class="launch">
+    <div class="hd"><span class="ic">${icons.spark}</span><div class="grow"><h2>Launch path</h2>
+      <p>Your idea needs a real app, and Quad Founders doesn't build apps. Your test site proves people want it first. Then follow these steps in order. Quad Founders never handles payments.</p></div>
+      <span class="count">${done}/${steps.length} done</span></div>
+    <ol class="lp">${steps.map((x, i) => `<li class="${x.done ? "done" : ""}"><span class="n">${x.done ? icons.check : i + 1}</span><a href="#/p/${project.id}/t/${esc(x.id)}">${esc(x.title)}</a><span class="mins">${x.minutes} min</span></li>`).join("")}</ol>
+    <div class="ft"><a class="btn" href="#/p/${project.id}/site">${icons.globe}${project.site ? "Your test site" : "Build your test site"}</a><button class="btn ghost" data-app="off">My idea doesn't need an app</button></div>
+  </section>`;
+}
+function wireLaunch(rerender) {
+  view.querySelectorAll("[data-app]").forEach((b) => b.addEventListener("click", async () => {
+    b.disabled = true;
+    try {
+      refresh(await api(`projects/${project.id}/app`, { method: "PATCH", body: { on: b.dataset.app === "on" } }));
+      sidebar(currentActive);
+      rerender();
+      toast(b.dataset.app === "on" ? "Launch path added to your plan" : "Launch path removed");
+    } catch (e) { b.disabled = false; toast(e.message, "error"); }
+  }));
 }
 
 function nextTaskLink(tasks) {
@@ -725,7 +780,7 @@ async function taskScreen(id, taskId) {
 }
 
 async function siteScreen(id) {
-  skeleton([{ label: "Website" }]);
+  skeleton([{ label: "Test site" }]);
   try { await load(id); } catch (e) { return errorScreen(e.message); }
   if (!project.plan) { location.hash = `#/p/${id}/questions`; return; }
   currentActive = "site";
@@ -733,28 +788,66 @@ async function siteScreen(id) {
   let page = "home";
   let device = "desktop";
   let confirmReset = false;
-  const crumbs = [{ label: project.title || "Plan", href: `#/p/${id}` }, { label: "Website" }];
+  const crumbs = [{ label: project.title || "Plan", href: `#/p/${id}` }, { label: "Test site" }];
 
   const generate = async () => {
-    render(buildingView("Designing your website"), { crumbs });
+    render(buildingView("Designing your test site"), { crumbs });
     const stop = cycleLines();
-    try { refresh(await api(`projects/${id}/site`, { method: "POST" })); stop(); sidebar("site"); draw(); toast("Website ready"); }
+    try { refresh(await api(`projects/${id}/site`, { method: "POST" })); stop(); sidebar("site"); draw(); loadSignups(); toast("Test site ready"); }
     catch (e) { stop(); render(`<div class="page"><p class="err">${esc(e.message)}</p><button class="btn primary" id="retry">Try again</button></div>`, { crumbs }); $("retry").addEventListener("click", generate); }
+  };
+
+  let confirmClear = false;
+  let signups = null; // loaded after the page draws
+
+  const liveUrl = () => `${location.origin}/s/${project.site.publicId}/`;
+  const formState = () => {
+    if (project.site.waitlistOn === false) return ["off", "Off"];
+    if (!project.site.pages.contact.email) return ["warn", "Needs your email"];
+    return ["on", "On"];
+  };
+
+  const drawSignups = () => {
+    const box = $("signupBox");
+    if (!box) return;
+    if (!signups) { box.innerHTML = working("Loading sign-ups"); return; }
+    $("signupCount").textContent = String(signups.length);
+    box.innerHTML = signups.length ? `
+      <div class="su-table" role="table" aria-label="Sign-ups">
+        <div class="su-row head" role="row"><span role="columnheader">Name</span><span role="columnheader">Email</span><span role="columnheader">${esc(project.site.waitlist?.question || "Answer")}</span><span role="columnheader">Date</span><span></span></div>
+        ${signups.map((r) => `<div class="su-row" role="row"><span role="cell">${esc(r.name)}</span><span role="cell"><a href="mailto:${esc(r.email)}">${esc(r.email)}</a></span><span role="cell">${esc(r.answer || "")}</span><span role="cell" class="mono">${esc(String(r.created_at).slice(0, 10))}</span><span role="cell"><button class="btn ghost sm" data-del="${r.id}" aria-label="Delete ${esc(r.email)}">Delete</button></span></div>`).join("")}
+      </div>
+      <div class="su-actions"><a class="btn" href="/api/projects/${id}/signups.csv">${icons.download}Download CSV</a><button class="btn ghost" id="clearAll">${confirmClear ? "Click again to delete all" : "Delete all"}</button></div>`
+      : `<p class="help">No sign-ups yet. Share your live link in group chats, on Instagram, or on a flyer with a QR code.</p>`;
+    box.querySelectorAll("[data-del]").forEach((b) => b.addEventListener("click", async () => {
+      try { signups = (await api(`projects/${id}/signups/${b.dataset.del}`, { method: "DELETE" })).signups; drawSignups(); toast("Sign-up deleted"); }
+      catch (e) { toast(e.message, "error"); }
+    }));
+    $("clearAll")?.addEventListener("click", async () => {
+      if (!confirmClear) { confirmClear = true; drawSignups(); return; }
+      try { signups = (await api(`projects/${id}/signups`, { method: "DELETE" })).signups; confirmClear = false; drawSignups(); toast("All sign-ups deleted"); }
+      catch (e) { toast(e.message, "error"); }
+    });
+  };
+  const loadSignups = async () => {
+    try { signups = (await api(`projects/${id}/signups`)).signups; } catch { signups = []; }
+    drawSignups();
   };
 
   const draw = (quiet) => {
     if (!project.site) {
       render(`<div class="page wide" style="max-width:1040px"><section class="site-empty">
         <div>
-          <span class="eyebrow">Website</span>
-          <h1 style="margin-top:8px">A real website for <span class="grad-text">${esc(project.title || "your business")}</span></h1>
-          <p class="sub">Four pages written from your plan. Preview it, change anything by asking, then download it and publish it to your own account.</p>
+          <span class="eyebrow">Test site</span>
+          <h1 style="margin-top:8px">A test site for <span class="grad-text">${esc(project.title || "your business")}</span></h1>
+          <p class="sub">Four pages written from your plan, with a sign-up form so you can find out if people actually want this before you build more. Share the live link, or download the files and host them yourself.</p>
           <ul>
             <li>${icons.check}Home, About, Services, and Contact pages</li>
+            <li>${icons.check}A sign-up form that collects names and emails, with a live link to share</li>
             <li>${icons.check}No made-up reviews, licenses, emails, or phone numbers</li>
-            <li>${icons.check}You own the files and the account it lives on</li>
+            <li class="no">${icons.circle}It can't run logins, match people, or take payments${(project.types || []).includes("app") ? ". Your launch path covers those." : ""}</li>
           </ul>
-          <button class="btn primary xl" id="gen">${icons.spark}Create my website</button>
+          <button class="btn primary xl" id="gen">${icons.spark}Create my test site</button>
         </div>
         <div class="mini-site" aria-hidden="true"><div class="bar"><i></i><i></i><i></i></div>
           <div class="body"><div class="l" style="width:30%"></div><div class="h"></div><div class="l" style="width:85%"></div><div class="l" style="width:65%"></div><div class="b"></div><div class="cards"><i></i><i></i><i></i></div></div></div>
@@ -763,7 +856,9 @@ async function siteScreen(id) {
       return;
     }
     const c = project.site.pages.contact;
-    const slug = (project.site.businessName || "your-site").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    const wl = project.site.waitlist || {};
+    const [fs, fsLabel] = formState();
+    const isApp = (project.types || []).includes("app");
     const html = `<div class="page wide">
       <div class="site-grid">
         <div>
@@ -771,38 +866,83 @@ async function siteScreen(id) {
             <div class="seg" role="tablist" aria-label="Page">${["home", "about", "services", "contact"].map((p) => `<button role="tab" aria-selected="${p === page}" data-page="${p}">${p[0].toUpperCase() + p.slice(1)}</button>`).join("")}</div>
             <div class="seg" aria-label="Device">${["desktop", "phone"].map((d) => `<button aria-pressed="${d === device}" data-device="${d}">${d[0].toUpperCase() + d.slice(1)}</button>`).join("")}</div>
           </div>
-          <div class="frame ${device}"><div class="chrome"><i></i><i></i><i></i><span>${esc(slug)}${page === "home" ? "" : "/" + page}</span></div>
-            <iframe title="Website preview" sandbox src="/preview/${id}/${page}?v=${Date.now()}"></iframe></div>
+          <div class="frame ${device}"><div class="chrome"><i></i><i></i><i></i><span>${esc(location.host)}/s/${esc(project.site.publicId)}${page === "home" ? "" : "/" + page}</span></div>
+            <iframe title="Test site preview" sandbox src="/preview/${id}/${page}?v=${Date.now()}"></iframe></div>
+          <p class="help" style="margin-top:8px">This is a preview, so the sign-up button is turned off here. It works on your live link and in your downloaded files.</p>
+          <section class="card su-card">
+            <div class="su-hd"><h3>${icons.q[0]}Sign-ups <span class="count" id="signupCount">${signups ? signups.length : "…"}</span></h3></div>
+            <p class="help">Only people with this plan's link can see these. Use them only to contact people about your idea, let anyone who asks be removed, and follow the email rules in your <a href="#/p/${id}/t/fixed-email">email marketing step</a>.</p>
+            <div id="signupBox"></div>
+          </section>
         </div>
         <aside class="inspector">
-          <form class="card" id="editForm">
-            <h3>${icons.spark}Change something</h3>
-            <textarea id="instr" class="field" rows="3" maxlength="500" placeholder="Shorten the home headline and add a team discount service."></textarea>
-            <div style="display:flex;justify-content:flex-end"><button class="btn primary" type="submit">Update site <kbd>${MOD}↵</kbd></button></div>
+          <div class="card">
+            <h3>${icons.globe}Your live link</h3>
+            <p class="help">Share this link to collect sign-ups. It shows only your test site, never your plan.</p>
+            <div class="linkbox"><input class="field mono" id="liveUrl" readonly value="${esc(liveUrl())}" aria-label="Your live link"><button class="btn" id="copyLink">Copy</button></div>
+            <a class="btn ghost" href="${esc(liveUrl())}" target="_blank" rel="noopener">Open live site ${icons.arrow}</a>
+          </div>
+          <form class="card" id="formCard">
+            <h3>${icons.doc}Sign-up form <span class="state ${fs}">${fsLabel}</span></h3>
+            <p class="help">${fs === "warn" ? "Add your contact email below to turn the form on. Visitors need a way to ask to be removed." : "Visitors leave their name, email, and an optional answer. The form never asks for anything sensitive."}</p>
+            <div><label class="label" for="wlQ">Question for visitors (optional)</label><input id="wlQ" class="field" maxlength="120" value="${esc(wl.question)}" placeholder="Example: When do you usually fly home?"></div>
+            <div><label class="label" for="wlBtn">Button text</label><input id="wlBtn" class="field" maxlength="30" value="${esc(wl.button || "Join the waitlist")}"></div>
+            <div style="display:flex;gap:6px;justify-content:space-between;flex-wrap:wrap">
+              <button class="btn ghost" type="button" id="wlToggle">${project.site.waitlistOn === false ? "Turn form on" : "Turn form off"}</button>
+              <button class="btn" type="submit">Save</button></div>
           </form>
           <form class="card" id="contactForm">
             <h3>${icons.q[0]}Contact info</h3>
-            <p class="help">Only what you enter here appears on your site.</p>
+            <p class="help">Only what you enter here appears on your site. Your email is required for the sign-up form.</p>
             <div><label class="label" for="cEmail">Email</label><input id="cEmail" class="field" type="email" maxlength="120" value="${esc(c.email)}" placeholder="hello@yourbusiness.com"></div>
             <div><label class="label" for="cIg">Instagram</label><input id="cIg" class="field" maxlength="40" value="${esc(c.instagram)}" placeholder="yourbusiness"></div>
             <div><label class="label" for="cLoc">Location</label><input id="cLoc" class="field" maxlength="120" value="${esc(c.location)}" placeholder="Elon University campus"></div>
             <div style="display:flex;justify-content:flex-end"><button class="btn" type="submit">Save</button></div>
           </form>
+          <form class="card" id="editForm">
+            <h3>${icons.spark}Change something</h3>
+            <textarea id="instr" class="field" rows="3" maxlength="500" placeholder="Shorten the home headline and add a team discount service."></textarea>
+            <div style="display:flex;justify-content:flex-end"><button class="btn primary" type="submit">Update site <kbd>${MOD}↵</kbd></button></div>
+          </form>
           <div class="card">
-            <h3>${icons.download}Publish</h3>
-            <p class="help">Download your 4 pages. One-click publishing to your own Cloudflare account is coming next.</p>
+            <h3>${icons.shieldok}What a test site can do</h3>
+            <ul class="cando">
+              <li class="yes">${icons.check}Show your idea, services, and contact info</li>
+              <li class="yes">${icons.check}Collect sign-ups to measure interest</li>
+              <li class="yes">${icons.check}Share with a link or host the files yourself</li>
+              <li class="no">${icons.circle}Logins, matching people, payments, or bookings</li>
+            </ul>
+            ${isApp
+              ? `<p class="help">Your idea needs a real app. Follow your <a href="#/p/${id}">launch path</a> to get there.</p>`
+              : `<p class="help">Does your idea need those? Add the launch path to your plan.</p><button class="btn" type="button" data-app="on">${icons.plus}Add launch path</button>`}
+          </div>
+          <div class="card">
+            <h3>${icons.download}Download files</h3>
+            <p class="help">Host your 4 pages on your own account or domain. The sign-up form still sends sign-ups here.</p>
             <div style="display:flex;gap:6px;flex-wrap:wrap"><a class="btn dark" href="/api/projects/${id}/site.zip">${icons.download}Download .zip</a>
             <button class="btn ghost" id="reset">${confirmReset ? "Click again to start over" : "Start over"}</button></div>
           </div>
         </aside>
       </div>
     </div>`;
-    const opts = { crumbs, actions: `<a class="btn" href="/preview/${id}/home" target="_blank" rel="noopener">Open preview ${icons.arrow}</a>` };
+    const opts = { crumbs, actions: `<a class="btn" href="${esc(liveUrl())}" target="_blank" rel="noopener">Open live site ${icons.arrow}</a>` };
     quiet ? quietRender(html, opts) : render(html, opts);
+    drawSignups();
 
     view.querySelectorAll("[data-page]").forEach((b) => b.addEventListener("click", () => { page = b.dataset.page; draw(true); }));
     view.querySelectorAll("[data-device]").forEach((b) => b.addEventListener("click", () => { device = b.dataset.device; draw(true); }));
     $("reset").addEventListener("click", () => { if (confirmReset) { confirmReset = false; generate(); } else { confirmReset = true; draw(true); } });
+    $("copyLink").addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(liveUrl()); toast("Link copied"); }
+      catch { $("liveUrl").select(); toast("Press Ctrl+C to copy"); }
+    });
+    wireLaunch(() => draw(true));
+    const saveForm = async (bodyIn, msg) => {
+      try { refresh(await api(`projects/${id}/site/waitlist`, { method: "PATCH", body: bodyIn })); draw(true); toast(msg); }
+      catch (ex) { project.fresh = false; await load(id).catch(() => {}); draw(true); toast(ex.message, "error"); }
+    };
+    $("formCard").addEventListener("submit", (e) => { e.preventDefault(); saveForm({ question: $("wlQ").value, button: $("wlBtn").value }, "Sign-up form saved"); });
+    $("wlToggle").addEventListener("click", () => saveForm({ on: project.site.waitlistOn === false }, project.site.waitlistOn === false ? "Sign-up form on" : "Sign-up form off"));
     const ef = $("editForm");
     submitOnModEnter($("instr"), ef);
     ef.addEventListener("submit", async (e) => {
@@ -822,6 +962,7 @@ async function siteScreen(id) {
     });
   };
   draw();
+  if (project.site) loadSignups();
 }
 
 function errorScreen(msg) {

@@ -101,7 +101,8 @@ function mockReply({ kind, messages }) {
     case "followup":
       return JSON.stringify({
         title: "Campus sneaker cleaning",
-        types: ["service"],
+        // Test mode marks app-style ideas so the launch path can be tried without a key.
+        types: /\b(ride|rides|match|matching|app|marketplace|booking)\b/i.test(last) ? ["service", "app"] : ["service"],
         novelty: "twist",
         questions: [
           { id: "q1", text: "Who would your first 10 customers be?", hint: "Friends in my dorm and on my club team" },
@@ -205,6 +206,12 @@ function sampleSite() {
         ],
       },
       contact: { headline: "Get in touch", text: "Message us to set up a drop-off.", email: "", instagram: "", location: "" },
+    },
+    waitlist: {
+      headline: "Be first in line",
+      text: "TEST MODE: Leave your email and we'll let you know when drop-offs open in your dorm.",
+      question: "Which dorm do you live in?",
+      button: "Join the waitlist",
     },
   };
 }

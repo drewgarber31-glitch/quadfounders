@@ -413,3 +413,60 @@ select.field { height: 38px; padding: 0 10px; }
   .guide { padding: 14px; }
   .g-step { grid-template-columns: 26px 1fr; }
 }
+
+/* Launch path (ideas that need a real app) */
+.launch { border: 1px solid var(--border); border-radius: var(--r-xl); background: var(--panel); box-shadow: var(--shadow-sm); overflow: hidden; margin: 8px 0 8px; }
+.launch .hd { display: flex; align-items: center; gap: 12px; padding: 16px 18px; background: var(--grad-soft); flex-wrap: wrap; }
+.launch:not(.off) .hd { border-bottom: 1px solid var(--border-soft); }
+.launch .hd .ic { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: var(--grad); color: #fff; flex: none; }
+.launch .hd .grow { flex: 1; min-width: 220px; }
+.launch .hd h2 { font-size: 15px; letter-spacing: -0.02em; }
+.launch .hd p { font-size: 12.5px; color: var(--text-2); max-width: 70ch; }
+.launch .hd .count { font: 500 12px var(--mono); color: var(--text-2); }
+.lp { list-style: none; margin: 0; padding: 6px 0; }
+.lp li { display: grid; grid-template-columns: 28px 1fr auto; gap: 12px; align-items: center; padding: 9px 18px; }
+.lp li + li { border-top: 1px solid var(--border-soft); }
+.lp .n { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font: 600 12px var(--mono); background: var(--hover); color: var(--text-2); }
+.lp .n svg { width: 14px; height: 14px; }
+.lp li.done .n { background: var(--ok-soft); color: var(--ok); }
+.lp li.done a { color: var(--text-3); text-decoration: line-through; }
+.lp a { color: var(--text); text-decoration: none; font-size: 14px; font-weight: 500; }
+.lp a:hover { color: var(--accent); }
+.lp .mins { font: 500 12px var(--mono); color: var(--text-3); }
+.launch .ft { display: flex; gap: 6px; flex-wrap: wrap; padding: 12px 18px 16px; border-top: 1px solid var(--border-soft); }
+
+/* Delete plan */
+.danger { display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-top: 28px; padding: 16px 18px; border: 1px solid var(--border); border-radius: var(--r-lg); }
+.danger h3 { font-size: 14px; }
+.danger p { font-size: 12.5px; color: var(--text-2); max-width: 60ch; }
+.btn.danger-btn { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 35%, var(--border)); }
+.btn.danger-btn:hover { background: var(--danger-soft); }
+
+/* Test site screen */
+.linkbox { display: flex; gap: 6px; }
+.linkbox .field { flex: 1; min-width: 0; font-size: 12.5px; }
+.card h3 .state { margin-left: auto; font: 600 11px var(--font); padding: 3px 8px; border-radius: 999px; }
+.card h3 .state.on { background: var(--ok-soft); color: var(--ok); }
+.card h3 .state.off { background: var(--hover); color: var(--text-2); }
+.card h3 .state.warn { background: var(--warn-soft); color: var(--warn); }
+.cando { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; font-size: 13px; }
+.cando li { display: flex; gap: 8px; align-items: flex-start; }
+.cando svg { width: 15px; height: 15px; flex: none; margin-top: 2px; }
+.cando .yes svg { color: var(--ok); }
+.cando .no { color: var(--text-2); }
+.cando .no::before { content: "Can't:"; font-weight: 600; color: var(--text); margin-right: -2px; }
+.cando .no svg { display: none; }
+.site-empty li.no { color: var(--text-2); }
+.site-empty li.no svg { color: var(--text-3); }
+.su-card { margin-top: 16px; }
+.su-hd h3 { display: flex; align-items: center; gap: 8px; }
+.su-hd .count { font: 500 12px var(--mono); color: var(--text-2); background: var(--hover); padding: 2px 8px; border-radius: 999px; }
+.su-table { border: 1px solid var(--border-soft); border-radius: var(--r); overflow: auto; }
+.su-row { display: grid; grid-template-columns: 1fr 1.4fr 1.2fr 92px 70px; gap: 10px; align-items: center; padding: 8px 12px; font-size: 13px; min-width: 620px; }
+.su-row + .su-row { border-top: 1px solid var(--border-soft); }
+.su-row.head { font-size: 11.5px; font-weight: 600; color: var(--text-2); background: var(--panel-2); }
+.su-row span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.su-row a { color: var(--accent); text-decoration: none; }
+.su-row .mono { font-family: var(--mono); font-size: 12px; color: var(--text-2); }
+.su-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.btn.sm { height: 26px; padding: 0 8px; font-size: 12px; }

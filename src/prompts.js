@@ -19,6 +19,12 @@ Hard rules (never break these):
 - Federal items (IRS, FTC, USPTO, SBA, CPSC, FDA, DOJ, DHS) apply in every state.
 - Respect school: students have classes. Keep tasks small (about 15-60 minutes).
 
+What Quad Founders itself can and can't do (state these facts accurately; never claim more):
+- It builds a 4-page TEST website (Home, About, Services, Contact) with a sign-up form. The form collects a visitor's name, email, and an answer to one question, so the student can measure interest and contact people. The site is shared with a public link or downloaded as files.
+- The test site CANNOT run user accounts or logins, match people with each other, take payments, book appointments, or run live features. Never tell a student the site can do these.
+- Quad Founders never takes, holds, or processes payments, and never stores bank or card details.
+- For ideas that need a real app, the plan has a "launch path": run it by hand first, take payments through a hosted payment link from a payment company, try a no-code builder, then privacy, accounts, code ownership, and insurance steps. Point students to those steps.
+
 Style:
 - Plain, friendly, peer-to-peer. No corporate jargon and no forced slang.
 - Short and scannable: short paragraphs, bullet points, bold only the key words.
@@ -57,9 +63,10 @@ ${TYPE_LIST}
    Also rate how new it is as "novelty": "common" (many similar businesses exist), "twist" (a known business with a meaningful new angle), or "new" (the student believes nothing like it exists yet). Judge from the description only; never claim something definitely does or doesn't exist.
 2. Ask the 3 to 5 most useful follow-up questions to build a plan. Questions must be short, answerable in a sentence, and about the business: customers, what exactly they'll sell, pricing, time available, budget, where they'll operate, and anything the business type makes important (for example, for food: what foods and whether they have pets at home; for online: how they'll ship; for a new invention or new idea: how people deal with this problem today, who has the problem most, what has to be true for it to work, and whether they've shared details publicly).
 For "new" or "twist" ideas, at least 2 questions must dig into the problem and how people handle it today, not just logistics. Never ask for personal identifying information.
+   Add the type "app" (in addition to the others) ONLY when the idea can't fully work without software that has user accounts, matches people with each other, takes payments inside an app, handles bookings, or runs live features. Ride matching, a marketplace between students, or a booking app need "app". A tutoring service, a bakery, or a clothing brand does not, even if it has a website.
 
 Respond with ONLY valid JSON in this exact shape:
-{"title": "short name for the idea, max 6 words", "types": ["service"], "novelty": "twist", "questions": [{"id": "q1", "text": "question", "hint": "short example answer"}]}`,
+{"title": "short name for the idea, max 6 words", "types": ["service", "app"], "novelty": "twist", "questions": [{"id": "q1", "text": "question", "hint": "short example answer"}]}`,
     messages: [{ role: "user", content: `My idea: ${idea}` }],
   };
 }
@@ -91,6 +98,11 @@ ${novelty === "common" ? "This is a common kind of business: focus on standing o
 - Pricing has nothing to copy: plan to learn willingness to pay from real potential customers.
 - If rules for this kind of business aren't covered in the library, say so and point to the closest official source or a SCORE mentor.
 - If it's an invention, include protecting the idea and caution about public disclosure.`}
+${types.includes("app") ? `
+This idea needs a real app to fully work. The student does NOT have that app yet, and the site Quad Founders builds for them is only a test site with a sign-up form. So:
+- Plan to prove demand before building: collect sign-ups on the test site, then run the service by hand for a small group (the launch path steps cover this).
+- Don't write tasks that assume the app exists (no "launch the app", "send push notifications", "set up in-app payments") and don't duplicate the launch path steps.
+- Customer and pricing tasks should test demand and price with the by-hand version first.` : ""}
 
 Also list 3 to 5 key "assumptions": things that must be true for this business to work, each with a cheap way to test it this month. Never state an assumption as already proven.
 
@@ -259,19 +271,29 @@ const SITE_SHAPE = `{
    "about": {"headline": "...", "story": "3-5 sentences", "values": ["...", "..."]},
    "services": {"headline": "...", "items": [{"name": "...", "description": "...", "price": "text, or empty if unknown"}]},
    "contact": {"headline": "...", "text": "...", "email": "", "instagram": "", "location": ""}
- }
+ },
+ "waitlist": {"headline": "sign-up section heading", "text": "1-2 sentences on what people get by signing up", "question": "one short optional question for visitors, or empty", "button": "2-4 word button text"}
 }`;
+
+// Rules for the sign-up form and for ideas whose app doesn't exist yet.
+function siteRules(project) {
+  const app = (project.types || []).includes("app");
+  return `- The site has a sign-up form (the "waitlist" section) where visitors leave their name and email. Write its heading, text, button, and ONE short optional question that helps the student learn about demand (for example "When do you usually fly home?" or "What would you order first?"). Never ask for sensitive information (no ID, money, health, passwords, addresses, or birthdays). Never promise a launch date, discount, or reward that isn't in the plan.
+- The waitlist "button" is also the main button at the top of the home page, so word it as an invitation like "Join the waitlist" or "Get updates". The home "cta" is used only when the form is off, and links to the services page.${app ? `
+- This idea needs an app that does NOT exist yet. Write the site as an honest preview: describe what it WILL do ("we're building", "coming soon"), invite people to join the waitlist, and never say or imply it's live. Never mention signing in, downloading an app, booking, matching, or paying on this site. Services are what the student plans to offer; if they plan to start by hand, say so.` : ""}`;
+}
 
 export function sitePrompt(project) {
   return {
     system: `${GUARDRAILS}
 
-Task: Write the content for this student's 4-page business website (home, about, services, contact).
-- Use their real idea, answers, and plan. Do not invent facts like awards, years in business, reviews, testimonials, certifications, or licenses.
+Task: Write the content for this student's 4-page test website (home, about, services, contact) plus its sign-up form.
+- Use their real idea, answers, and plan. Do not invent facts like awards, years in business, reviews, testimonials, certifications, licenses, or numbers of customers or sign-ups.
 - Leave contact fields empty strings unless the student provided them. Never invent an email or phone number.
 - Prices only if they appear in the plan; otherwise use an empty string.
 - Don't make health, safety, or income claims about the product or service.
 - 2-4 highlights and 2-6 services.
+${siteRules(project)}
 
 Respond with ONLY valid JSON in this exact shape:
 ${SITE_SHAPE}`,
@@ -285,16 +307,19 @@ ${SITE_SHAPE}`,
 }
 
 export function siteEditPrompt(project, instruction) {
+  const { publicId, waitlistOn, ...content } = project.site || {};
   return {
     system: `${GUARDRAILS}
 
 Task: Update this website content JSON based on the student's request. Change only what they asked. Keep the same shape. Do not invent facts, reviews, testimonials, licenses, emails, or phone numbers.
+${siteRules(project)}
+- If the student asks for logins, accounts, payments, booking, matching, or other app features, don't add them. Leave the JSON unchanged for that part (the test site can't run them).
 Respond with ONLY the full updated JSON in this shape:
 ${SITE_SHAPE}`,
     messages: [
       {
         role: "user",
-        content: `Current site JSON:\n${JSON.stringify(project.site)}\n\nMy change: ${instruction}`,
+        content: `Current site JSON:\n${JSON.stringify(content)}\n\nMy change: ${instruction}`,
       },
     ],
   };

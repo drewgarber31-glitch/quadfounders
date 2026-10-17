@@ -6,7 +6,8 @@ An AI startup co-pilot that walks college students from an idea to a launched bu
 1. **Idea in.** A student types their idea. The co-pilot asks 3 to 5 follow-up questions, one at a time, and every one can be skipped.
 2. **The Quad.** It builds a business plan in 4 quadrants: idea and customer, pricing and costs, marketing and first customers, and legal and registration. Each quadrant has small tasks of 15 to 60 minutes.
 3. **Guided tasks.** Each task opens a chat with the co-pilot. Legal steps link only to verified official sources.
-4. **Website.** It builds a 4-page site (Home, About, Services, Contact) from the plan. Students preview it on phone or desktop, ask for changes, add contact info, and download a .zip.
+4. **Test site.** It builds a 4-page test site (Home, About, Services, Contact) from the plan, with a sign-up form that collects a visitor's name, email, and one optional answer. Students share a live link (`/s/:publicId`, which never reveals the plan) or download a .zip; the form works in both. Sign-ups show in the app, download as CSV, and can be deleted.
+5. **Launch path.** Test sites can't run logins, matching, or payments. For ideas that need a real app, the plan adds sourced steps in order: run it by hand first, take payments through a hosted payment link (Quad Founders never handles money), try a no-code builder, then privacy policy, accounts, code ownership, and insurance.
 
 **Built on:** Cloudflare Workers, a D1 database, plain HTML/CSS/JS, and Claude Haiku 5.5. The AI provider can be swapped in `src/ai.js`.
 
@@ -25,7 +26,7 @@ npx wrangler d1 create quadfounders     # prints a database_id
 Copy the `database_id` it prints into `wrangler.jsonc`, replacing `REPLACE_WITH_YOUR_D1_DATABASE_ID`. Then:
 
 ```bash
-npx wrangler d1 migrations apply DB --remote   # creates the tables
+npx wrangler d1 migrations apply DB --remote   # creates the tables (run again after pulling new migrations)
 npx wrangler deploy                            # publishes the app
 ```
 
@@ -70,7 +71,9 @@ There are no logins, so the daily limits are what stop a stranger from running u
 - **Verified sources only.** The AI can only cite sources in `src/sources.js` (SBA, IRS, NC Secretary of State, NC Dept. of Revenue, SCORE). Each was checked by hand and dated. Unknown citations are stripped out. Legal tasks are fixed steps, not invented by the AI.
 - **No made-up contact info.** The site's email, Instagram and location only come from what the student types, and they're validated.
 - **Safe student sites.** All AI text is escaped. Previews run with no scripts.
-- **Students own their sites.** They download the files and publish on their own account and domain.
+- **Test sites only.** Student sites can't run logins, matching, or payments, and the AI is told never to claim they can. App ideas get a launch path instead.
+- **Sign-ups are minimal and deletable.** Name, email, and one optional answer. Sensitive questions are blocked. The form needs the student's contact email (so visitors can ask to be removed), says visitors must be 13+, and links to `/privacy`. Spam limits: a hidden honeypot field, 30 sign-ups per network per site per day, 2,000 per site. CSV exports are protected against spreadsheet formulas.
+- **Delete anytime.** Students can delete one sign-up, all of them, or the whole plan (plan, chats, site, and sign-ups).
 
 ## Knowledge library (how the co-pilot is grounded)
 

@@ -296,3 +296,4 @@ footer nav { display: flex; gap: 22px; flex-wrap: wrap; }
 footer a { text-decoration: none; color: var(--text-2); }
 footer a:hover { color: var(--text); }
 footer .legal { flex-basis: 100%; line-height: 1.6; max-width: 80ch; }
+.faq p a { color: var(--accent); text-underline-offset: 2px; }

@@ -15,6 +15,7 @@ export const BUSINESS_TYPES = {
   digital: "Digital products or tech (apps, websites, templates, content, social media services)",
   beauty: "Hair, nails, makeup, lashes, skincare, or other personal-care services",
   invention: "A new invention, product, or technology that doesn't really exist yet",
+  app: "Needs a real app or platform to fully work: user accounts, matching people with each other, in-app payments, bookings, or live features (for example ride matching, a campus marketplace, or a booking app)",
 };
 
 export const KNOWLEDGE = [
@@ -482,7 +483,7 @@ export const KNOWLEDGE = [
   {
     id: "k_coppa",
     title: "Children's online privacy (COPPA)",
-    types: ["digital"],
+    types: ["digital", "app"],
     quadrant: "legal",
     source: "ftc_coppa",
     points: [
@@ -583,8 +584,134 @@ export const KNOWLEDGE = [
       "FinCEN says U.S. companies are exempt from Beneficial Ownership Information (BOI) reporting requirements (final rule effective August 14, 2026). Some older guides still say most businesses must file, so go by FinCEN's current page.",
     ],
   },
+  // ---------- Launch path (ideas that need a real app) ----------
+  {
+    id: "k_unscalable",
+    title: "Do things by hand first",
+    types: ["app"],
+    quadrant: "customer",
+    source: "pg_dont_scale",
+    points: [
+      "Paul Graham writes that the most common unscalable thing founders have to do at the start is to recruit users manually.",
+      "He writes that you can sometimes get away with doing by hand things that you plan to automate later.",
+      "He also writes that sometimes the right unscalable trick is to focus on a deliberately narrow market.",
+      "Quad Founders suggests (not from this source): before building an app, run the service by hand for a small group (for example, match people yourself from your sign-up list and a spreadsheet), and build only what that test proves people use.",
+    ],
+  },
+  {
+    id: "k_forms",
+    title: "Collect requests with a free form",
+    types: ["app"],
+    quadrant: "customer",
+    source: "google_forms",
+    points: [
+      "Google's help page says you can create a form at forms.google.com, or from a Google Sheet with Tools, then Create a new form.",
+      "When you create a form in Google Sheets, the responses are saved in a new sheet, and you can choose to store form responses in a Google Sheet.",
+    ],
+  },
+  {
+    id: "k_nocode_bubble",
+    title: "No-code web apps (Bubble example)",
+    types: ["app"],
+    quadrant: "customer",
+    source: "bubble_manual",
+    points: [
+      "Bubble's manual says it lets you build an app by pointing and clicking instead of writing code.",
+      "It says its built-in user management tools let users sign up for and log in to your app, and that it automates the database.",
+      "Quad Founders suggests (not from this source): Bubble and Glide are examples, not endorsements. Compare tools, and read each tool's pricing and terms yourself before you build.",
+    ],
+  },
+  {
+    id: "k_nocode_glide",
+    title: "No-code apps from a spreadsheet (Glide example)",
+    types: ["app"],
+    quadrant: "customer",
+    source: "glide_sheets",
+    points: [
+      "Glide says it builds custom no-code apps from Google Sheets and generates a mobile-friendly app from your sheet that you can customize.",
+    ],
+  },
+  {
+    id: "k_payment_links",
+    title: "Payment links (no code)",
+    types: ["app"],
+    quadrant: "pricing",
+    source: "stripe_no_code",
+    points: [
+      "Stripe says Payment Links let you create a payment page without code and share it on social media, in emails, or on your website, including as a QR code or a buy button.",
+      "The payment page is hosted by Stripe. Stripe lists automatic receipts and no-code refunds, and says you can use Payment Links to sell a product or a subscription, or accept a donation.",
+      "Quad Founders never takes or handles payments. Payment providers are separate companies with their own fees and terms, so read them before you sign up.",
+    ],
+  },
+  {
+    id: "k_pci",
+    title: "Card security rules (PCI DSS)",
+    types: ["app"],
+    quadrant: "pricing",
+    source: "stripe_security",
+    points: [
+      "Stripe says PCI DSS is the global security standard for anyone that stores, processes, or transmits cardholder data, and anyone involved with card data must comply.",
+      "It says a business that handles sensitive card data directly might be required to meet more than 300 security controls.",
+      "It says many businesses don't need to handle card data: low-risk integrations send payment information directly to Stripe without it passing through your servers, which reduces your PCI obligations.",
+      "It also says PCI compliance is shared: a business accepting payments must do so in a PCI-compliant manner and attest to it every year.",
+    ],
+  },
+  {
+    id: "k_stripe_age",
+    title: "Age rules for payment accounts (Stripe example)",
+    types: ["app"],
+    quadrant: "pricing",
+    source: "stripe_age",
+    points: [
+      "Stripe says you must be at least 13 to create a Stripe account. If you're under 18, a legal guardian must take the role of account owner, and the account can't accept charges or send money to your bank until they do.",
+    ],
+  },
+  {
+    id: "k_start_security",
+    title: "Security basics for apps that collect data",
+    types: ["app"],
+    quadrant: "legal",
+    source: "ftc_start_security",
+    points: [
+      "FTC's Start with Security guide says: don't collect personal information you don't need, hold on to it only as long as you have a legitimate business need, and don't use personal information when it's not necessary.",
+      "For logins, it says to insist on complex and unique passwords, store passwords securely, and guard against brute force attacks.",
+    ],
+  },
+  {
+    id: "k_app_store_privacy",
+    title: "App store privacy rules (Apple example)",
+    types: ["app"],
+    quadrant: "legal",
+    source: "apple_review",
+    points: [
+      "Apple's App Review Guidelines say all apps must link to a privacy policy that identifies what data the app collects, how, and all uses of it, and explains data retention and deletion and how a user can request deletion.",
+      "They say that if your app supports account creation, you must also offer account deletion within the app.",
+    ],
+  },
+  {
+    id: "k_work_for_hire",
+    title: "Who owns code someone builds for you",
+    types: ["app"],
+    quadrant: "legal",
+    source: "copyright_circ30",
+    points: [
+      "The Copyright Office says a work made by an employee within the scope of employment is a work made for hire, and the party that hired the person is both the author and the copyright owner.",
+      "For specially ordered or commissioned work, it qualifies only if the parties agree in a written instrument signed by them, and only in nine categories: contributions to a collective work, parts of a motion picture or audiovisual work, translations, supplementary works, compilations, instructional texts, tests, answer material for tests, and atlases. Software is not one of the listed categories.",
+      "The Copyright Office says it cannot give legal advice about the status of a work, so confirm your situation with a qualified professional.",
+    ],
+  },
+  {
+    id: "k_transfer",
+    title: "Transferring copyright in writing",
+    types: ["app"],
+    quadrant: "legal",
+    source: "usc_204",
+    points: [
+      "Federal law (17 U.S.C. 204) says a transfer of copyright ownership, other than by operation of law, is not valid unless it is in writing and signed by the owner of the rights being transferred or their authorized agent.",
+      "Quad Founders suggests (not from this source): if a friend or freelancer builds your app, agree in writing who owns the code before they start, and have a qualified professional or a free law clinic review it.",
+    ],
+  },
 ];
-
 /** Cards relevant to a set of business types (and optionally one quadrant). */
 /** Cards relevant to a set of business types, one quadrant (optional), and a state. */
 export function knowledgeFor(types = [], quadrant, state = "NC") {
@@ -602,5 +729,8 @@ export function knowledgeText(cards) {
 }
 
 export function cleanTypes(types) {
-  return Array.isArray(types) ? [...new Set(types.filter((t) => BUSINESS_TYPES[t]))].slice(0, 3) : [];
+  if (!Array.isArray(types)) return [];
+  const list = [...new Set(types.filter((t) => BUSINESS_TYPES[t]))];
+  // Up to 3 business types, plus "app" when the idea needs a real app.
+  return [...list.filter((t) => t !== "app").slice(0, 3), ...(list.includes("app") ? ["app"] : [])];
 }

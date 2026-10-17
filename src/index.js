@@ -10,13 +10,17 @@ import {
   sitePrompt,
   siteEditPrompt,
 } from "./prompts.js";
-import { SOURCES, legalStepsFor } from "./sources.js";
+import { SOURCES, legalStepsFor, LEGAL_STEPS } from "./sources.js";
 import { cleanTypes, KNOWLEDGE } from "./knowledge.js";
-import { renderPage, siteFiles, makeZip, PAGES } from "./site.js";
+import { renderPage, siteFiles, makeZip, PAGES, waitlistReady } from "./site.js";
 import { STATES, stateName, stateSources } from "./states.js";
 
 const QUADRANTS = ["customer", "pricing", "marketing", "legal"];
 const LIMITS = { idea: 2000, answer: 500, message: 1500, instruction: 500, summary: 1200, history: 20 };
+// Sign-up form limits: per site, and per visitor network per site per day (dorms share networks).
+const SIGNUPS = { perSite: 2000, perVisitorDay: 30 };
+// Sign-up questions may never ask for sensitive information.
+const SENSITIVE_Q = /\b(ssn|social security|password|passcode|bank|card number|credit card|debit|routing|account number|birth|birthday|age|address|phone|health|medical|diagnos|religio|immigra|citizen|license number|id number|income|salary)\b/i;
 
 export default {
   async fetch(request, env) {
@@ -24,6 +28,7 @@ export default {
     try {
       if (url.pathname.startsWith("/api/")) return await api(request, env, url);
       if (url.pathname.startsWith("/preview/")) return await preview(env, url);
+      if (url.pathname.startsWith("/s/")) return await liveSite(env, url);
       return env.ASSETS.fetch(request);
     } catch (err) {
       if (err instanceof HttpError) return json({ error: err.message }, err.status);
@@ -77,6 +82,9 @@ async function api(request, env, url) {
     return json({ ideas });
   }
 
+  // POST /api/w/:publicId  -> a visitor joins a student's sign-up list (plain HTML form post)
+  if (parts[0] === "w" && parts.length === 2 && method === "POST") return await signup(request, env, url, parts[1]);
+
   if (parts[0] !== "projects") throw new HttpError(404, "Not found.");
 
   // POST /api/projects  -> new project + follow-up questions
@@ -109,6 +117,62 @@ async function api(request, env, url) {
 
   // GET /api/projects/:id
   if (parts.length === 2 && method === "GET") return json(publicProject(project));
+
+  // DELETE /api/projects/:id  -> deletes the plan, its chats, and its sign-ups for good
+  if (parts.length === 2 && method === "DELETE") {
+    await env.DB.batch([
+      env.DB.prepare("DELETE FROM signups WHERE project_id = ?").bind(id),
+      env.DB.prepare("DELETE FROM messages WHERE project_id = ?").bind(id),
+      env.DB.prepare("DELETE FROM projects WHERE id = ?").bind(id),
+    ]);
+    return json({ deleted: true });
+  }
+
+  // PATCH /api/projects/:id/app  {on}  -> mark whether the idea needs a real app (adds or removes the launch path)
+  if (parts[2] === "app" && parts.length === 3 && method === "PATCH") {
+    if (!project.plan) throw new HttpError(400, "Finish your plan first.");
+    const { on } = await body(request);
+    const types = (project.types || []).filter((t) => t !== "app");
+    if (on) types.push("app");
+    const steps = legalStepsFor(types, project.state, stateSources(project.state));
+    const allowed = new Set(steps.map((st) => st.id));
+    const fixedIds = new Set(LEGAL_STEPS.map((st) => st.id));
+    const tasks = project.plan.tasks.filter((t) => !fixedIds.has(t.id) || allowed.has(t.id));
+    for (const st of steps) {
+      if (tasks.some((t) => t.id === st.id)) continue;
+      tasks.push({ id: st.id, quadrant: st.quadrant || "legal", title: st.title, why: "Read the official source to see if this applies to you.", minutes: st.minutes, sources: st.sources, ...(st.launch ? { launch: st.launch } : {}), done: false });
+    }
+    tasks.sort((a, b) => QUADRANTS.indexOf(a.quadrant) - QUADRANTS.indexOf(b.quadrant));
+    project.plan.tasks = tasks;
+    project.types = types;
+    await env.DB.prepare("UPDATE projects SET idea = ?, plan = ?, updated_at = ? WHERE id = ?")
+      .bind(JSON.stringify({ text: project.idea, title: project.title, types, novelty: project.novelty, state: project.state }), JSON.stringify(project.plan), new Date().toISOString(), id).run();
+    return json(publicProject(project));
+  }
+
+  // /api/projects/:id/signups[.csv][/:signupId]  -> the student's sign-up list (private to the plan owner)
+  if (parts[2] === "signups" || parts[2] === "signups.csv") {
+    if (parts[2] === "signups.csv" && method === "GET") {
+      const rows = await signupList(env, id);
+      const cell = (v) => {
+        let t = String(v ?? "");
+        if (/^[=+\-@\t\r]/.test(t)) t = "'" + t; // stop spreadsheet formulas
+        return `"${t.replace(/"/g, '""')}"`;
+      };
+      const csv = ["Name,Email,Answer,Signed up (UTC)", ...rows.map((r) => [r.name, r.email, r.answer, r.created_at].map(cell).join(","))].join("\r\n");
+      return new Response(csv, { headers: { "content-type": "text/csv; charset=utf-8", "content-disposition": 'attachment; filename="sign-ups.csv"', "cache-control": "no-store" } });
+    }
+    if (parts.length === 3 && method === "GET") return json({ signups: await signupList(env, id) });
+    if (parts.length === 3 && method === "DELETE") {
+      await env.DB.prepare("DELETE FROM signups WHERE project_id = ?").bind(id).run();
+      return json({ signups: [] });
+    }
+    if (parts.length === 4 && method === "DELETE") {
+      await env.DB.prepare("DELETE FROM signups WHERE project_id = ? AND id = ?").bind(id, Number(parts[3]) || 0).run();
+      return json({ signups: await signupList(env, id) });
+    }
+    throw new HttpError(405, "Not allowed.");
+  }
 
   // POST /api/projects/:id/plan  (answers -> plan)
   if (parts[2] === "plan" && parts.length === 3 && method === "POST") {
@@ -237,12 +301,12 @@ async function api(request, env, url) {
   if (parts[2] === "site" || parts[2] === "site.zip") {
     if (parts[2] === "site.zip" && method === "GET") {
       if (!project.site) throw new HttpError(404, "Build your site first.");
-      const zip = makeZip(siteFiles(project.site));
+      const zip = makeZip(siteFiles(project.site, { formAction: `${url.origin}/api/w/${project.site.publicId}`, origin: url.origin }));
       const slug = (project.site.businessName || "my-site").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "my-site";
       return new Response(zip, {
         headers: {
           "content-type": "application/zip",
-          "content-disposition": `attachment; filename="${slug}-website.zip"`,
+          "content-disposition": `attachment; filename="${slug}-test-site.zip"`,
         },
       });
     }
@@ -252,7 +316,7 @@ async function api(request, env, url) {
       await useQuota(request, env);
       const out = await callAIJson(env, { kind: "site", build: true, maxTokens: 5000, ...sitePrompt(project) });
       const site = normalizeSite(out, project.site);
-      await save(env, id, { site });
+      await saveSite(env, id, site);
       return json(publicProject({ ...project, site }));
     }
     if (parts[3] === "edit" && method === "POST") {
@@ -263,7 +327,7 @@ async function api(request, env, url) {
       await useQuota(request, env);
       const out = await callAIJson(env, { kind: "siteEdit", build: true, maxTokens: 5000, ...siteEditPrompt(project, text) });
       const site = normalizeSite(out, project.site);
-      await save(env, id, { site });
+      await saveSite(env, id, site);
       return json(publicProject({ ...project, site }));
     }
     if (parts[3] === "contact" && method === "PATCH") {
@@ -284,6 +348,28 @@ async function api(request, env, url) {
       await save(env, id, { site: project.site });
       return json(publicProject(project));
     }
+    // PATCH /api/projects/:id/site/waitlist  {on, headline, text, question, button}
+    if (parts[3] === "waitlist" && method === "PATCH") {
+      if (!project.site) throw new HttpError(400, "Build your site first.");
+      const b = await body(request);
+      const wl = project.site.waitlist || {};
+      if ("on" in b) project.site.waitlistOn = Boolean(b.on);
+      if ("headline" in b) wl.headline = clean(b.headline, 100);
+      if ("text" in b) wl.text = clean(b.text, 300);
+      if ("button" in b) wl.button = clean(b.button, 30);
+      if ("question" in b) {
+        const q = clean(b.question, 120);
+        if (q && SENSITIVE_Q.test(q)) throw new HttpError(400, "Pick a question that doesn't ask for personal details like age, address, phone, money, or health.");
+        wl.question = q;
+      }
+      project.site.waitlist = wl;
+      if (project.site.waitlistOn !== false && !project.site.pages.contact.email) {
+        await save(env, id, { site: project.site });
+        throw new HttpError(400, "Saved. Add your contact email above to turn the form on, so visitors can ask to be removed.");
+      }
+      await save(env, id, { site: project.site });
+      return json(publicProject(project));
+    }
     throw new HttpError(405, "Not allowed.");
   }
 
@@ -298,7 +384,7 @@ async function preview(env, url) {
   const project = await loadProject(env, id);
   if (!project.site) return new Response("No site yet", { status: 404 });
   const page = PAGES.includes(pageRaw) ? pageRaw : "home";
-  const html = renderPage(project.site, page, (pg) => `/preview/${id}/${pg}`);
+  const html = renderPage(project.site, page, (pg) => `/preview/${id}/${pg}`, { preview: true, origin: url.origin });
   return new Response(html, {
     headers: {
       "content-type": "text/html; charset=utf-8",
@@ -348,6 +434,7 @@ function normalizePlan(out, types = [], state = "NC") {
       why: sanitize(clean(ai?.why, 240)) || "Read the official source to see if this applies to you.",
       minutes: step.minutes,
       sources: step.sources,
+      ...(step.launch ? { launch: step.launch } : {}),
       done: false,
     });
   }
@@ -366,7 +453,18 @@ function normalizeSite(out, previous) {
   const clean = (v, max) => String(v ?? "").replace(/\u0000/g, "").replace(/\s*\[source:[^\]]*\]/gi, "").trim().slice(0, max);
   const prevContact = previous?.pages?.contact || {};
   const list = (arr, n, map) => (Array.isArray(arr) ? arr.slice(0, n).map(map) : []);
+  const w = out?.waitlist || {};
+  const prevW = previous?.waitlist || {};
+  const q = clean(w.question, 120);
   return {
+    publicId: previous?.publicId || crypto.randomUUID().replace(/-/g, "").slice(0, 16),
+    waitlistOn: previous ? previous.waitlistOn !== false : true,
+    waitlist: {
+      headline: clean(w.headline, 100) || prevW.headline || "",
+      text: clean(w.text, 300) || prevW.text || "",
+      question: q && !SENSITIVE_Q.test(q) ? q : (prevW.question || ""),
+      button: clean(w.button, 30) || prevW.button || "Join the waitlist",
+    },
     businessName: clean(out?.businessName, 60) || "My Business",
     tagline: clean(out?.tagline, 120),
     palette: ["lawn", "ink", "brick", "sky", "plum", "sun"].includes(out?.palette) ? out.palette : "lawn",
@@ -435,7 +533,7 @@ async function loadProject(env, id) {
   const row = await env.DB.prepare("SELECT * FROM projects WHERE id = ?").bind(id).first();
   if (!row) throw new HttpError(404, "Project not found. It may have been started on another device.");
   const idea = JSON.parse(row.idea);
-  return {
+  const p = {
     id: row.id,
     idea: idea.text,
     title: idea.title,
@@ -448,6 +546,12 @@ async function loadProject(env, id) {
     site: row.site ? JSON.parse(row.site) : null,
     createdAt: row.created_at,
   };
+  // Sites made before live links existed get a public id the first time they're opened.
+  if (p.site && !p.site.publicId) {
+    p.site.publicId = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+    await saveSite(env, id, p.site);
+  }
+  return p;
 }
 
 function publicProject(p) {
@@ -464,6 +568,86 @@ async function save(env, id, fields) {
   sets.push("updated_at = ?");
   vals.push(new Date().toISOString(), id);
   await env.DB.prepare(`UPDATE projects SET ${sets.join(", ")} WHERE id = ?`).bind(...vals).run();
+}
+
+async function saveSite(env, id, site) {
+  await env.DB.prepare("UPDATE projects SET site = ?, public_id = ?, updated_at = ? WHERE id = ?")
+    .bind(JSON.stringify(site), site.publicId, new Date().toISOString(), id).run();
+}
+
+async function signupList(env, projectId) {
+  const { results } = await env.DB.prepare("SELECT id, name, email, answer, created_at FROM signups WHERE project_id = ? ORDER BY id DESC").bind(projectId).all();
+  return results || [];
+}
+
+async function projectByPublicId(env, publicId) {
+  if (!/^[0-9a-f]{16}$/.test(publicId || "")) return null;
+  const row = await env.DB.prepare("SELECT id FROM projects WHERE public_id = ?").bind(publicId).first();
+  return row ? loadProject(env, row.id) : null;
+}
+
+// Headers for any student page we serve. Pages never run scripts; forms may only post back to us.
+function pageHeaders(extra = {}) {
+  return {
+    "content-type": "text/html; charset=utf-8",
+    "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; img-src data: https:; form-action 'self'; frame-ancestors 'self'",
+    "x-content-type-options": "nosniff",
+    "referrer-policy": "strict-origin-when-cross-origin",
+    ...extra,
+  };
+}
+
+// A visitor submits the sign-up form. Always answers with a page (it's a plain HTML form).
+async function signup(request, env, url, publicId) {
+  const project = await projectByPublicId(env, publicId);
+  if (!project?.site) return new Response("Not found", { status: 404 });
+  const site = project.site;
+  const href = (pg) => `/s/${publicId}/${pg === "home" ? "" : pg}`;
+  // "Back" goes to the page they came from when it's a real web page (the hosted link or their own domain).
+  let back = "";
+  try {
+    const ref = new URL(request.headers.get("referer") || "");
+    if (ref.protocol === "https:" || ref.protocol === "http:") back = ref.href;
+  } catch { /* no referrer, e.g. a file opened on a computer */ }
+  const page = (status, code = 200) => new Response(renderPage(site, "joined", href, { origin: url.origin, joined: { status, back } }), { status: code, headers: pageHeaders({ "cache-control": "no-store" }) });
+
+  if (!waitlistReady(site)) return page("off", 403);
+  let form;
+  try { form = await request.formData(); } catch { return page("invalid", 400); }
+  if (String(form.get("website") || "")) return page("ok"); // honeypot: bots fill hidden fields
+  const name = clean(form.get("name"), 80);
+  const email = clean(form.get("email"), 120).toLowerCase();
+  const answer = site.waitlist?.question ? clean(form.get("answer"), 300) : "";
+  if (!name || !/^[^\s@<>"']+@[^\s@<>"']+\.[a-z]{2,}$/i.test(email)) return page("invalid", 400);
+
+  const day = new Date().toISOString().slice(0, 10);
+  const ip = request.headers.get("cf-connecting-ip") || "local";
+  const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`qf-w:${ip}:${publicId}`));
+  const key = "w:" + [...new Uint8Array(hash)].slice(0, 12).map((b) => b.toString(16).padStart(2, "0")).join("");
+  const [v, total] = await env.DB.batch([
+    env.DB.prepare("SELECT count FROM usage WHERE key = ? AND day = ?").bind(key, day),
+    env.DB.prepare("SELECT COUNT(*) AS n FROM signups WHERE project_id = ?").bind(project.id),
+  ]);
+  if ((v.results[0]?.count || 0) >= SIGNUPS.perVisitorDay) return page("limit", 429);
+  if ((total.results[0]?.n || 0) >= SIGNUPS.perSite) return page("full", 403);
+  await env.DB.batch([
+    env.DB.prepare("INSERT INTO usage (key, day, count) VALUES (?, ?, 1) ON CONFLICT(key, day) DO UPDATE SET count = count + 1").bind(key, day),
+    env.DB.prepare("INSERT INTO signups (project_id, name, email, answer, created_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(project_id, email) DO UPDATE SET name = excluded.name, answer = excluded.answer")
+      .bind(project.id, name, email, answer, new Date().toISOString()),
+  ]);
+  return page("ok");
+}
+
+// The student's live test site at /s/:publicId/:page (safe to share; it never reveals the plan).
+async function liveSite(env, url) {
+  const [, publicId, pageRaw] = url.pathname.split("/").filter(Boolean);
+  const project = await projectByPublicId(env, publicId);
+  if (!project?.site) return new Response("Not found", { status: 404, headers: { "content-type": "text/plain" } });
+  if (!pageRaw && !url.pathname.endsWith("/")) return Response.redirect(`${url.origin}/s/${publicId}/`, 301);
+  const page = PAGES.includes(pageRaw) ? pageRaw : "home";
+  const href = (pg) => `/s/${publicId}/${pg === "home" ? "" : pg}`;
+  const html = renderPage(project.site, page, href, { formAction: `/api/w/${publicId}`, origin: url.origin });
+  return new Response(html, { headers: pageHeaders() });
 }
 
 async function history(env, projectId, taskId) {

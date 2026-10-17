@@ -1,6 +1,10 @@
-// Renders a student's website from JSON content into safe static HTML pages,
+// Renders a student's TEST website from JSON content into safe static HTML pages,
 // and packages them as a .zip download. All AI text is escaped, so the AI can't
-// inject scripts into a student's site.
+// inject scripts into a student's site. Sites never run scripts.
+//
+// The only live feature is a plain HTML sign-up form (name, email, one optional
+// answer). It posts to Quad Founders at /api/w/:publicId, so it works on the
+// hosted link and in the downloaded files. Sites can't run logins, matching, or payments.
 
 const PALETTES = {
   lawn: { bg: "#F7FAF7", ink: "#0F1F17", accent: "#1F7A4D", accent2: "#5FBF8F", soft: "#E3EFE7" },
@@ -23,7 +27,7 @@ export function esc(v) {
     .replace(/'/g, "&#39;");
 }
 
-function safeEmail(v) {
+export function safeEmail(v) {
   const s = String(v || "").trim();
   return /^[^\s@<>"']+@[^\s@<>"']+\.[a-z]{2,}$/i.test(s) ? s : "";
 }
@@ -45,12 +49,19 @@ const IG = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" wi
 const PIN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0113 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg>';
 const ARROW = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
 
+// The sign-up form shows only when it's turned on AND the student added a contact email,
+// because visitors need a way to ask to be removed.
+export function waitlistReady(site) {
+  return site?.waitlistOn !== false && Boolean(safeEmail(site?.pages?.contact?.email));
+}
+
 /**
  * @param {object} site  site JSON
- * @param {string} page  one of PAGES
+ * @param {string} page  one of PAGES, or "joined" (the confirmation page after signing up)
  * @param {(page:string)=>string} href  builds links between pages
+ * @param {{formAction?:string, origin?:string, preview?:boolean, joined?:{status:string, back?:string}}} opts
  */
-export function renderPage(site, page, href) {
+export function renderPage(site, page, href, opts = {}) {
   const p = PALETTES[site.palette] || PALETTES.lawn;
   const c = site.pages?.[page] || {};
   const rawName = String(site.businessName || "My Business");
@@ -62,6 +73,31 @@ export function renderPage(site, page, href) {
   ).join("");
   const services = (site.pages?.services?.items || []).slice(0, 8);
   const contactHead = esc(site.pages?.contact?.headline || "Get in touch");
+  const wl = site.waitlist || {};
+  const ready = waitlistReady(site) && (opts.formAction || opts.preview);
+  const joinLink = ready ? `${href("home")}#join` : href("contact");
+  const ownerEmail = safeEmail(site.pages?.contact?.email);
+  const privacyUrl = opts.origin ? `${opts.origin}/privacy` : "/privacy";
+
+  const joinSection = () => {
+    if (!ready) {
+      return opts.preview ? `<section class="sec join" id="join"><div class="wrap"><div class="join-off"><strong>Sign-up form is off.</strong> ${site.waitlistOn === false ? "Turn it on in Quad Founders to collect sign-ups." : "Add your contact email in Quad Founders to turn it on. Visitors need a way to ask to be removed."}</div></div></section>` : "";
+    }
+    const q = String(wl.question || "").trim();
+    return `<section class="sec join" id="join"><div class="wrap join-in">
+      <div class="join-copy"><p class="eyebrow">${opts.preview ? "Sign-up form" : "Stay in the loop"}</p><h2>${esc(wl.headline || `Get updates from ${rawName}`)}</h2>${wl.text ? `<p class="lead">${esc(wl.text)}</p>` : ""}</div>
+      <form class="jform" method="post" action="${esc(opts.formAction || "#")}">
+        <label>Your name<input name="name" maxlength="80" autocomplete="name" required></label>
+        <label>Email<input type="email" name="email" maxlength="120" autocomplete="email" required></label>
+        ${q ? `<label>${esc(q)} <span class="opt">(optional)</span><input name="answer" maxlength="300"></label>` : ""}
+        <div class="hp" aria-hidden="true"><label>Leave this empty<input name="website" tabindex="-1" autocomplete="off"></label></div>
+        <input type="hidden" name="page" value="${esc(page)}">
+        <button class="btn" type="submit"${opts.preview ? " disabled" : ""}>${esc(wl.button || "Join the waitlist")} ${ARROW}</button>
+        ${opts.preview ? `<p class="fine"><strong>Preview only.</strong> Sign-ups work on your live link and in your downloaded files.</p>` : ""}
+        <p class="fine">${name} is a student-run business idea. Your name, email, and answer go only to ${name} so they can contact you about it, and are stored by Quad Founders, the tool this site was built with. To be removed, email <a href="mailto:${esc(ownerEmail)}">${esc(ownerEmail)}</a>. You must be 13 or older to sign up. <a href="${esc(privacyUrl)}" rel="noopener">Privacy</a></p>
+      </form>
+    </div></section>`;
+  };
 
   const same = (a, b) => String(a || "").trim().toLowerCase() === String(b || "").trim().toLowerCase();
   const pageHero = (eyebrow, headline, lead) => `<section class="phero"><div class="wrap">
@@ -71,12 +107,12 @@ export function renderPage(site, page, href) {
   const serviceCard = (i, n) => `<article class="svc a${Math.min(n + 2, 6)}">
       <div class="svc-top"><span class="ic">${icon(n)}</span>${i.price ? `<span class="price">${esc(i.price)}</span>` : ""}</div>
       <h3>${esc(i.name)}</h3><p>${esc(i.description)}</p>
-      <a class="more" href="${esc(href("contact"))}">Ask about this ${ARROW}</a>
+      <a class="more" href="${esc(joinLink)}">${ready ? "I'm interested" : "Ask about this"} ${ARROW}</a>
     </article>`;
 
   const ctaBand = `<section class="band"><div class="wrap band-in">
       <h2>${contactHead}</h2>
-      <a class="btn light" href="${esc(href("contact"))}">Contact ${name} ${ARROW}</a>
+      <a class="btn light" href="${esc(joinLink)}">${ready ? esc(wl.button || "Join the waitlist") : `Contact ${name}`} ${ARROW}</a>
     </div></section>`;
 
   let body = "";
@@ -88,7 +124,9 @@ export function renderPage(site, page, href) {
           ${tagline ? `<p class="pill a1"><i></i>${tagline}</p>` : ""}
           <h1 class="a2">${esc(c.headline)}</h1>
           <p class="lead a3">${esc(c.intro)}</p>
-          <div class="btns a4"><a class="btn" href="${esc(href("services"))}">${esc(c.cta || "See services")} ${ARROW}</a><a class="btn ghost" href="${esc(href("about"))}">About us</a></div>
+          <div class="btns a4">${ready
+            ? `<a class="btn" href="#join">${esc(wl.button || "Join the waitlist")} ${ARROW}</a><a class="btn ghost" href="${esc(href("services"))}">See services</a>`
+            : `<a class="btn" href="${esc(href("services"))}">${esc(c.cta || "See services")} ${ARROW}</a><a class="btn ghost" href="${esc(href("about"))}">About us</a>`}</div>
         </div>
         <div class="art a3" aria-hidden="true"><div class="orb"></div><div class="tile"><span>${initial}</span></div>${chips}</div>
       </div></section>
@@ -100,7 +138,7 @@ export function renderPage(site, page, href) {
         <div class="sec-head"><div>${same("Services", site.pages?.services?.headline) ? "" : '<p class="eyebrow">Services</p>'}<h2>${esc(site.pages?.services?.headline || "What we offer")}</h2></div><a class="link" href="${esc(href("services"))}">All services ${ARROW}</a></div>
         <div class="grid g3">${services.slice(0, 3).map(serviceCard).join("")}</div>
       </div></section>` : ""}
-      ${ctaBand}`;
+      ${ready || opts.preview ? joinSection() : ctaBand}`;
   } else if (page === "about") {
     const vals = (c.values || []).slice(0, 6);
     body = `${pageHero("About", c.headline)}
@@ -125,12 +163,26 @@ export function renderPage(site, page, href) {
       <section class="sec"><div class="wrap"><div class="contact a3">
         ${rows || `<p class="muted">Add your email or Instagram in Quad Founders to show it here.</p>`}
         ${email ? `<a class="btn" href="mailto:${esc(email)}">Send an email ${ARROW}</a>` : ""}
-      </div></div></section>`;
+      </div></div></section>
+      ${ready ? joinSection() : ""}`;
+  } else if (page === "joined") {
+    const j = opts.joined || {};
+    const back = j.back || href("home");
+    const MSG = {
+      ok: ["You're on the list", `Thanks for signing up. ${rawName} may email you about it. To be removed, email ${ownerEmail || "them"}.`],
+      invalid: ["Check your email address", "That email doesn't look right. Go back and try again."],
+      full: ["Sign-ups are closed for now", `${rawName} isn't taking new sign-ups right now.`],
+      limit: ["Too many tries", "Please try again tomorrow."],
+      off: ["Sign-ups are off", `${rawName} isn't collecting sign-ups right now.`],
+    };
+    const [h, t] = MSG[j.status] || MSG.ok;
+    body = `${pageHero(j.status === "ok" ? "Signed up" : "Sign-up", h, t)}
+      <section class="sec"><div class="wrap"><a class="btn" href="${esc(back)}">Back to ${name} ${ARROW}</a></div></section>`;
   }
 
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${PAGE_LABEL[page]} | ${name}</title>
+<title>${PAGE_LABEL[page] || "Thanks"} | ${name}</title>${opts.preview || page === "joined" ? '\n<meta name="robots" content="noindex">' : ""}
 <meta name="description" content="${tagline}">
 <style>
 :root{--bg:${p.bg};--ink:${p.ink};--accent:${p.accent};--accent2:${p.accent2};--soft:${p.soft};--muted:color-mix(in srgb,var(--ink) 62%,var(--bg));--line:color-mix(in srgb,var(--ink) 10%,transparent)}
@@ -212,6 +264,22 @@ a.row:hover{transform:translateX(4px)}
 .row small{display:block;font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.02em}
 .contact .btn{justify-self:start;margin-top:8px}
 .muted{color:var(--muted)}
+/* Sign-up form */
+.join{padding-top:0}
+.join-in{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start;padding:clamp(28px,4vw,48px);border-radius:32px;background:#fff;box-shadow:0 0 0 1px var(--line),0 24px 60px -30px rgba(0,0,0,.3)}
+.join-copy h2{font-size:clamp(28px,3.6vw,40px);font-weight:800}
+.join-copy .lead{margin-top:14px}
+.jform{display:grid;gap:14px}
+.jform label{display:grid;gap:6px;font-size:14px;font-weight:650}
+.jform .opt{font-weight:500;color:var(--muted)}
+.jform input{font:inherit;font-size:16px;padding:12px 14px;border-radius:14px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);outline:none;transition:border-color .2s,box-shadow .2s}
+.jform input:focus{border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 18%,transparent)}
+.jform .btn{justify-self:start;border:0;cursor:pointer;font:inherit;font-weight:700}
+.jform .btn[disabled]{opacity:.55;cursor:not-allowed;transform:none}
+.jform .fine{font-size:12.5px;line-height:1.5;color:var(--muted)}
+.jform .fine a{color:var(--accent)}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.join-off{padding:18px 22px;border-radius:18px;border:1.5px dashed var(--line);color:var(--muted);font-size:15px}
 footer{border-top:1px solid var(--line);padding:36px 0 44px;font-size:15px;color:var(--muted)}
 .foot{display:flex;flex-wrap:wrap;gap:16px 32px;justify-content:space-between;align-items:center}
 .foot nav a{padding:4px 8px;font-size:14px}
@@ -220,10 +288,10 @@ footer{border-top:1px solid var(--line);padding:36px 0 44px;font-size:15px;color
 .a1,.a2,.a3,.a4,.a5,.a6{animation:up .7s cubic-bezier(.2,.8,.2,1) both}
 .a2{animation-delay:.08s}.a3{animation-delay:.16s}.a4{animation-delay:.24s}.a5{animation-delay:.32s}.a6{animation-delay:.4s}
 @keyframes up{from{opacity:0;transform:translateY(16px)}}
-@media (max-width:820px){.hero-in,.story{grid-template-columns:1fr}.art{max-width:300px}.chip1{left:0}.chip2{right:0}}
+@media (max-width:820px){.hero-in,.story,.join-in{grid-template-columns:1fr}.art{max-width:300px}.chip1{left:0}.chip2{right:0}}
 @media (max-width:520px){nav a{padding:6px 10px;font-size:14px}.head{justify-content:center}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-a:focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:8px}
+a:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:8px}
 </style></head>
 <body>
 <header><div class="wrap head"><a class="brand" href="${esc(href("home"))}"><span class="mono" aria-hidden="true">${initial}</span>${name}</a><nav aria-label="Main">${nav}</nav></div></header>
@@ -296,7 +364,7 @@ export function makeZip(files) {
   return out;
 }
 
-export function siteFiles(site) {
+export function siteFiles(site, opts = {}) {
   const file = (pg) => (pg === "home" ? "index.html" : `${pg}.html`);
-  return PAGES.map((pg) => ({ name: file(pg), content: renderPage(site, pg, file) }));
+  return PAGES.map((pg) => ({ name: file(pg), content: renderPage(site, pg, file, opts) }));
 }

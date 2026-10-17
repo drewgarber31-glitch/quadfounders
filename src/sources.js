@@ -383,6 +383,85 @@ export const SOURCES = {
     summary: "For F-1 students, starting a business counts as work and generally requires qualifying for OPT first.",
     checked: "2026-10-17",
   },
+
+  // ---------- Launch path for app ideas (checked 2026-10-17) ----------
+  pg_dont_scale: {
+    title: "Paul Graham: Do Things that Don't Scale",
+    org: "Paul Graham, Y Combinator co-founder",
+    url: "https://paulgraham.com/ds.html",
+    summary: "Essay (July 2013): early founders recruit users by hand, start with a deliberately narrow market, and can do by hand what they plan to automate later.",
+    checked: "2026-10-17",
+  },
+  google_forms: {
+    title: "Google Docs Editors Help: How to use Google Forms",
+    org: "Google",
+    url: "https://support.google.com/docs/answer/6281888",
+    summary: "How to create a form at forms.google.com or from Google Sheets, and how to store responses in a Google Sheet.",
+    checked: "2026-10-17",
+  },
+  bubble_manual: {
+    title: "Bubble manual: What is Bubble?",
+    org: "Bubble",
+    url: "https://manual.bubble.io/what-is-bubble",
+    summary: "A visual, point-and-click web app builder with built-in user sign-up and login and an automated database.",
+    checked: "2026-10-17",
+  },
+  glide_sheets: {
+    title: "Glide: Build custom no code apps using Google Sheets",
+    org: "Glide",
+    url: "https://www.glideapps.com/data-sources/google-sheets",
+    summary: "Builds a mobile-friendly app from a Google Sheet without programming.",
+    checked: "2026-10-17",
+  },
+  stripe_no_code: {
+    title: "Stripe Docs: Accept payments online without writing code",
+    org: "Stripe",
+    url: "https://docs.stripe.com/payments/no-code",
+    summary: "Payment Links: a Stripe-hosted payment page you create without code and share by link, QR code, or a buy button. Includes automatic receipts and no-code refunds.",
+    checked: "2026-10-17",
+  },
+  stripe_security: {
+    title: "Stripe Docs: Integration security guide",
+    org: "Stripe",
+    url: "https://docs.stripe.com/security/guide",
+    summary: "PCI DSS applies to anyone who handles card data. Low-risk integrations send payment details straight to Stripe so they don't pass through your servers.",
+    checked: "2026-10-17",
+  },
+  stripe_age: {
+    title: "Stripe Support: Age requirement to create a Stripe account",
+    org: "Stripe",
+    url: "https://support.stripe.com/questions/age-requirement-to-create-a-stripe-account",
+    summary: "You must be at least 13. Under 18, a legal guardian must be the account owner before the account can accept charges or pay out.",
+    checked: "2026-10-17",
+  },
+  ftc_start_security: {
+    title: "FTC: Start with Security, a guide for business",
+    org: "Federal Trade Commission",
+    url: "https://www.ftc.gov/system/files/ftc_gov/pdf/920a_start_with_security_en_aug2023_508_final_0.pdf",
+    summary: "Ten lessons, including: don't collect personal information you don't need, keep it only as long as you need it, and require secure passwords.",
+    checked: "2026-10-17",
+  },
+  apple_review: {
+    title: "Apple: App Review Guidelines (5.1.1 Data collection and storage)",
+    org: "Apple",
+    url: "https://developer.apple.com/app-store/review/guidelines/",
+    summary: "All apps must link a privacy policy that explains what data they collect and how users can request deletion. Apps with account creation must offer account deletion in the app.",
+    checked: "2026-10-17",
+  },
+  copyright_circ30: {
+    title: "U.S. Copyright Office: Works Made for Hire (Circular 30)",
+    org: "U.S. Copyright Office",
+    url: "https://www.copyright.gov/circs/circ30.pdf",
+    summary: "When the person or company that hired the creator owns the copyright, and the written, signed agreement and nine categories required for commissioned works.",
+    checked: "2026-10-17",
+  },
+  usc_204: {
+    title: "17 U.S.C. 204: Execution of transfers of copyright ownership",
+    org: "U.S. Government Publishing Office",
+    url: "https://www.govinfo.gov/content/pkg/USCODE-2023-title17/html/USCODE-2023-title17-chap2-sec204.htm",
+    summary: "A transfer of copyright ownership is not valid unless it is in writing and signed by the owner of the rights.",
+    checked: "2026-10-17",
+  },
 };
 
 // The legal quadrant is built from these fixed steps, not invented by AI.
@@ -406,7 +485,7 @@ export const LEGAL_STEPS = [
   { id: "legal-marketplace", title: "Learn what marketplaces must collect from sellers", sources: ["ftc_inform"], minutes: 15, types: ["online"] },
   { id: "legal-ip", title: "Learn how to protect your idea (patent, trademark, copyright)", sources: ["uspto_ip_types", "uspto_provisional", "copyright_faq"], minutes: 30, types: ["invention", "digital", "product"] },
   { id: "legal-trademark", title: "Learn when to use TM and whether to register your brand", sources: ["uspto_trademark"], minutes: 15, types: ["all"] },
-  { id: "legal-coppa", title: "Check children's privacy rules if kids under 13 might use it", sources: ["ftc_coppa"], minutes: 20, types: ["digital"] },
+  { id: "legal-coppa", title: "Check children's privacy rules if kids under 13 might use it", sources: ["ftc_coppa"], minutes: 20, types: ["digital", "app"] },
   { id: "legal-ein", title: "Decide whether you need a free EIN from the IRS", sources: ["irs_ein", "sba_tax_ids"], minutes: 15, types: ["all"] },
   { id: "legal-sales-tax", title: "Check if you need to register for NC sales tax", sources: ["ncdor_who_registers", "ncdor_sales_tax"], minutes: 20, types: ["all"], other: { title: "Check if you need to register for state taxes, like sales tax", sources: ["st_tax", "sba_tax_ids", "st_irs"] } },
   { id: "legal-taxes", title: "Learn how self-employment taxes work", sources: ["irs_self_employed", "irs_hobby"], minutes: 20, types: ["all"] },
@@ -427,6 +506,16 @@ export const LEGAL_STEPS = [
   { id: "fixed-reviews", title: "Learn the rules for reviews and paid posts", sources: ["ftc_endorsements"], minutes: 15, types: ["all"], quadrant: "marketing" },
   { id: "fixed-access", title: "Make your website accessible to everyone", sources: ["ada_web"], minutes: 20, types: ["all"], quadrant: "marketing" },
   { id: "fixed-data", title: "Protect any customer information you collect", sources: ["ftc_protect_info", "ftc_cyber"], minutes: 20, types: ["all"], quadrant: "marketing" },
+  { id: "fixed-waitlist", title: "Share your test site and collect your first sign-ups", sources: ["sba_market_research", "ftc_start_security"], minutes: 20, types: ["all"], quadrant: "marketing" },
+  // Launch path: only for ideas that need a real app (accounts, matching, payments, live features).
+  // Order matters: this is the order the launch path shows them in.
+  { id: "app-concierge", title: "Run your service by hand before building the app", sources: ["pg_dont_scale", "google_forms"], minutes: 45, types: ["app"], quadrant: "customer", launch: 1 },
+  { id: "app-payments", title: "Take payments with a hosted payment link, not your own card form", sources: ["stripe_no_code", "stripe_security", "stripe_age"], minutes: 30, types: ["app"], quadrant: "pricing", launch: 2 },
+  { id: "app-nocode", title: "Try building a first version with a no-code tool", sources: ["bubble_manual", "glide_sheets"], minutes: 60, types: ["app"], quadrant: "customer", launch: 3 },
+  { id: "app-privacy", title: "Write a privacy policy before your app collects user data", sources: ["ftc_start_security", "apple_review", "ftc_protect_info"], minutes: 30, types: ["app"], quadrant: "legal", launch: 4 },
+  { id: "app-accounts", title: "If users will make accounts, plan passwords and account deletion", sources: ["ftc_start_security", "apple_review"], minutes: 20, types: ["app"], quadrant: "legal", launch: 5 },
+  { id: "app-ownership", title: "If someone else builds your app, get ownership of the code in writing", sources: ["copyright_circ30", "usc_204"], minutes: 20, types: ["app"], quadrant: "legal", launch: 6 },
+  { id: "app-meetups", title: "If users meet in person or ride together, check insurance first", sources: ["sba_insurance"], minutes: 20, types: ["app"], quadrant: "legal", launch: 7 },
 ];
 
 /**
