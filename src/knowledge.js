@@ -155,7 +155,7 @@ export const KNOWLEDGE = [
       "Partnership: simplest structure for two or more owners; unlimited personal liability unless set up as an LP or LLP.",
       "LLC: protects owners from personal liability in most instances, with pass-through taxes; SBA notes it suits medium- or higher-risk businesses.",
       "Corporations give the strongest liability protection but cost more to form and require more record-keeping.",
-      "Quad Founders suggests (not from this source): structure affects legal and tax matters, so confirm your choice with your state's business registration office and a qualified professional.",
+      "Quad Founders note (not from this source): structure affects legal and tax matters. Look into it with your state's business registration office and a qualified professional.",
     ],
   },
   {
@@ -165,7 +165,7 @@ export const KNOWLEDGE = [
     quadrant: "legal",
     source: "uspto_search",
     points: [
-      "USPTO says to do a clearance search for similar trademarks before applying to register one, and Quad Founders suggests searching before you settle on a name. A common reason trademark applications are rejected is that the name is too similar to an existing one and customers could be confused.",
+      "USPTO says to do a clearance search for similar trademarks before applying to register one. A common reason trademark applications are rejected is that the name is too similar to an existing one and customers could be confused.",
       "The USPTO only checks the federal database. USPTO says it's your responsibility to search state trademark databases and the internet.",
     ],
   },
@@ -192,7 +192,7 @@ export const KNOWLEDGE = [
       "You are generally self-employed if you run your own business, including part-time or gig work.",
       "The IRS says you must file a tax return if your net earnings from self-employment were $400 or more.",
       "Self-employment tax covers Social Security and Medicare. Self-employed people generally pay estimated taxes quarterly (Form 1040-ES).",
-      "Quad Founders suggests (not from this source): confirm your own situation with the IRS or a tax professional.",
+      "Quad Founders note (not from this source): your own situation is something to look into with the IRS or a tax professional.",
     ],
   },
   {
@@ -235,7 +235,7 @@ export const KNOWLEDGE = [
       "The home kitchen must be inspected by NCDA&CS before selling. NCDA&CS does not charge for the inspection, and a permit is not issued.",
       "Homes with any pets, even pets that only come inside at night, cannot make food for sale.",
       "Labels are required for self-service sales and must include the product name and all \"Top 9\" allergens by common name.",
-      "This summary is from NC State Extension (page updated April 23, 2024). Quad Founders suggests confirming current rules with NCDA&CS before selling.",
+      "This summary is from NC State Extension (page updated April 23, 2024). Current rules are something to look into with NCDA&CS.",
     ],
   },
   {
@@ -283,7 +283,7 @@ export const KNOWLEDGE = [
       "A provisional patent application sets an official U.S. filing date and allows \"Patent Pending\" for 12 months. It is not examined and won't become a patent unless a full (nonprovisional) application follows within 12 months. The 12 months can't be extended.",
       "USPTO warns that publicly disclosing an invention can cost you rights. Students should be careful about posting or pitching an invention's details publicly before getting advice.",
       "USPTO warns that some invention promotion firms misuse the provisional process and leave inventors with no patent.",
-      "USPTO says fees are subject to change annually. Quad Founders suggests taking patent questions to the USPTO or a registered patent attorney or agent.",
+      "USPTO says fees are subject to change annually. Patent questions are something to look into with the USPTO or a registered patent attorney or agent.",
     ],
   },
   {
@@ -296,7 +296,7 @@ export const KNOWLEDGE = [
     points: [
       "North Carolina law (G.S. 88B-22) says no person may practice cosmetic art for pay or reward without a license from the NC Board of Cosmetic Art Examiners, except as the law provides.",
       "License types include cosmetologist, esthetician, natural hair care specialist, and manicurist. The law also bars practicing for pay outside a licensed shop, except as the chapter provides.",
-      "Quad Founders suggests (not from this source): anyone offering hair, nail, skin, or similar services for pay should check licensing with the NC Board of Cosmetic Art Examiners before starting.",
+      "Quad Founders note (not from this source): licensing for hair, nail, skin, or similar paid services is something to look into with the NC Board of Cosmetic Art Examiners.",
     ],
   },
   // ---------- Added 2026-10-17 ----------
@@ -395,7 +395,7 @@ export const KNOWLEDGE = [
     points: [
       "DHS Study in the States says starting your own business constitutes work for F-1 students.",
       "It says F-1 students generally need to qualify for and apply for OPT first, the work must relate to their program of study, and pre-completion OPT is limited to 20 hours a week while school is in session.",
-      "Quad Founders suggests (this is not from DHS) talking to your school's international student office before starting. Never give immigration advice.",
+      "Quad Founders note (not from DHS): work rules for international students are something to look into with your school's international student office. Never give immigration advice.",
     ],
   },
   {
@@ -708,7 +708,7 @@ export const KNOWLEDGE = [
     source: "usc_204",
     points: [
       "Federal law (17 U.S.C. 204) says a transfer of copyright ownership, other than by operation of law, is not valid unless it is in writing and signed by the owner of the rights being transferred or their authorized agent.",
-      "Quad Founders suggests (not from this source): if a friend or freelancer builds your app, agree in writing who owns the code before they start, and have a qualified professional or a free law clinic review it.",
+      "Quad Founders note (not from this source): if a friend or freelancer will build your app, code ownership is something to look into with a qualified professional or a free law clinic before they start.",
     ],
   },
 ];

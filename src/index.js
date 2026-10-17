@@ -19,6 +19,20 @@ const QUADRANTS = ["customer", "pricing", "marketing", "legal"];
 const LIMITS = { idea: 2000, answer: 500, message: 1500, instruction: 500, summary: 1200, history: 20 };
 // Sign-up form limits: per site, and per visitor network per site per day (dorms share networks).
 const SIGNUPS = { perSite: 2000, perVisitorDay: 30 };
+// Safety net for legal topics: drop any sentence where the AI tells a student whether a rule
+// applies to them or what they must do. Legal topics are only ever flagged to look into.
+const LEGAL_CONCLUSION = /\b(you (do not|don't|won't|will not) (need|have)( to)?|(is|are)n't (required|needed)|(is|are) not (required|needed)|not (required|needed) for you|you('re| are) (exempt|fine|good to go|in the clear|all set|covered|legal)|(doesn't|does not|don't|do not|won't|will not) apply to you|(this|that|it|they) (applies|apply) to you|you('re| are) required to|you (must|have to|need to) (register|file|get|obtain|apply|pay|collect|form|buy|incorporate)|you should (register|file|form|incorporate|choose|pick|get an? (llc|license|permit|ein|insurance)))\b/i;
+// Chat replies keep their line breaks (bullets), so filter line by line, then sentence by sentence.
+function legalSafeChat(text) {
+  const out = String(text || "").split("\n").map((line) => legalSafe(line, "")).filter((line, i, all) => line || (all[i - 1] ?? "") !== "").join("\n").trim();
+  return out || "I can't tell you whether this applies to you. I can show you what the official source says and help you write down questions for the office or a licensed professional.";
+}
+function legalSafe(text, fallback = "") {
+  const out = String(text || "").split(/(?<=[.!?])\s+/).filter((x) => !LEGAL_CONCLUSION.test(x)).join(" ").trim();
+  return out || fallback;
+}
+const LOOK_DEFAULT = "Look into the official source to see what it says about this for your idea.";
+
 // Sign-up questions may never ask for sensitive information.
 const SENSITIVE_Q = /\b(ssn|social security|password|passcode|bank|card number|credit card|debit|routing|account number|birth|birthday|age|address|phone|health|medical|diagnos|religio|immigra|citizen|license number|id number|income|salary)\b/i;
 
@@ -140,7 +154,7 @@ async function api(request, env, url) {
     const tasks = project.plan.tasks.filter((t) => !fixedIds.has(t.id) || allowed.has(t.id));
     for (const st of steps) {
       if (tasks.some((t) => t.id === st.id)) continue;
-      tasks.push({ id: st.id, quadrant: st.quadrant || "legal", title: st.title, why: "Read the official source to see if this applies to you.", minutes: st.minutes, sources: st.sources, ...(st.launch ? { launch: st.launch } : {}), done: false });
+      tasks.push({ id: st.id, quadrant: st.quadrant || "legal", title: st.title, why: st.legal ? LOOK_DEFAULT : "Read the official source to learn more.", minutes: st.minutes, sources: st.sources, ...(st.launch ? { launch: st.launch } : {}), ...(st.legal ? { legal: true } : {}), done: false });
     }
     tasks.sort((a, b) => QUADRANTS.indexOf(a.quadrant) - QUADRANTS.indexOf(b.quadrant));
     project.plan.tasks = tasks;
@@ -203,7 +217,8 @@ async function api(request, env, url) {
         maxTokens: 1000,
         ...regenerateQuadrantPrompt(project, q, clean(feedback, LIMITS.instruction)),
       });
-      project.plan.quadrants[q].summary = sanitizeSources(clean(out.summary, LIMITS.summary), project.state);
+      const sum = sanitizeSources(clean(out.summary, LIMITS.summary), project.state);
+      project.plan.quadrants[q].summary = q === "legal" ? legalSafe(sum, project.plan.quadrants[q].summary) : sum;
     } else if (parts.length === 4 && method === "PATCH") {
       const { summary } = await body(request);
       const s = clean(summary, LIMITS.summary);
@@ -244,12 +259,13 @@ async function api(request, env, url) {
         const steps = (Array.isArray(out.steps) ? out.steps : []).slice(0, 5).map((st, i) => ({
           id: `s${i + 1}`,
           title: clean(st?.title, 100),
-          how: sanitizeSources(clean(st?.how, 400), project.state),
+          how: task.legal ? legalSafe(sanitizeSources(clean(st?.how, 400), project.state), "Open the official source for this step and write down the questions it raises for your idea.") : sanitizeSources(clean(st?.how, 400), project.state),
           done: false,
         })).filter((st) => st.title);
         if (!steps.length) throw new AIError("The co-pilot couldn't set up this step. Try again.");
         task.guide = { steps };
-        const opening = sanitizeSources(clean(out.opening, 800), project.state);
+        const opening0 = sanitizeSources(clean(out.opening, 800), project.state);
+        const opening = task.legal ? legalSafe(opening0, "Let's find what to look into for this step. I can point you to what the official source says, but I can't tell you what applies to you.") : opening0;
         const already = await history(env, id, task.id);
         const stmts = [env.DB.prepare("UPDATE projects SET plan = ?, updated_at = ? WHERE id = ?").bind(JSON.stringify(project.plan), new Date().toISOString(), id)];
         if (opening && !already.length) {
@@ -283,10 +299,12 @@ async function api(request, env, url) {
       }));
       // The co-pilot speaks first in a walkthrough, but the API needs the first turn to be the student's.
       if (messages[0].role !== "user") messages.unshift({ role: "user", content: "Walk me through this task." });
-      const reply = sanitizeSources(
+      const reply0 = sanitizeSources(
         await callAI(env, { kind: "chat", system: taskChatSystem(project, task), messages, maxTokens: 1000 }),
         project.state
       );
+      // On legal topics, strip any sentence that tells the student what applies to them.
+      const reply = task.legal ? legalSafeChat(reply0) : reply0;
       const now = new Date().toISOString();
       await env.DB.batch([
         env.DB.prepare("INSERT INTO messages (project_id, task_id, role, content, created_at) VALUES (?, ?, 'user', ?, ?)").bind(id, task.id, text, now),
@@ -404,7 +422,8 @@ function normalizePlan(out, types = [], state = "NC") {
   const stSources = stateSources(state);
   const quadrants = {};
   for (const q of QUADRANTS) {
-    quadrants[q] = { summary: sanitize(clean(out?.quadrants?.[q]?.summary, LIMITS.summary)) || "Ask the co-pilot to fill this in." };
+    const sum = sanitize(clean(out?.quadrants?.[q]?.summary, LIMITS.summary));
+    quadrants[q] = { summary: (q === "legal" ? legalSafe(sum) : sum) || (q === "legal" ? "These are the legal and registration topics to look into for your idea. Each step links to its official source." : "Ask the co-pilot to fill this in.") };
   }
   const tasks = [];
   const counts = {};
@@ -426,15 +445,18 @@ function normalizePlan(out, types = [], state = "NC") {
   const legalAI = new Map((out?.legal || []).map((l) => [l.id, l]));
   for (const step of legalStepsFor(types, state, stSources)) {
     const ai = legalAI.get(step.id);
-    if (ai && ai.applies === false) continue;
+    // Legal topics are always shown: the AI never decides that a legal step doesn't apply.
+    if (!step.legal && ai && ai.applies === false) continue;
+    const why = sanitize(clean(ai?.why, 240));
     tasks.push({
       id: step.id,
       quadrant: step.quadrant || "legal",
       title: step.title,
-      why: sanitize(clean(ai?.why, 240)) || "Read the official source to see if this applies to you.",
+      why: step.legal ? legalSafe(why, LOOK_DEFAULT) : why || "Read the official source to learn more.",
       minutes: step.minutes,
       sources: step.sources,
       ...(step.launch ? { launch: step.launch } : {}),
+      ...(step.legal ? { legal: true } : {}),
       done: false,
     });
   }
@@ -546,6 +568,17 @@ async function loadProject(env, id) {
     site: row.site ? JSON.parse(row.site) : null,
     createdAt: row.created_at,
   };
+  // Plans made earlier get the current fixed-step titles and legal-topic flags (wording only; progress is kept).
+  if (p.plan?.tasks) {
+    const current = new Map(legalStepsFor(p.types, p.state, stateSources(p.state)).map((st) => [st.id, st]));
+    for (const t of p.plan.tasks) {
+      const st = current.get(t.id);
+      if (!st) continue;
+      t.title = st.title;
+      if (st.legal) { t.legal = true; t.why = legalSafe(t.why, LOOK_DEFAULT); } else delete t.legal;
+    }
+    if (p.plan.quadrants?.legal) p.plan.quadrants.legal.summary = legalSafe(p.plan.quadrants.legal.summary, "These are the legal and registration topics to look into for your idea. Each step links to its official source.");
+  }
   // Sites made before live links existed get a public id the first time they're opened.
   if (p.site && !p.site.publicId) {
     p.site.publicId = crypto.randomUUID().replace(/-/g, "").slice(0, 16);

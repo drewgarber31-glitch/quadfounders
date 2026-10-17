@@ -466,57 +466,63 @@ export const SOURCES = {
 
 // The legal quadrant is built from these fixed steps, not invented by AI.
 // types: which business types the step applies to ("all" = everyone).
-// The AI only decides which ones apply and explains why in plain language.
+// Legal, tax, regulatory, insurance, privacy, and IP steps (legal: true, set below) are only
+// flagged as things to LOOK INTO. They are always shown, the AI never decides whether they
+// apply, and the AI never says what the student must or doesn't need to do.
 export const LEGAL_STEPS = [
   // Legal and registration
-  { id: "legal-structure", title: "Choose a business structure", sources: ["sba_structure"], minutes: 30, types: ["all"] },
-  { id: "legal-name", title: "Check your business name (trademarks and NC records)", sources: ["uspto_search", "nc_sos_registration"], minutes: 20, types: ["all"], other: { title: "Check your business name (trademarks and state records)", sources: ["uspto_search", "st_reg"] } },
-  { id: "legal-dba", title: "Decide whether to file an assumed business name (DBA)", sources: ["nc_abn", "sba_register"], minutes: 15, types: ["all"], other: { title: "Decide whether you need to register a DBA (doing business as) name", sources: ["sba_register", "st_reg"] } },
-  { id: "legal-register", title: "Decide whether to register with the NC Secretary of State", sources: ["nc_sos_registration", "sba_register"], minutes: 30, types: ["all"], other: { title: "Decide whether to register with your state's business office", sources: ["st_reg", "sba_register"] } },
-  { id: "legal-licenses", title: "Check which licenses and permits apply to you", sources: ["nc_licenses", "sba_licenses"], minutes: 30, types: ["all"], other: { title: "Check which licenses and permits apply to you", sources: ["st_lic", "sba_licenses", "st_irs"] } },
-  { id: "legal-zoning", title: "Check local zoning rules, even for a home business", sources: ["sba_location"], minutes: 20, types: ["all"] },
-  { id: "legal-food", title: "Check NC home food rules and request a kitchen inspection", sources: ["ncsu_home_food"], minutes: 30, types: ["food"], other: { title: "Find your state's rules for selling food made at home", sources: ["st_lic", "st_help", "st_sba", "st_irs"] } },
-  { id: "legal-beauty", title: "Check NC cosmetic art licensing before charging for services", sources: ["nc_gs_88b22"], minutes: 20, types: ["beauty"], other: { title: "Check your state's beauty and cosmetology licensing before charging", sources: ["st_lic", "st_irs"] } },
-  { id: "legal-cosmetics", title: "Check FDA rules if you make or sell cosmetics", sources: ["fda_cosmetics"], minutes: 20, types: ["beauty", "product"] },
-  { id: "legal-children", title: "Check safety rules if you sell products for kids 12 and under", sources: ["cpsc_cpc", "cpsc_small_batch"], minutes: 20, types: ["product", "online", "invention"] },
-  { id: "legal-textile", title: "Check label rules if you sell clothing or textiles", sources: ["ftc_textile"], minutes: 15, types: ["product", "online"] },
-  { id: "legal-made-usa", title: "Check the rules before saying \"Made in USA\"", sources: ["ftc_made_usa"], minutes: 15, types: ["product", "online", "invention"] },
-  { id: "legal-shipping", title: "Set honest shipping times and a refund policy", sources: ["ftc_mail_order"], minutes: 20, types: ["online"] },
-  { id: "legal-marketplace", title: "Learn what marketplaces must collect from sellers", sources: ["ftc_inform"], minutes: 15, types: ["online"] },
-  { id: "legal-ip", title: "Learn how to protect your idea (patent, trademark, copyright)", sources: ["uspto_ip_types", "uspto_provisional", "copyright_faq"], minutes: 30, types: ["invention", "digital", "product"] },
-  { id: "legal-trademark", title: "Learn when to use TM and whether to register your brand", sources: ["uspto_trademark"], minutes: 15, types: ["all"] },
-  { id: "legal-coppa", title: "Check children's privacy rules if kids under 13 might use it", sources: ["ftc_coppa"], minutes: 20, types: ["digital", "app"] },
-  { id: "legal-ein", title: "Decide whether you need a free EIN from the IRS", sources: ["irs_ein", "sba_tax_ids"], minutes: 15, types: ["all"] },
-  { id: "legal-sales-tax", title: "Check if you need to register for NC sales tax", sources: ["ncdor_who_registers", "ncdor_sales_tax"], minutes: 20, types: ["all"], other: { title: "Check if you need to register for state taxes, like sales tax", sources: ["st_tax", "sba_tax_ids", "st_irs"] } },
-  { id: "legal-taxes", title: "Learn how self-employment taxes work", sources: ["irs_self_employed", "irs_hobby"], minutes: 20, types: ["all"] },
-  { id: "legal-bank", title: "Plan a separate account for business money", sources: ["sba_bank"], minutes: 15, types: ["all"] },
-  { id: "legal-insurance", title: "Check which insurance makes sense", sources: ["sba_insurance"], minutes: 20, types: ["all"] },
-  { id: "legal-hiring", title: "If anyone will help you, learn employee vs. contractor rules", sources: ["irs_contractor", "sba_hire"], minutes: 20, types: ["all"] },
-  { id: "legal-intl", title: "International students: check work rules before you start", sources: ["dhs_intl_entrepreneurs"], minutes: 15, types: ["all"] },
-  { id: "legal-annual", title: "If you form an LLC or corporation, know your annual report duties", sources: ["nc_maintaining"], minutes: 15, types: ["all"], other: { title: "If you form an LLC or corporation, check your state's ongoing filing duties", sources: ["st_reg"] } },
+  { id: "legal-structure", title: "Look into business structures (sole proprietorship, LLC, and more)", sources: ["sba_structure"], minutes: 30, types: ["all"] },
+  { id: "legal-name", title: "Look into whether your business name is taken (trademarks and NC records)", sources: ["uspto_search", "nc_sos_registration"], minutes: 20, types: ["all"], other: { title: "Look into whether your business name is taken (trademarks and state records)", sources: ["uspto_search", "st_reg"] } },
+  { id: "legal-dba", title: "Look into whether you need an assumed business name (DBA)", sources: ["nc_abn", "sba_register"], minutes: 15, types: ["all"], other: { title: "Look into whether you need a DBA (doing business as) name", sources: ["sba_register", "st_reg"] } },
+  { id: "legal-register", title: "Look into registering with the NC Secretary of State", sources: ["nc_sos_registration", "sba_register"], minutes: 30, types: ["all"], other: { title: "Look into registering with your state's business office", sources: ["st_reg", "sba_register"] } },
+  { id: "legal-licenses", title: "Look into which licenses and permits may apply", sources: ["nc_licenses", "sba_licenses"], minutes: 30, types: ["all"], other: { title: "Look into which licenses and permits may apply", sources: ["st_lic", "sba_licenses", "st_irs"] } },
+  { id: "legal-zoning", title: "Look into local zoning rules, even for a home business", sources: ["sba_location"], minutes: 20, types: ["all"] },
+  { id: "legal-food", title: "Look into NC home food rules and kitchen inspections", sources: ["ncsu_home_food"], minutes: 30, types: ["food"], other: { title: "Look into your state's rules for selling food made at home", sources: ["st_lic", "st_help", "st_sba", "st_irs"] } },
+  { id: "legal-beauty", title: "Look into NC cosmetic art licensing before charging for services", sources: ["nc_gs_88b22"], minutes: 20, types: ["beauty"], other: { title: "Look into your state's beauty and cosmetology licensing before charging", sources: ["st_lic", "st_irs"] } },
+  { id: "legal-cosmetics", title: "Look into FDA rules if you make or sell cosmetics", sources: ["fda_cosmetics"], minutes: 20, types: ["beauty", "product"] },
+  { id: "legal-children", title: "Look into safety rules for products for kids 12 and under", sources: ["cpsc_cpc", "cpsc_small_batch"], minutes: 20, types: ["product", "online", "invention"] },
+  { id: "legal-textile", title: "Look into label rules for clothing and textiles", sources: ["ftc_textile"], minutes: 15, types: ["product", "online"] },
+  { id: "legal-made-usa", title: "Look into the rules before saying \"Made in USA\"", sources: ["ftc_made_usa"], minutes: 15, types: ["product", "online", "invention"] },
+  { id: "legal-shipping", title: "Look into FTC rules on shipping times for online orders", sources: ["ftc_mail_order"], minutes: 20, types: ["online"] },
+  { id: "legal-marketplace", title: "Look into what marketplaces must collect from sellers", sources: ["ftc_inform"], minutes: 15, types: ["online"] },
+  { id: "legal-ip", title: "Look into ways to protect an idea (patent, trademark, copyright)", sources: ["uspto_ip_types", "uspto_provisional", "copyright_faq"], minutes: 30, types: ["invention", "digital", "product"] },
+  { id: "legal-trademark", title: "Look into the TM symbol and trademark registration", sources: ["uspto_trademark"], minutes: 15, types: ["all"] },
+  { id: "legal-coppa", title: "Look into children's privacy rules if kids under 13 might use it", sources: ["ftc_coppa"], minutes: 20, types: ["digital", "app"] },
+  { id: "legal-ein", title: "Look into whether you need a free EIN from the IRS", sources: ["irs_ein", "sba_tax_ids"], minutes: 15, types: ["all"] },
+  { id: "legal-sales-tax", title: "Look into NC sales tax registration", sources: ["ncdor_who_registers", "ncdor_sales_tax"], minutes: 20, types: ["all"], other: { title: "Look into state tax registration, like sales tax", sources: ["st_tax", "sba_tax_ids", "st_irs"] } },
+  { id: "legal-taxes", title: "Look into how self-employment taxes work", sources: ["irs_self_employed", "irs_hobby"], minutes: 20, types: ["all"] },
+  { id: "legal-bank", title: "Look into a separate bank account for business money", sources: ["sba_bank"], minutes: 15, types: ["all"] },
+  { id: "legal-insurance", title: "Look into business insurance", sources: ["sba_insurance"], minutes: 20, types: ["all"] },
+  { id: "legal-hiring", title: "If anyone will help you, look into employee vs. contractor rules", sources: ["irs_contractor", "sba_hire"], minutes: 20, types: ["all"] },
+  { id: "legal-intl", title: "International students: look into work rules before you start", sources: ["dhs_intl_entrepreneurs"], minutes: 15, types: ["all"] },
+  { id: "legal-annual", title: "If you form an LLC or corporation, look into annual report duties", sources: ["nc_maintaining"], minutes: 15, types: ["all"], other: { title: "If you form an LLC or corporation, look into your state's ongoing filing duties", sources: ["st_reg"] } },
   { id: "legal-clinic", title: "Look into free legal help from a university law clinic", sources: ["nc_checklist"], minutes: 15, types: ["all"], other: null },
   { id: "legal-mentor", title: "Book a free mentor session to review your plan", sources: ["score_mentoring", "nc_sbtdc", "nc_sbcn", "edpnc_advisors"], minutes: 15, types: ["all"], other: { title: "Book a free mentor session to review your plan", sources: ["score_mentoring", "st_help", "st_sba"] } },
   // Idea and customer (fixed)
   { id: "fixed-lean-plan", title: "Write a one-page lean business plan", sources: ["sba_business_plan", "nc_checklist"], minutes: 45, types: ["all"], quadrant: "customer", other: { title: "Write a one-page lean business plan", sources: ["sba_business_plan"] } },
   // Pricing and costs (fixed)
-  { id: "fixed-records", title: "Set up a simple system to track income and expenses", sources: ["irs_records"], minutes: 20, types: ["all"], quadrant: "pricing" },
+  { id: "fixed-records", title: "Look into IRS recordkeeping for income and expenses", sources: ["irs_records"], minutes: 20, types: ["all"], quadrant: "pricing" },
   // Marketing (fixed)
-  { id: "fixed-ads", title: "Check that your ads and claims are true and backed up", sources: ["ftc_ads"], minutes: 15, types: ["all"], quadrant: "marketing" },
-  { id: "fixed-email", title: "Follow the rules if you market by email", sources: ["ftc_canspam"], minutes: 15, types: ["all"], quadrant: "marketing" },
-  { id: "fixed-reviews", title: "Learn the rules for reviews and paid posts", sources: ["ftc_endorsements"], minutes: 15, types: ["all"], quadrant: "marketing" },
-  { id: "fixed-access", title: "Make your website accessible to everyone", sources: ["ada_web"], minutes: 20, types: ["all"], quadrant: "marketing" },
-  { id: "fixed-data", title: "Protect any customer information you collect", sources: ["ftc_protect_info", "ftc_cyber"], minutes: 20, types: ["all"], quadrant: "marketing" },
+  { id: "fixed-ads", title: "Look into FTC rules for ads and claims", sources: ["ftc_ads"], minutes: 15, types: ["all"], quadrant: "marketing" },
+  { id: "fixed-email", title: "Look into email marketing rules (CAN-SPAM)", sources: ["ftc_canspam"], minutes: 15, types: ["all"], quadrant: "marketing" },
+  { id: "fixed-reviews", title: "Look into FTC rules for reviews and paid posts", sources: ["ftc_endorsements"], minutes: 15, types: ["all"], quadrant: "marketing" },
+  { id: "fixed-access", title: "Look into website accessibility guidance (ADA)", sources: ["ada_web"], minutes: 20, types: ["all"], quadrant: "marketing" },
+  { id: "fixed-data", title: "Look into protecting customer information", sources: ["ftc_protect_info", "ftc_cyber"], minutes: 20, types: ["all"], quadrant: "marketing" },
   { id: "fixed-waitlist", title: "Share your test site and collect your first sign-ups", sources: ["sba_market_research", "ftc_start_security"], minutes: 20, types: ["all"], quadrant: "marketing" },
   // Launch path: only for ideas that need a real app (accounts, matching, payments, live features).
   // Order matters: this is the order the launch path shows them in.
   { id: "app-concierge", title: "Run your service by hand before building the app", sources: ["pg_dont_scale", "google_forms"], minutes: 45, types: ["app"], quadrant: "customer", launch: 1 },
-  { id: "app-payments", title: "Take payments with a hosted payment link, not your own card form", sources: ["stripe_no_code", "stripe_security", "stripe_age"], minutes: 30, types: ["app"], quadrant: "pricing", launch: 2 },
+  { id: "app-payments", title: "Look into payment options that keep card data off your site", sources: ["stripe_no_code", "stripe_security", "stripe_age"], minutes: 30, types: ["app"], quadrant: "pricing", launch: 2 },
   { id: "app-nocode", title: "Try building a first version with a no-code tool", sources: ["bubble_manual", "glide_sheets"], minutes: 60, types: ["app"], quadrant: "customer", launch: 3 },
-  { id: "app-privacy", title: "Write a privacy policy before your app collects user data", sources: ["ftc_start_security", "apple_review", "ftc_protect_info"], minutes: 30, types: ["app"], quadrant: "legal", launch: 4 },
-  { id: "app-accounts", title: "If users will make accounts, plan passwords and account deletion", sources: ["ftc_start_security", "apple_review"], minutes: 20, types: ["app"], quadrant: "legal", launch: 5 },
-  { id: "app-ownership", title: "If someone else builds your app, get ownership of the code in writing", sources: ["copyright_circ30", "usc_204"], minutes: 20, types: ["app"], quadrant: "legal", launch: 6 },
-  { id: "app-meetups", title: "If users meet in person or ride together, check insurance first", sources: ["sba_insurance"], minutes: 20, types: ["app"], quadrant: "legal", launch: 7 },
+  { id: "app-privacy", title: "Look into privacy policy rules before collecting user data", sources: ["ftc_start_security", "apple_review", "ftc_protect_info"], minutes: 30, types: ["app"], quadrant: "legal", launch: 4 },
+  { id: "app-accounts", title: "If users will make accounts, look into security and deletion rules", sources: ["ftc_start_security", "apple_review"], minutes: 20, types: ["app"], quadrant: "legal", launch: 5 },
+  { id: "app-ownership", title: "If someone else builds your app, look into who owns the code", sources: ["copyright_circ30", "usc_204"], minutes: 20, types: ["app"], quadrant: "legal", launch: 6 },
+  { id: "app-meetups", title: "If users meet in person or ride together, look into insurance", sources: ["sba_insurance"], minutes: 20, types: ["app"], quadrant: "legal", launch: 7 },
 ];
+
+// Steps that are business coaching, not legal topics. Every other fixed step is a legal topic.
+const NOT_LEGAL = new Set(["legal-mentor", "fixed-lean-plan", "fixed-waitlist", "app-concierge", "app-nocode"]);
+for (const step of LEGAL_STEPS) step.legal = !NOT_LEGAL.has(step.id);
 
 /**
  * Fixed steps for an idea's business types and state.

@@ -424,10 +424,10 @@ function sectionBlock(s, idx, { showHeader = true } = {}) {
 function stateNote() {
   const code = project.state || "NC";
   const name = project.stateName || code;
-  if (code === "NC") return `<p class="state-note">${icons.shieldok}<span>These steps are written for <b>North Carolina</b>. Federal steps (IRS, FTC, USPTO) apply everywhere.</span></p>`;
+  if (code === "NC") return `<p class="state-note">${icons.shieldok}<span>These are topics to look into, not legal advice. They're written for <b>North Carolina</b>, and federal sources (IRS, FTC, USPTO) cover every state. Confirm anything that affects you with the official office or a licensed professional.</span></p>`;
   const KIND = { st_reg: "Register your business", st_tax: "State taxes", st_lic: "Licenses and permits", st_help: "Free business help", st_sba: "SBA district office", st_irs: "IRS list of all your state's business sites" };
   const links = Object.entries(project.stateSources || {});
-  return `<div class="state-note">${icons.shieldok}<div><span>These steps link to <b>${esc(name)}</b>'s official offices. Quad Founders has not checked ${esc(name)}'s specific rules, so confirm what applies to you with these offices. Federal steps (IRS, FTC, USPTO) apply everywhere.</span>
+  return `<div class="state-note">${icons.shieldok}<div><span>These are topics to look into, not legal advice. They link to <b>${esc(name)}</b>'s official offices. Quad Founders has not checked ${esc(name)}'s specific rules, so confirm what applies to you with these offices. Federal steps (IRS, FTC, USPTO) apply everywhere.</span>
     ${links.length ? `<ul class="st-links">${links.map(([k, l]) => `<li><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(KIND[k] || l.title)}</a><span>${esc(l.org)}</span></li>`).join("")}</ul>` : ""}</div></div>`;
 }
 
@@ -583,7 +583,7 @@ function launchCard() {
   if (!isApp) {
     return `<section class="launch off">
       <div class="hd"><span class="ic">${icons.spark}</span><div class="grow"><h2>Does your idea need a real app?</h2>
-        <p>Your test site shows your idea and collects sign-ups. It can't run logins, match people, or take payments. If your idea needs those, add the launch path: official, step-by-step guidance for getting there.</p></div>
+        <p>Your test site shows your idea and collects sign-ups. It can't run logins, match people, or take payments. If your idea needs those, add the launch path: steps to take and topics to look into, in order, each linked to its source.</p></div>
         <button class="btn" data-app="on">${icons.plus}Add launch path</button></div>
     </section>`;
   }
@@ -641,6 +641,8 @@ async function sectionScreen(id, sec) {
 }
 
 const CHAT_STARTERS = ["I'm stuck", "Explain it more simply", "Give me an example"];
+// Legal topics: the co-pilot only helps find what to look into, so the starters say that.
+const LEGAL_STARTERS = ["Explain the source simply", "Where on the page do I look?", "What should I ask the office?"];
 async function taskScreen(id, taskId) {
   skeleton([{ label: "Plan" }]);
   let msgs;
@@ -662,6 +664,7 @@ async function taskScreen(id, taskId) {
       <div class="meta"><span class="qchip">${sec.short}</span><span class="tag num">${icons.clock}About ${task.minutes} min</span>${(task.sources || []).map(srcTag).join("")}${task.basis ? `<span class="tag">Based on: ${esc(task.basis)}</span>` : ""}</div>
       <h1>${esc(task.title)}</h1>
       <div class="why">${md(task.why)}</div>
+      ${task.legal ? `<p class="state-note legal-note">${icons.shieldok}<span><b>Legal topic: something to look into, not advice.</b> Quad Founders can show you what the official source says and help you list questions. It can't tell you whether this applies to you or what to do, and it can't write legal documents. For that, ask the official office or a licensed professional.</span></p>` : ""}
     </header>`;
 
   const walkthrough = () => {
@@ -699,7 +702,7 @@ async function taskScreen(id, taskId) {
       ${walkthrough()}
       <div class="thread" id="thread">${thread()}</div>
       <form class="reply" id="chatForm">
-        ${task.guide ? `<div class="chips" style="margin-bottom:10px">${CHAT_STARTERS.map((c) => `<button class="chip" type="button" data-start="${esc(c)}">${esc(c)}</button>`).join("")}</div>` : ""}
+        ${task.guide ? `<div class="chips" style="margin-bottom:10px">${(task.legal ? LEGAL_STARTERS : CHAT_STARTERS).map((c) => `<button class="chip" type="button" data-start="${esc(c)}">${esc(c)}</button>`).join("")}</div>` : ""}
         <div class="composer-box">
           <label for="msg" class="sr">Message the co-pilot</label>
           <textarea id="msg" maxlength="1500" placeholder="Answer the co-pilot or ask anything about this step."></textarea>
@@ -871,7 +874,7 @@ async function siteScreen(id) {
           <p class="help" style="margin-top:8px">This is a preview, so the sign-up button is turned off here. It works on your live link and in your downloaded files.</p>
           <section class="card su-card">
             <div class="su-hd"><h3>${icons.q[0]}Sign-ups <span class="count" id="signupCount">${signups ? signups.length : "…"}</span></h3></div>
-            <p class="help">Only people with this plan's link can see these. Use them only to contact people about your idea, let anyone who asks be removed, and follow the email rules in your <a href="#/p/${id}/t/fixed-email">email marketing step</a>.</p>
+            <p class="help">Only people with this plan's link can see these. Before you email anyone, look into the email rules in your <a href="#/p/${id}/t/fixed-email">email marketing step</a>. The form tells visitors they can ask you to remove them.</p>
             <div id="signupBox"></div>
           </section>
         </div>
