@@ -387,15 +387,16 @@ function sectionBlock(s, idx, { showHeader = true } = {}) {
   return `<section class="section" id="sec-${s.id}" style="${qc(idx)}">
     ${showHeader ? `<div class="section-head"><span class="ic">${icons.q[idx]}</span><h2><a href="#/p/${project.id}/s/${s.id}">${s.name}</a></h2><span class="count">${done}/${tasks.length}</span><span class="spacer"></span></div>` : ""}
     <div class="summary" id="sum-${s.id}">
-      <p>${esc(project.plan.quadrants[s.id].summary)}</p>
+      <div class="sum-text">${md(project.plan.quadrants[s.id].summary)}</div>
       <div class="row"><span class="tag ai">AI draft</span>
         <div class="acts"><button class="btn ghost" data-edit="${s.id}">${icons.edit}Edit</button><button class="btn ghost" data-redo="${s.id}">${icons.redo}Redo with feedback</button></div></div>
     </div>
+    ${s.id === "legal" ? `<p class="state-note">${icons.shieldok}<span>These steps are written for <b>North Carolina</b>. Federal steps (IRS, FTC, USPTO) apply everywhere. In another state, use your state's official business and tax offices instead of the NC links.</span></p>` : ""}
     <div class="list">${tasks.map(taskRow).join("")}</div>
   </section>`;
 }
 
-const SHORT_ORG = { "U.S. Small Business Administration": "SBA", "Internal Revenue Service": "IRS", "Federal Trade Commission": "FTC", "U.S. Patent and Trademark Office": "USPTO" };
+const SHORT_ORG = { "U.S. Small Business Administration": "SBA", "Internal Revenue Service": "IRS", "Federal Trade Commission": "FTC", "U.S. Patent and Trademark Office": "USPTO", "North Carolina Department of the Secretary of State": "NC Sec. of State", "North Carolina Department of Revenue": "NC Revenue", "North Carolina General Assembly": "NC law", "University of Alaska Fairbanks Center ICE": "NSF I-Corps Hub" };
 function taskRow(t) {
   const org = t.sources?.[0] && SOURCES[t.sources[0]]?.org;
   return `<div class="rowi ${t.done ? "done" : ""}">
@@ -474,7 +475,7 @@ async function overviewScreen(id) {
     const html = `<div class="page">
       <header class="hero-card">
         <div class="info">
-          <div class="meta"><span class="tag novelty">${esc(NOVELTY[project.novelty] || "Plan")}</span>${(project.types || []).map((x) => `<span class="tag">${esc(x)}</span>`).join("")}</div>
+          <div class="meta"><span class="tag novelty" title="Based on how you described it. Not checked against existing businesses.">${esc(NOVELTY[project.novelty] || "Plan")}</span>${(project.types || []).map((x) => `<span class="tag">${esc(x)}</span>`).join("")}</div>
           <h1>${esc(project.title || "Your plan")}</h1>
           <p class="sub">${esc(project.idea)}</p>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
@@ -496,12 +497,12 @@ async function overviewScreen(id) {
       }).join("")}</div>
       ${assumptions.length ? `<section class="assume-card">
         <div class="hd"><span class="ic">${icons.spark}</span><div class="grow"><h2>What has to be true</h2><p>Test these before you spend money. Update each one as you learn.</p></div><span class="count">${confirmed}/${assumptions.length} confirmed</span></div>
-        ${assumptions.map((a) => `<div class="assume"><p class="t">${esc(a.text)}</p>
+        ${assumptions.map((a) => `<div class="assume"><div class="t">${md(a.text)}</div>
           <select class="field" data-assume="${a.id}" data-s="${a.status}" aria-label="Status of: ${esc(a.text)}">
             <option value="untested" ${a.status === "untested" ? "selected" : ""}>Untested</option>
             <option value="holds" ${a.status === "holds" ? "selected" : ""}>Confirmed</option>
             <option value="wrong" ${a.status === "wrong" ? "selected" : ""}>Proven wrong</option>
-          </select><p class="how"><b>Test</b><span>${esc(a.test)}</span></p></div>`).join("")}
+          </select><div class="how"><b>Test</b><span>${md(a.test)}</span></div></div>`).join("")}
       </section>` : ""}
       ${SECTIONS.map((s, i) => sectionBlock(s, i)).join("")}
     </div>`;
@@ -572,7 +573,7 @@ async function taskScreen(id, taskId) {
       <header class="task-head">
         <div class="meta"><span class="qchip">${sec.short}</span><span class="tag num">${icons.clock}About ${task.minutes} min</span>${(task.sources || []).map(srcTag).join("")}${task.basis ? `<span class="tag">Based on: ${esc(task.basis)}</span>` : ""}</div>
         <h1>${esc(task.title)}</h1>
-        <p class="why">${esc(task.why)}</p>
+        <div class="why">${md(task.why)}</div>
       </header>
       <div class="thread" id="thread">
         ${msgs.length ? msgs.map((m) => m.role === "user"

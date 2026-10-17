@@ -132,7 +132,7 @@ async function api(request, env, url) {
         maxTokens: 1000,
         ...regenerateQuadrantPrompt(project, q, clean(feedback, LIMITS.instruction)),
       });
-      project.plan.quadrants[q].summary = clean(out.summary, LIMITS.summary);
+      project.plan.quadrants[q].summary = sanitizeSources(clean(out.summary, LIMITS.summary));
     } else if (parts.length === 4 && method === "PATCH") {
       const { summary } = await body(request);
       const s = clean(summary, LIMITS.summary);
@@ -272,7 +272,7 @@ async function preview(env, url) {
 function normalizePlan(out, types = []) {
   const quadrants = {};
   for (const q of QUADRANTS) {
-    quadrants[q] = { summary: clean(out?.quadrants?.[q]?.summary, LIMITS.summary) || "Ask the co-pilot to fill this in." };
+    quadrants[q] = { summary: sanitizeSources(clean(out?.quadrants?.[q]?.summary, LIMITS.summary)) || "Ask the co-pilot to fill this in." };
   }
   const tasks = [];
   const counts = {};
@@ -284,7 +284,7 @@ function normalizePlan(out, types = []) {
       id: `${t.quadrant}-${counts[t.quadrant]}`,
       quadrant: t.quadrant,
       title: clean(t.title, 120),
-      why: clean(t.why, 240),
+      why: sanitizeSources(clean(t.why, 240)),
       basis: clean(t.basis, 80),
       minutes: clampMinutes(t.minutes),
       sources: basisSources(t.basis),
@@ -299,7 +299,7 @@ function normalizePlan(out, types = []) {
       id: step.id,
       quadrant: "legal",
       title: step.title,
-      why: clean(ai?.why, 240) || "Read the official source to see if this applies to you.",
+      why: sanitizeSources(clean(ai?.why, 240)) || "Read the official source to see if this applies to you.",
       minutes: step.minutes,
       sources: step.sources,
       done: false,
@@ -307,8 +307,8 @@ function normalizePlan(out, types = []) {
   }
   const assumptions = (Array.isArray(out?.assumptions) ? out.assumptions : []).slice(0, 5).map((a, i) => ({
     id: `a${i + 1}`,
-    text: clean(a?.text, 240),
-    test: clean(a?.test, 240),
+    text: sanitizeSources(clean(a?.text, 240)),
+    test: sanitizeSources(clean(a?.test, 240)),
     status: "untested",
   })).filter((a) => a.text);
   return { quadrants, tasks, assumptions };

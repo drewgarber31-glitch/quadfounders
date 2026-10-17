@@ -82,7 +82,7 @@ export const KNOWLEDGE = [
     points: [
       "Costs depend on business type (brick-and-mortar, online, or service).",
       "Common costs: equipment and supplies, licenses and permits, insurance, inventory, advertising and marketing, market research, printed materials, and a website.",
-      "Separate one-time costs (equipment, logo design, permits) from monthly costs. Count at least one year of monthly expenses.",
+      "Separate one-time costs (equipment, logo design, permits) from monthly costs. SBA says to count at least one year of monthly expenses, and that five years is ideal.",
       "For uncertain costs, look online and talk to mentors, vendors, and service providers about what similar businesses pay.",
     ],
   },
@@ -94,8 +94,8 @@ export const KNOWLEDGE = [
     source: "sba_startup_costs",
     points: [
       "Break-even formula: Fixed Costs ÷ (Price − Variable Costs) = Break-Even Point in Units.",
-      "Fixed costs don't change with volume (for example rent or insurance). Variable costs change with each sale (for example materials per item).",
-      "Add a buffer of about 10% for unpredictable costs. A break-even analysis is an estimate, not a substitute for real accounting.",
+      "SBA describes fixed costs as costs over a set period that don't change with how much you produce or sell. The formula subtracts the variable cost per unit from the price.",
+      "SBA suggests adding about 10% to cover costs you can't predict. SBA says the break-even point is an estimate and is not meant to exactly determine your accounting or financing.",
     ],
   },
   {
@@ -107,8 +107,8 @@ export const KNOWLEDGE = [
     points: [
       "Self-funding (bootstrapping) keeps full control but you take on all the risk. Don't spend more than you can afford.",
       "Crowdfunding suits creative works and physical products; backers usually get a perk, not ownership, and owners keep control. Read the platform's fine print.",
-      "Investors usually want ownership and some control in exchange for funding.",
-      "Small business loans usually require a business plan, expense sheet, and financial projections.",
+      "Venture capital is normally offered in exchange for an ownership share and an active role in the company, and most venture capitalists want at least a seat on the board.",
+      "To improve the chances of getting a loan, SBA suggests having a business plan, an expense sheet, and financial projections for the next five years.",
     ],
   },
 
@@ -137,7 +137,7 @@ export const KNOWLEDGE = [
       "If you give someone free products, money, or perks to post about you, they must clearly disclose it. Labels like \"#ad\" or \"Paid ad\" at the start of a post are likely effective. Vague tags like \"#partner\" or \"#ambassador\" or a simple thank-you are not enough.",
       "Friends, family, and employees who promote your business should disclose their connection.",
       "Never offer a discount or reward only for positive reviews. You may ask all customers for honest reviews, positive or negative.",
-      "Don't hide, delay, or ask people to delete negative reviews, and never use fake reviews or fake likes.",
+      "Don't delay or hide only the negative reviews, since that gives a biased picture. Never use fake reviews.",
       "Disclosures in videos should be in the video itself, and repeated during livestreams.",
     ],
   },
@@ -164,7 +164,7 @@ export const KNOWLEDGE = [
     quadrant: "legal",
     source: "uspto_search",
     points: [
-      "Search for similar trademarks before choosing a name. A common reason trademark applications are rejected is that the name is too similar to an existing one and customers could be confused.",
+      "USPTO says to do a clearance search for similar trademarks before applying to register one, and it's smart to search before settling on a name. A common reason trademark applications are rejected is that the name is too similar to an existing one and customers could be confused.",
       "The USPTO only checks the federal database, so also search state records (NC Secretary of State) and the internet.",
     ],
   },
@@ -175,8 +175,8 @@ export const KNOWLEDGE = [
     quadrant: "legal",
     source: "sba_licenses",
     points: [
-      "Most small businesses need some combination of federal, state, and local licenses and permits, depending on the activity and location.",
-      "Federal licenses apply only to federally regulated activities (for example alcohol, firearms, aviation, broadcasting).",
+      "SBA says most small businesses need a combination of licenses and permits from federal and state agencies. What you need depends on your business activities and location.",
+      "Activities regulated by a federal agency need a federal license or permit. SBA's examples include alcoholic beverages, firearms, aviation, and radio and television broadcasting.",
       "States regulate more activities than the federal government, and counties or cities may require their own licenses. Check state, county, and city rules.",
       "Some licenses expire; track renewal dates.",
     ],
@@ -215,7 +215,7 @@ export const KNOWLEDGE = [
     points: [
       "Insurance covers costs from accidents, disasters, or lawsuits that a business may not be able to absorb.",
       "General liability fits any business. Product liability fits businesses that make or sell products. Professional liability fits service businesses. Home-based business coverage can be added to a homeowner's policy as a rider.",
-      "Businesses with employees must carry workers' compensation, unemployment, and disability insurance.",
+      "SBA says the federal government requires every business with employees to have workers' compensation, unemployment, and disability insurance, and that some states require more. Laws vary by state.",
       "Assess risks, use a licensed agent, compare quotes, and reassess every year.",
     ],
   },
@@ -228,9 +228,9 @@ export const KNOWLEDGE = [
     quadrant: "legal",
     source: "ncsu_home_food",
     points: [
-      "NC home kitchens may make only shelf-stable, low-risk foods, such as baked goods that don't need refrigeration, jams, jellies and preserves, candies, and dried mixes and spices.",
+      "NC home kitchens may make only shelf-stable, low-risk foods, such as baked goods that don't need refrigeration, jams, jellies and preserves, candies, and dried mixes and spices. Acid and acidified foods (like pickles or BBQ sauce) must first be evaluated for shelf stability, so contact the NCDA&CS Food Compliance Office.",
       "Not allowed from a home kitchen: refrigerated or frozen products, low-acid canned foods, dairy products, and seafood.",
-      "The home kitchen must be inspected by NCDA&CS before selling. NCDA&CS does not charge for the inspection.",
+      "The home kitchen must be inspected by NCDA&CS before selling. NCDA&CS does not charge for the inspection, and a permit is not issued.",
       "Homes with any pets, even pets that only come inside at night, cannot make food for sale.",
       "Labels are required for self-service sales and must include the product name and all \"Top 9\" allergens by common name.",
       "This summary is from NC State Extension (updated April 23, 2024). Confirm current rules with NCDA&CS before selling.",

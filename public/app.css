@@ -363,3 +363,11 @@ select.field { height: 38px; padding: 0 10px; }
 .toast svg { color: var(--ok); width: 15px; height: 15px; }
 .toast.error { background: var(--danger); color: #fff; }
 @keyframes toast-in { from { opacity: 0; transform: translateY(10px) scale(.96); } }
+
+.sum-text p + p, .sum-text p + ul, .sum-text ul + p { margin-top: 8px; }
+.sum-text ul { margin: 6px 0 0; padding-left: 18px; }
+.sum-text, .assume .t, .assume .how span, .task-head .why { overflow-wrap: anywhere; }
+.summary .sum-text { color: var(--text); font-size: 14.5px; line-height: 1.6; }
+.assume .how span p, .assume .t p { display: inline; }
+.state-note { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 10px; padding: 12px 14px; border-radius: var(--r-lg); background: var(--warn-soft); color: var(--text); font-size: 13px; line-height: 1.5; }
+.state-note svg { color: var(--warn); margin-top: 1px; }

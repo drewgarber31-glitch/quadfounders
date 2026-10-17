@@ -5,10 +5,10 @@
 
 export const SOURCES = {
   sba_steps: {
-    title: "SBA: 10 steps to start your business",
+    title: "SBA: Business guide (plan and launch your business)",
     org: "U.S. Small Business Administration",
     url: "https://www.sba.gov/business-guide/10-steps-start-your-business",
-    summary: "Federal guide covering market research, business plans, startup costs, structure, naming, registration, tax IDs, licenses, bank accounts, and insurance.",
+    summary: "Federal guide covering market research, business plans, startup costs, funding, location, structure, naming, registration, tax IDs, licenses, bank accounts, and insurance.",
     checked: "2026-10-16",
   },
   sba_market_research: {
@@ -163,7 +163,7 @@ export const SOURCES = {
     org: "SCORE",
     url: "https://www.score.org/about-score",
     summary: "Free, confidential mentoring from experienced business leaders, for the life of your business.",
-    checked: "2026-10-13",
+    checked: "2026-10-16",
   },
 };
 
