@@ -396,7 +396,7 @@ function sectionBlock(s, idx, { showHeader = true } = {}) {
   </section>`;
 }
 
-const SHORT_ORG = { "U.S. Small Business Administration": "SBA", "Internal Revenue Service": "IRS", "Federal Trade Commission": "FTC", "U.S. Patent and Trademark Office": "USPTO", "North Carolina Department of the Secretary of State": "NC Sec. of State", "North Carolina Department of Revenue": "NC Revenue", "North Carolina General Assembly": "NC law", "University of Alaska Fairbanks Center ICE": "NSF I-Corps Hub" };
+const SHORT_ORG = { "U.S. Small Business Administration": "SBA", "Internal Revenue Service": "IRS", "Federal Trade Commission": "FTC", "U.S. Patent and Trademark Office": "USPTO", "North Carolina Department of the Secretary of State": "NC Sec. of State", "North Carolina Department of Revenue": "NC Revenue", "North Carolina General Assembly": "NC law", "University of Alaska Fairbanks Center ICE": "NSF I-Corps Hub", "U.S. Department of Justice": "ADA.gov", "U.S. Consumer Product Safety Commission": "CPSC", "U.S. Food and Drug Administration": "FDA", "U.S. Copyright Office": "Copyright Office", "U.S. Department of Homeland Security": "DHS", "Economic Development Partnership of North Carolina": "EDPNC", "NC Community College System": "NC Small Business Centers" };
 function taskRow(t) {
   const org = t.sources?.[0] && SOURCES[t.sources[0]]?.org;
   return `<div class="rowi ${t.done ? "done" : ""}">

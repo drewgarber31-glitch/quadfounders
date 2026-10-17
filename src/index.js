@@ -113,7 +113,7 @@ async function api(request, env, url) {
     const out = await callAIJson(env, {
       kind: "plan",
       build: true,
-      maxTokens: 6000,
+      maxTokens: 8000,
       ...planPrompt(project.idea, project.types, project.questions, cleanAnswers, project.novelty),
     });
     const plan = normalizePlan(out, project.types);
@@ -314,7 +314,7 @@ function normalizePlan(out, types = []) {
   for (const t of out?.tasks || []) {
     if (!["customer", "pricing", "marketing"].includes(t.quadrant)) continue;
     counts[t.quadrant] = (counts[t.quadrant] || 0) + 1;
-    if (counts[t.quadrant] > 5) continue;
+    if (counts[t.quadrant] > 7) continue;
     tasks.push({
       id: `${t.quadrant}-${counts[t.quadrant]}`,
       quadrant: t.quadrant,
@@ -332,7 +332,7 @@ function normalizePlan(out, types = []) {
     if (ai && ai.applies === false) continue;
     tasks.push({
       id: step.id,
-      quadrant: "legal",
+      quadrant: step.quadrant || "legal",
       title: step.title,
       why: sanitizeSources(clean(ai?.why, 240)) || "Read the official source to see if this applies to you.",
       minutes: step.minutes,
@@ -340,6 +340,7 @@ function normalizePlan(out, types = []) {
       done: false,
     });
   }
+  tasks.sort((a, b) => QUADRANTS.indexOf(a.quadrant) - QUADRANTS.indexOf(b.quadrant));
   const assumptions = (Array.isArray(out?.assumptions) ? out.assumptions : []).slice(0, 5).map((a, i) => ({
     id: `a${i + 1}`,
     text: sanitizeSources(clean(a?.text, 240)),

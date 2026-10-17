@@ -50,7 +50,7 @@ export function planPrompt(idea, types, questions, answers, novelty = "common") 
   const qa = (questions || [])
     .map((q) => `Q: ${q.text}\nA: ${(answers && answers[q.id]) || "(skipped)"}`)
     .join("\n\n");
-  const legal = legalStepsFor(types).map((s) => `- ${s.id}: ${s.title}`).join("\n");
+  const legal = legalStepsFor(types).map((s) => `- ${s.id} (${s.quadrant || "legal"}): ${s.title}`).join("\n");
   return {
     system: `${GUARDRAILS}
 
@@ -81,8 +81,8 @@ Quadrants (each "summary" is 2-4 short sentences, specific to this idea):
 4. legal: legal and registration steps, educational only
 
 Tasks:
-- For customer, pricing, and marketing: 3 to 5 concrete tasks each, each doable in 15-60 minutes, ordered so earlier tasks come first. Each task should follow a best practice from the library and name it in "basis" by its card title.
-- For legal: choose which of these fixed steps apply and explain why in one sentence each, using this idea's details. Use these exact ids:
+- For customer, pricing, and marketing: 4 to 7 concrete tasks each, each doable in 15-60 minutes, ordered so earlier tasks come first. Cover the full journey for that area (for example customer: who has the problem, how they solve it today, interviews, competitors, a one-sentence value proposition; pricing: startup costs, monthly costs, break-even, test prices, funding; marketing: where customers are, first offer, first posts, how people will buy, measuring results). Each task should follow a best practice from the library and name it in "basis" by its card title. Don't duplicate the fixed steps below.
+- Fixed steps: these official steps are added to the plan automatically (the quadrant is in parentheses). For EACH one, say whether it applies to this idea and explain why in one sentence using this idea's details. Mark applies:false only when it clearly can't apply (for example children's products for a tutoring service). When unsure, mark it as applying and say what to check. Use these exact ids:
 ${legal}
 
 Respond with ONLY valid JSON in this exact shape:
@@ -97,7 +97,7 @@ Respond with ONLY valid JSON in this exact shape:
    {"quadrant": "customer", "title": "...", "why": "one sentence", "basis": "card title", "minutes": 30}
  ],
  "legal": [
-   {"id": "legal-ein", "applies": true, "why": "one sentence"}
+   {"id": "legal-ein", "applies": true, "why": "one sentence"} (one entry for every fixed step id)
  ],
  "assumptions": [
    {"text": "People in my dorm would pay to ...", "test": "Ask 10 of them this week ..."}
