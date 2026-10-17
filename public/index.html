@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&display=swap">
   <link rel="stylesheet" href="/base.css?v=3">
-  <link rel="stylesheet" href="/landing.css?v=3">
+  <link rel="stylesheet" href="/landing.css?v=4">
   <script>document.documentElement.classList.add("js")</script>
 </head>
 <body>
@@ -53,6 +53,8 @@
       <form class="hero-input reveal d3" id="heroForm">
         <label class="sr" for="heroIdea">Your idea</label>
         <input id="heroIdea" maxlength="2000" autocomplete="off" placeholder="An app that matches students flying home on the same day">
+        <label class="sr" for="heroState">State or territory where you'll run it</label>
+        <select id="heroState" required><option value="" selected disabled>Your state</option></select>
         <button class="btn primary xl" type="submit">Build my plan</button>
       </form>
       <p class="err" id="heroErr" hidden></p>
@@ -124,8 +126,8 @@
       <p class="k reveal">Guidance and legal steps link to official sources, including</p>
       <div class="marquee reveal d1" aria-label="Official sources used">
         <div class="track">
-          <span>U.S. Small Business Administration</span><span>Internal Revenue Service</span><span>Federal Trade Commission</span><span>U.S. Patent and Trademark Office</span><span>NC Secretary of State</span><span>NC Department of Revenue</span><span>NC State Extension</span><span>NSF I-Corps</span><span>SCORE</span><span>Consumer Product Safety Commission</span><span>Food and Drug Administration</span><span>U.S. Copyright Office</span><span>ADA.gov</span><span>NC SBTDC</span>
-          <span aria-hidden="true">U.S. Small Business Administration</span><span aria-hidden="true">Internal Revenue Service</span><span aria-hidden="true">Federal Trade Commission</span><span aria-hidden="true">U.S. Patent and Trademark Office</span><span aria-hidden="true">NC Secretary of State</span><span aria-hidden="true">NC Department of Revenue</span><span aria-hidden="true">NC State Extension</span><span aria-hidden="true">NSF I-Corps</span><span aria-hidden="true">SCORE</span><span aria-hidden="true">Consumer Product Safety Commission</span><span aria-hidden="true">Food and Drug Administration</span><span aria-hidden="true">U.S. Copyright Office</span><span aria-hidden="true">ADA.gov</span><span aria-hidden="true">NC SBTDC</span>
+          <span>U.S. Small Business Administration</span><span>Internal Revenue Service</span><span>Federal Trade Commission</span><span>U.S. Patent and Trademark Office</span><span>NC Secretary of State</span><span>NC Department of Revenue</span><span>NC State Extension</span><span>NSF I-Corps</span><span>SCORE</span><span>Consumer Product Safety Commission</span><span>Food and Drug Administration</span><span>U.S. Copyright Office</span><span>ADA.gov</span><span>NC SBTDC</span><span>State offices in all 50 states</span>
+          <span aria-hidden="true">U.S. Small Business Administration</span><span aria-hidden="true">Internal Revenue Service</span><span aria-hidden="true">Federal Trade Commission</span><span aria-hidden="true">U.S. Patent and Trademark Office</span><span aria-hidden="true">NC Secretary of State</span><span aria-hidden="true">NC Department of Revenue</span><span aria-hidden="true">NC State Extension</span><span aria-hidden="true">NSF I-Corps</span><span aria-hidden="true">SCORE</span><span aria-hidden="true">Consumer Product Safety Commission</span><span aria-hidden="true">Food and Drug Administration</span><span aria-hidden="true">U.S. Copyright Office</span><span aria-hidden="true">ADA.gov</span><span aria-hidden="true">NC SBTDC</span><span aria-hidden="true">State offices in all 50 states</span>
         </div>
       </div>
       <p class="fine reveal d2">Quad Founders is not affiliated with or endorsed by any of these organizations.</p>
@@ -312,7 +314,7 @@
       <div class="sec-head center reveal"><span class="kicker">FAQ</span><h2>Questions, answered.</h2></div>
       <div class="faq">
         <details class="reveal"><summary>Is this legal or tax advice?</summary><p>No. Quad Founders gives educational guidance only. Legal and tax steps link to the official government source so you can read the rules yourself. For your specific situation, check with a qualified professional. Free mentors are available through SCORE.</p></details>
-        <details class="reveal"><summary>Does it work outside North Carolina?</summary><p>The registration and state tax steps are written for North Carolina right now. Federal guidance, like the IRS, FTC, and USPTO pages, applies everywhere. If you're in another state, the co-pilot will say when it doesn't have verified information and point you to the closest official source.</p></details>
+        <details class="reveal"><summary>Does it work outside North Carolina?</summary><p>Yes. Pick your state or territory when you start: all 50 states, DC, Puerto Rico, the U.S. Virgin Islands, Guam, American Samoa, and the Northern Mariana Islands. Your legal steps then link to that state's official registration, tax, licensing, and free business help offices, found through the IRS and SBA state lists. North Carolina has the most detail so far. For other states, Quad Founders has not checked state-specific rules, so the co-pilot points you to those offices instead of guessing. Federal guidance, like the IRS, FTC, and USPTO pages, applies everywhere.</p></details>
         <details class="reveal"><summary>What if nobody has done my idea before?</summary><p>That's what it's built for. Your plan is shaped around your idea instead of a template, and it starts with the assumptions that have to be true and a cheap way to test each one.</p></details>
         <details class="reveal"><summary>Do I need to know how to code?</summary><p>No. You describe your idea, answer a few questions, and ask for changes in plain English. The website is written for you.</p></details>
         <details class="reveal"><summary>Who owns my website?</summary><p>You do. You download the files and publish them on your own account. Quad Founders doesn't host your site.</p></details>
@@ -340,6 +342,6 @@
   </div>
 </footer>
 
-<script src="/landing.js?v=3" type="module"></script>
+<script src="/landing.js?v=4" type="module"></script>
 </body>
 </html>

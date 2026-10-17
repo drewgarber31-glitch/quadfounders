@@ -1,8 +1,9 @@
-import { sourceList, legalStepsFor } from "./sources.js";
+import { sourceList, legalStepsFor, SOURCES } from "./sources.js";
+import { stateName, stateSources } from "./states.js";
 import { BUSINESS_TYPES, knowledgeFor, knowledgeText } from "./knowledge.js";
 
 // Rules every AI call follows. These encode the product's no-liability rules.
-export const GUARDRAILS = `You are the Quad Founders startup co-pilot for college students. State-specific guidance in your library currently covers North Carolina only.
+export const GUARDRAILS = `You are the Quad Founders startup co-pilot for college students in the United States.
 
 Hard rules (never break these):
 - You give educational guidance only. You are not a lawyer, accountant, or financial advisor. Never present anything as legal, tax, or financial advice.
@@ -14,8 +15,8 @@ Hard rules (never break these):
 - If the library doesn't cover something the student needs, say plainly that you don't have verified information on it, and point them to the closest listed source, their county or city office, or a free SCORE mentor [source:score_mentoring]. Do not guess.
 - You may share practical, common-sense business ideas (how to word a flyer, how to approach a customer), but never present them as rules or facts.
 - For anything that depends on a student's specific legal or tax situation, tell them to confirm with the official source or a qualified professional.
-- State rules: library items about North Carolina (NC Secretary of State, NC Department of Revenue, NC home food rules, NC cosmetic art licensing) apply ONLY in North Carolina. If the student is or may be in another state, say plainly that those steps are for NC and that they should use their own state's official business, tax, and licensing offices. Never describe another state's rules, fees, or forms.
-- Federal items (IRS, FTC, USPTO, SBA) apply in every state.
+- State rules: only describe state-specific rules that appear in the knowledge library. For any other state or territory, you have verified LINKS to its official offices (listed below as st_ sources) but NOT its rules. Never describe a state's rules, fees, forms, deadlines, or thresholds from memory. Instead, say what to look up and cite the matching office, like [source:st_reg] or [source:st_tax].
+- Federal items (IRS, FTC, USPTO, SBA, CPSC, FDA, DOJ, DHS) apply in every state.
 - Respect school: students have classes. Keep tasks small (about 15-60 minutes).
 
 Style:
@@ -25,13 +26,30 @@ Style:
 
 const TYPE_LIST = Object.entries(BUSINESS_TYPES).map(([id, d]) => `- ${id}: ${d}`).join("\n");
 
-function library(types, quadrant) {
-  return `KNOWLEDGE LIBRARY (verified official guidance; base your answer on this):\n\n${knowledgeText(knowledgeFor(types, quadrant))}`;
+function library(types, quadrant, state = "NC") {
+  return `KNOWLEDGE LIBRARY (verified official guidance; base your answer on this):\n\n${knowledgeText(knowledgeFor(types, quadrant, state))}`;
 }
 
-export function followUpPrompt(idea) {
+// Where the business is, and the verified official offices for that state.
+function stateBlock(state = "NC") {
+  const st = stateSources(state);
+  const lines = Object.entries(st).map(([id, s]) => `- ${id}: ${s.title}`).join("\n");
+  return `WHERE THE BUSINESS IS: ${stateName(state) || "North Carolina"}.
+${state === "NC" ? "The library includes detailed North Carolina guidance." : `The library has NO rules specific to ${stateName(state)}. Use these verified official offices for anything state-specific, and say plainly that the student should confirm the rules there:`}
+${lines ? `Official ${stateName(state)} offices (cite as [source:id]):\n${lines}` : ""}`;
+}
+
+function allSources(state = "NC") {
+  const st = stateSources(state);
+  const fed = sourceList(Object.keys(SOURCES).filter((id) => state === "NC" || !/^(nc_|ncdor_|ncsu_|edpnc_)/.test(id)));
+  return fed + (Object.keys(st).length ? "\n" + Object.entries(st).map(([id, s]) => `- ${id}: ${s.title}. ${s.summary}`).join("\n") : "");
+}
+
+export function followUpPrompt(idea, state = "NC") {
   return {
     system: `${GUARDRAILS}
+
+The business will run in: ${stateName(state) || "North Carolina"}. Don't ask which state; you already know.
 
 Task: The student just described a business idea.
 1. Classify it into 1 to 3 of these business types (use the ids exactly). If it doesn't fit any well, pick the closest; the plan will still be built around the idea itself:
@@ -46,21 +64,23 @@ Respond with ONLY valid JSON in this exact shape:
   };
 }
 
-export function planPrompt(idea, types, questions, answers, novelty = "common") {
+export function planPrompt(idea, types, questions, answers, novelty = "common", state = "NC") {
   const qa = (questions || [])
     .map((q) => `Q: ${q.text}\nA: ${(answers && answers[q.id]) || "(skipped)"}`)
     .join("\n\n");
-  const legal = legalStepsFor(types).map((s) => `- ${s.id} (${s.quadrant || "legal"}): ${s.title}`).join("\n");
+  const legal = legalStepsFor(types, state, stateSources(state)).map((s) => `- ${s.id} (${s.quadrant || "legal"}): ${s.title}`).join("\n");
   return {
     system: `${GUARDRAILS}
 
 Business types for this idea: ${types.join(", ") || "unknown"}
 How new the idea is: ${novelty}
 
-${library(types)}
+${stateBlock(state)}
+
+${library(types, undefined, state)}
 
 Official sources (ids you may cite):
-${sourceList()}
+${allSources(state)}
 
 Task: Write a starter business plan as four quadrants plus a checklist, grounded in the knowledge library above and specific to this student's idea and answers.
 
@@ -142,7 +162,9 @@ export function regenerateQuadrantPrompt(project, quadrant, feedback) {
 
 Business types: ${(project.types || []).join(", ") || "unknown"}
 
-${library(project.types || [], quadrant)}
+${stateBlock(project.state)}
+
+${library(project.types || [], quadrant, project.state)}
 
 Task: Rewrite only the "${quadrant}" quadrant summary of this student's plan using their feedback and the knowledge library. 2-4 short sentences.
 Respond with ONLY valid JSON: {"summary": "..."}`,
@@ -164,10 +186,12 @@ export function guidePrompt(project, task) {
 Business types: ${types.join(", ") || "unknown"}
 How new the idea is: ${project.novelty || "common"}
 
-${library(types, task.quadrant)}
+${stateBlock(project.state)}
+
+${library(types, task.quadrant, project.state)}
 
 Official sources (ids you may cite, written like [source:irs_ein]):
-${sourceList()}
+${allSources(project.state)}
 
 Task: Build a short walkthrough for ONE task in this student's plan, then write the co-pilot's opening message.
 
@@ -197,10 +221,12 @@ export function taskChatSystem(project, task) {
 
 Business types: ${types.join(", ") || "unknown"}
 
-${library(types, task.quadrant)}
+${stateBlock(project.state)}
+
+${library(types, task.quadrant, project.state)}
 
 Official sources (ids you may cite, written like [source:irs_ein]):
-${sourceList()}
+${allSources(project.state)}
 
 The student's business idea: ${project.idea}
 How new the idea is: ${project.novelty || "common"}${project.novelty && project.novelty !== "common" ? " (there may be no direct competitors or rules written for it; test assumptions before spending money, and say plainly when official guidance doesn't cover something)" : ""}

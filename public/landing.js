@@ -45,6 +45,23 @@ setInterval(() => {
   input.placeholder = examples[ex];
 }, 3200);
 
+// State picker for the hero form (remembers the last pick)
+const stateSel = $("heroState");
+const TERR = ["DC", "PR", "VI", "GU", "AS", "MP"];
+let savedState = "";
+try { savedState = localStorage.getItem("qf.state") || ""; } catch { /* storage unavailable */ }
+fetch("/api/states").then((r) => r.json()).then(({ states = {} }) => {
+  const codes = Object.keys(states).sort((a, b) => states[a].localeCompare(states[b]));
+  const group = (label, list) => {
+    const g = document.createElement("optgroup");
+    g.label = label;
+    for (const c of list) g.append(new Option(states[c], c, false, c === savedState));
+    stateSel.append(g);
+  };
+  group("States", codes.filter((c) => !TERR.includes(c)));
+  group("DC and U.S. territories", codes.filter((c) => TERR.includes(c)));
+}).catch(() => { /* the app screen also asks for the state */ });
+
 // Hero form: create the plan right away, then continue in the app
 $("heroForm").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -53,10 +70,13 @@ $("heroForm").addEventListener("submit", async (e) => {
   const idea = input.value.trim();
   err.hidden = true;
   if (!idea) { input.focus(); input.placeholder = "Type your idea first, even one sentence"; return; }
+  const state = stateSel.value;
+  if (!state) { err.textContent = "Pick the state or territory where you'll run your business."; err.hidden = false; stateSel.focus(); return; }
+  try { localStorage.setItem("qf.state", state); } catch { /* storage unavailable */ }
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Reading your idea';
   try {
-    const res = await fetch("/api/projects", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ idea }) });
+    const res = await fetch("/api/projects", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ idea, state }) });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || "Something went wrong. Try again.");
     try {

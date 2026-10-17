@@ -154,7 +154,7 @@ export const KNOWLEDGE = [
       "Partnership: simplest structure for two or more owners; unlimited personal liability unless set up as an LP or LLP.",
       "LLC: protects owners from personal liability in most instances, with pass-through taxes; SBA notes it suits medium- or higher-risk businesses.",
       "Corporations give the strongest liability protection but cost more to form and require more record-keeping.",
-      "Quad Founders suggests (not from this source): structure affects legal and tax matters, so confirm your choice with the NC Secretary of State and a qualified professional.",
+      "Quad Founders suggests (not from this source): structure affects legal and tax matters, so confirm your choice with your state's business registration office and a qualified professional.",
     ],
   },
   {
@@ -165,7 +165,7 @@ export const KNOWLEDGE = [
     source: "uspto_search",
     points: [
       "USPTO says to do a clearance search for similar trademarks before applying to register one, and Quad Founders suggests searching before you settle on a name. A common reason trademark applications are rejected is that the name is too similar to an existing one and customers could be confused.",
-      "The USPTO only checks the federal database, so also search state records (NC Secretary of State) and the internet.",
+      "The USPTO only checks the federal database. USPTO says it's your responsibility to search state trademark databases and the internet.",
     ],
   },
   {
@@ -223,6 +223,7 @@ export const KNOWLEDGE = [
   // ---------- Type-specific ----------
   {
     id: "k_home_food",
+    state: "NC",
     title: "Selling food made at home in North Carolina",
     types: ["food"],
     quadrant: "legal",
@@ -286,6 +287,7 @@ export const KNOWLEDGE = [
   },
   {
     id: "k_beauty_license",
+    state: "NC",
     title: "Beauty services need a state license in NC",
     types: ["beauty"],
     quadrant: "legal",
@@ -324,6 +326,7 @@ export const KNOWLEDGE = [
   },
   {
     id: "k_nc_licenses",
+    state: "NC",
     title: "Licenses in North Carolina",
     types: ["all"],
     quadrant: "legal",
@@ -489,6 +492,7 @@ export const KNOWLEDGE = [
   },
   {
     id: "k_free_help_nc",
+    state: "NC",
     title: "Free business help in North Carolina",
     types: ["all"],
     quadrant: "legal",
@@ -544,6 +548,7 @@ export const KNOWLEDGE = [
   },
   {
     id: "k_nc_annual",
+    state: "NC",
     title: "Keeping an NC LLC or corporation in good standing",
     types: ["all"],
     quadrant: "legal",
@@ -557,6 +562,7 @@ export const KNOWLEDGE = [
   },
   {
     id: "k_free_legal_nc",
+    state: "NC",
     title: "Free or low-cost legal help in North Carolina",
     types: ["all"],
     quadrant: "legal",
@@ -580,11 +586,13 @@ export const KNOWLEDGE = [
 ];
 
 /** Cards relevant to a set of business types (and optionally one quadrant). */
-export function knowledgeFor(types = [], quadrant) {
+/** Cards relevant to a set of business types, one quadrant (optional), and a state. */
+export function knowledgeFor(types = [], quadrant, state = "NC") {
   const set = new Set(types);
+  const nc = /\b(NC|North Carolina)\b/;
   return KNOWLEDGE.filter(
-    (k) => (k.types.includes("all") || k.types.some((t) => set.has(t))) && (!quadrant || k.quadrant === quadrant)
-  );
+    (k) => (k.types.includes("all") || k.types.some((t) => set.has(t))) && (!quadrant || k.quadrant === quadrant) && (!k.state || k.state === state)
+  ).map((k) => (state === "NC" ? k : { ...k, points: k.points.filter((p) => !nc.test(p)) })).filter((k) => k.points.length);
 }
 
 export function knowledgeText(cards) {

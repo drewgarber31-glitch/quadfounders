@@ -13,6 +13,7 @@ import {
 import { SOURCES, legalStepsFor } from "./sources.js";
 import { cleanTypes, KNOWLEDGE } from "./knowledge.js";
 import { renderPage, siteFiles, makeZip, PAGES } from "./site.js";
+import { STATES, stateName, stateSources } from "./states.js";
 
 const QUADRANTS = ["customer", "pricing", "marketing", "legal"];
 const LIMITS = { idea: 2000, answer: 500, message: 1500, instruction: 500, summary: 1200, history: 20 };
@@ -41,6 +42,9 @@ async function api(request, env, url) {
 
   if (parts[0] === "status" && method === "GET") {
     return json({ testMode: isTestMode(env) });
+  }
+  if (parts[0] === "states" && method === "GET") {
+    return json({ states: Object.fromEntries(Object.entries(STATES).map(([k, v]) => [k, v.name])) });
   }
   if (parts[0] === "sources" && method === "GET") {
     return json({ sources: SOURCES });
@@ -77,11 +81,13 @@ async function api(request, env, url) {
 
   // POST /api/projects  -> new project + follow-up questions
   if (parts.length === 1 && method === "POST") {
-    const { idea } = await body(request);
+    const { idea, state: stateIn } = await body(request);
     const text = clean(idea, LIMITS.idea);
     if (text.length < 10) throw new HttpError(400, "Tell us a little more about your idea (at least a sentence).");
+    const state = String(stateIn || "").toUpperCase();
+    if (!STATES[state]) throw new HttpError(400, "Pick the state or territory where you'll run your business.");
     await useQuota(request, env);
-    const out = await callAIJson(env, { kind: "followup", ...followUpPrompt(text), maxTokens: 1500 });
+    const out = await callAIJson(env, { kind: "followup", ...followUpPrompt(text, state), maxTokens: 1500 });
     const questions = (out.questions || []).slice(0, 5).map((q, i) => ({
       id: `q${i + 1}`,
       text: clean(q.text, 200),
@@ -93,8 +99,8 @@ async function api(request, env, url) {
     const now = new Date().toISOString();
     await env.DB.prepare(
       "INSERT INTO projects (id, created_at, updated_at, idea, questions) VALUES (?, ?, ?, ?, ?)"
-    ).bind(id, now, now, JSON.stringify({ text, title: clean(out.title, 60), types, novelty }), JSON.stringify(questions)).run();
-    return json({ id, title: clean(out.title, 60), types, novelty, questions }, 201);
+    ).bind(id, now, now, JSON.stringify({ text, title: clean(out.title, 60), types, novelty, state }), JSON.stringify(questions)).run();
+    return json({ id, title: clean(out.title, 60), types, novelty, state, questions }, 201);
   }
 
   const id = parts[1];
@@ -114,9 +120,9 @@ async function api(request, env, url) {
       kind: "plan",
       build: true,
       maxTokens: 8000,
-      ...planPrompt(project.idea, project.types, project.questions, cleanAnswers, project.novelty),
+      ...planPrompt(project.idea, project.types, project.questions, cleanAnswers, project.novelty, project.state),
     });
-    const plan = normalizePlan(out, project.types);
+    const plan = normalizePlan(out, project.types, project.state);
     await save(env, id, { answers: cleanAnswers, plan });
     return json(publicProject({ ...project, answers: cleanAnswers, plan }));
   }
@@ -133,7 +139,7 @@ async function api(request, env, url) {
         maxTokens: 1000,
         ...regenerateQuadrantPrompt(project, q, clean(feedback, LIMITS.instruction)),
       });
-      project.plan.quadrants[q].summary = sanitizeSources(clean(out.summary, LIMITS.summary));
+      project.plan.quadrants[q].summary = sanitizeSources(clean(out.summary, LIMITS.summary), project.state);
     } else if (parts.length === 4 && method === "PATCH") {
       const { summary } = await body(request);
       const s = clean(summary, LIMITS.summary);
@@ -174,12 +180,12 @@ async function api(request, env, url) {
         const steps = (Array.isArray(out.steps) ? out.steps : []).slice(0, 5).map((st, i) => ({
           id: `s${i + 1}`,
           title: clean(st?.title, 100),
-          how: sanitizeSources(clean(st?.how, 400)),
+          how: sanitizeSources(clean(st?.how, 400), project.state),
           done: false,
         })).filter((st) => st.title);
         if (!steps.length) throw new AIError("The co-pilot couldn't set up this step. Try again.");
         task.guide = { steps };
-        const opening = sanitizeSources(clean(out.opening, 800));
+        const opening = sanitizeSources(clean(out.opening, 800), project.state);
         const already = await history(env, id, task.id);
         const stmts = [env.DB.prepare("UPDATE projects SET plan = ?, updated_at = ? WHERE id = ?").bind(JSON.stringify(project.plan), new Date().toISOString(), id)];
         if (opening && !already.length) {
@@ -214,7 +220,8 @@ async function api(request, env, url) {
       // The co-pilot speaks first in a walkthrough, but the API needs the first turn to be the student's.
       if (messages[0].role !== "user") messages.unshift({ role: "user", content: "Walk me through this task." });
       const reply = sanitizeSources(
-        await callAI(env, { kind: "chat", system: taskChatSystem(project, task), messages, maxTokens: 1000 })
+        await callAI(env, { kind: "chat", system: taskChatSystem(project, task), messages, maxTokens: 1000 }),
+        project.state
       );
       const now = new Date().toISOString();
       await env.DB.batch([
@@ -304,10 +311,14 @@ async function preview(env, url) {
 
 // ---------------- Helpers ----------------
 
-function normalizePlan(out, types = []) {
+function normalizePlan(out, types = [], state = "NC") {
+  // Outside NC, drop any plan sentence that names NC rules: the library only checked NC's.
+  const noNC = (t) => (state === "NC" ? t : String(t).split(/(?<=[.!?])\s+/).filter((x) => !/\b(NC|North Carolina)\b/.test(x)).join(" "));
+  const sanitize = (t) => noNC(sanitizeSources(t, state));
+  const stSources = stateSources(state);
   const quadrants = {};
   for (const q of QUADRANTS) {
-    quadrants[q] = { summary: sanitizeSources(clean(out?.quadrants?.[q]?.summary, LIMITS.summary)) || "Ask the co-pilot to fill this in." };
+    quadrants[q] = { summary: sanitize(clean(out?.quadrants?.[q]?.summary, LIMITS.summary)) || "Ask the co-pilot to fill this in." };
   }
   const tasks = [];
   const counts = {};
@@ -319,7 +330,7 @@ function normalizePlan(out, types = []) {
       id: `${t.quadrant}-${counts[t.quadrant]}`,
       quadrant: t.quadrant,
       title: clean(t.title, 120),
-      why: sanitizeSources(clean(t.why, 240)),
+      why: sanitize(clean(t.why, 240)),
       basis: clean(t.basis, 80),
       minutes: clampMinutes(t.minutes),
       sources: basisSources(t.basis),
@@ -327,14 +338,14 @@ function normalizePlan(out, types = []) {
     });
   }
   const legalAI = new Map((out?.legal || []).map((l) => [l.id, l]));
-  for (const step of legalStepsFor(types)) {
+  for (const step of legalStepsFor(types, state, stSources)) {
     const ai = legalAI.get(step.id);
     if (ai && ai.applies === false) continue;
     tasks.push({
       id: step.id,
       quadrant: step.quadrant || "legal",
       title: step.title,
-      why: sanitizeSources(clean(ai?.why, 240)) || "Read the official source to see if this applies to you.",
+      why: sanitize(clean(ai?.why, 240)) || "Read the official source to see if this applies to you.",
       minutes: step.minutes,
       sources: step.sources,
       done: false,
@@ -343,8 +354,8 @@ function normalizePlan(out, types = []) {
   tasks.sort((a, b) => QUADRANTS.indexOf(a.quadrant) - QUADRANTS.indexOf(b.quadrant));
   const assumptions = (Array.isArray(out?.assumptions) ? out.assumptions : []).slice(0, 5).map((a, i) => ({
     id: `a${i + 1}`,
-    text: sanitizeSources(clean(a?.text, 240)),
-    test: sanitizeSources(clean(a?.test, 240)),
+    text: sanitize(clean(a?.text, 240)),
+    test: sanitize(clean(a?.test, 240)),
     status: "untested",
   })).filter((a) => a.text);
   return { quadrants, tasks, assumptions };
@@ -391,8 +402,16 @@ function normalizeSite(out, previous) {
   };
 }
 
-function sanitizeSources(text) {
-  return String(text).replace(/\[source:([a-z0-9_]+)\]/gi, (m, sid) => (SOURCES[sid] ? `[source:${sid}]` : ""));
+// Keeps only citations to sources that exist for this project (federal, NC for NC, or this state's offices).
+function sanitizeSources(text, state = "NC") {
+  const st = stateSources(state);
+  return String(text).replace(/\[source:([a-z0-9_]+)\]/gi, (m, sid) => {
+    const id = sid.toLowerCase();
+    if (st[id]) return `[source:${id}]`;
+    if (!SOURCES[id]) return "";
+    if (state !== "NC" && /^(nc_|ncdor_|ncsu_|edpnc_)/.test(id)) return "";
+    return `[source:${id}]`;
+  });
 }
 
 function basisSources(basis) {
@@ -422,6 +441,7 @@ async function loadProject(env, id) {
     title: idea.title,
     types: idea.types || [],
     novelty: idea.novelty || "common",
+    state: STATES[idea.state] ? idea.state : "NC", // plans made before state support were NC-only
     questions: row.questions ? JSON.parse(row.questions) : [],
     answers: row.answers ? JSON.parse(row.answers) : null,
     plan: row.plan ? JSON.parse(row.plan) : null,
@@ -431,7 +451,7 @@ async function loadProject(env, id) {
 }
 
 function publicProject(p) {
-  return { id: p.id, idea: p.idea, title: p.title, types: p.types || [], novelty: p.novelty || "common", questions: p.questions, answers: p.answers, plan: p.plan, site: p.site };
+  return { id: p.id, idea: p.idea, title: p.title, types: p.types || [], novelty: p.novelty || "common", state: p.state || "NC", stateName: stateName(p.state || "NC"), stateSources: stateSources(p.state || "NC"), questions: p.questions, answers: p.answers, plan: p.plan, site: p.site };
 }
 
 async function save(env, id, fields) {

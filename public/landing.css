@@ -44,12 +44,15 @@ section { position: relative; }
 .hero-input:focus-within { border-color: transparent; background: linear-gradient(var(--panel), var(--panel)) padding-box, var(--grad) border-box; box-shadow: 0 0 0 6px var(--accent-soft), var(--shadow-lg); }
 .hero-input input { flex: 1; min-width: 0; border: 0; background: transparent; padding: 0 14px; font-size: 16px; outline: none; }
 .hero-input input::placeholder { color: var(--text-3); }
+.hero-input select { flex: none; max-width: 170px; border: 0; border-left: 1px solid var(--border); background: transparent; color: var(--text); padding: 0 10px; font: inherit; font-size: 14px; outline: none; cursor: pointer; }
+.hero-input select:invalid { color: var(--text-3); }
+.hero-input select option { color: var(--text); background: var(--panel); }
 .hero-under { margin-top: 14px; display: flex; justify-content: center; flex-wrap: wrap; gap: 8px 22px; font-size: 13px; color: var(--text-3); }
 .hero-under span { display: inline-flex; align-items: center; gap: 6px; }
 .hero-under svg { width: 14px; height: 14px; color: var(--ok); }
 .hero-under a { color: var(--text-2); text-underline-offset: 3px; }
 .hero .err { margin: 12px auto 0; max-width: 640px; font-size: 13px; color: var(--danger); }
-@media (max-width: 560px) { .hero-input { flex-direction: column; padding: 10px; } .hero-input input { height: 44px; } }
+@media (max-width: 560px) { .hero-input { flex-direction: column; padding: 10px; } .hero-input input { height: 44px; } .hero-input select { height: 44px; max-width: none; border-left: 0; border-top: 1px solid var(--border); } }
 
 /* Product mockup */
 .stage { position: relative; margin: 64px auto 0; max-width: 1060px; perspective: 1600px; }

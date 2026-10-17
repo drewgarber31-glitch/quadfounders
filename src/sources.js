@@ -391,13 +391,13 @@ export const SOURCES = {
 export const LEGAL_STEPS = [
   // Legal and registration
   { id: "legal-structure", title: "Choose a business structure", sources: ["sba_structure"], minutes: 30, types: ["all"] },
-  { id: "legal-name", title: "Check your business name (trademarks and NC records)", sources: ["uspto_search", "nc_sos_registration"], minutes: 20, types: ["all"] },
-  { id: "legal-dba", title: "Decide whether to file an assumed business name (DBA)", sources: ["nc_abn", "sba_register"], minutes: 15, types: ["all"] },
-  { id: "legal-register", title: "Decide whether to register with the NC Secretary of State", sources: ["nc_sos_registration", "sba_register"], minutes: 30, types: ["all"] },
-  { id: "legal-licenses", title: "Check which licenses and permits apply to you", sources: ["nc_licenses", "sba_licenses"], minutes: 30, types: ["all"] },
+  { id: "legal-name", title: "Check your business name (trademarks and NC records)", sources: ["uspto_search", "nc_sos_registration"], minutes: 20, types: ["all"], other: { title: "Check your business name (trademarks and state records)", sources: ["uspto_search", "st_reg"] } },
+  { id: "legal-dba", title: "Decide whether to file an assumed business name (DBA)", sources: ["nc_abn", "sba_register"], minutes: 15, types: ["all"], other: { title: "Decide whether you need to register a DBA (doing business as) name", sources: ["sba_register", "st_reg"] } },
+  { id: "legal-register", title: "Decide whether to register with the NC Secretary of State", sources: ["nc_sos_registration", "sba_register"], minutes: 30, types: ["all"], other: { title: "Decide whether to register with your state's business office", sources: ["st_reg", "sba_register"] } },
+  { id: "legal-licenses", title: "Check which licenses and permits apply to you", sources: ["nc_licenses", "sba_licenses"], minutes: 30, types: ["all"], other: { title: "Check which licenses and permits apply to you", sources: ["st_lic", "sba_licenses", "st_irs"] } },
   { id: "legal-zoning", title: "Check local zoning rules, even for a home business", sources: ["sba_location"], minutes: 20, types: ["all"] },
-  { id: "legal-food", title: "Check NC home food rules and request a kitchen inspection", sources: ["ncsu_home_food"], minutes: 30, types: ["food"] },
-  { id: "legal-beauty", title: "Check NC cosmetic art licensing before charging for services", sources: ["nc_gs_88b22"], minutes: 20, types: ["beauty"] },
+  { id: "legal-food", title: "Check NC home food rules and request a kitchen inspection", sources: ["ncsu_home_food"], minutes: 30, types: ["food"], other: { title: "Find your state's rules for selling food made at home", sources: ["st_lic", "st_help", "st_sba", "st_irs"] } },
+  { id: "legal-beauty", title: "Check NC cosmetic art licensing before charging for services", sources: ["nc_gs_88b22"], minutes: 20, types: ["beauty"], other: { title: "Check your state's beauty and cosmetology licensing before charging", sources: ["st_lic", "st_irs"] } },
   { id: "legal-cosmetics", title: "Check FDA rules if you make or sell cosmetics", sources: ["fda_cosmetics"], minutes: 20, types: ["beauty", "product"] },
   { id: "legal-children", title: "Check safety rules if you sell products for kids 12 and under", sources: ["cpsc_cpc", "cpsc_small_batch"], minutes: 20, types: ["product", "online", "invention"] },
   { id: "legal-textile", title: "Check label rules if you sell clothing or textiles", sources: ["ftc_textile"], minutes: 15, types: ["product", "online"] },
@@ -408,17 +408,17 @@ export const LEGAL_STEPS = [
   { id: "legal-trademark", title: "Learn when to use TM and whether to register your brand", sources: ["uspto_trademark"], minutes: 15, types: ["all"] },
   { id: "legal-coppa", title: "Check children's privacy rules if kids under 13 might use it", sources: ["ftc_coppa"], minutes: 20, types: ["digital"] },
   { id: "legal-ein", title: "Decide whether you need a free EIN from the IRS", sources: ["irs_ein", "sba_tax_ids"], minutes: 15, types: ["all"] },
-  { id: "legal-sales-tax", title: "Check if you need to register for NC sales tax", sources: ["ncdor_who_registers", "ncdor_sales_tax"], minutes: 20, types: ["all"] },
+  { id: "legal-sales-tax", title: "Check if you need to register for NC sales tax", sources: ["ncdor_who_registers", "ncdor_sales_tax"], minutes: 20, types: ["all"], other: { title: "Check if you need to register for state taxes, like sales tax", sources: ["st_tax", "sba_tax_ids", "st_irs"] } },
   { id: "legal-taxes", title: "Learn how self-employment taxes work", sources: ["irs_self_employed", "irs_hobby"], minutes: 20, types: ["all"] },
   { id: "legal-bank", title: "Plan a separate account for business money", sources: ["sba_bank"], minutes: 15, types: ["all"] },
   { id: "legal-insurance", title: "Check which insurance makes sense", sources: ["sba_insurance"], minutes: 20, types: ["all"] },
   { id: "legal-hiring", title: "If anyone will help you, learn employee vs. contractor rules", sources: ["irs_contractor", "sba_hire"], minutes: 20, types: ["all"] },
   { id: "legal-intl", title: "International students: check work rules before you start", sources: ["dhs_intl_entrepreneurs"], minutes: 15, types: ["all"] },
-  { id: "legal-annual", title: "If you form an LLC or corporation, know your annual report duties", sources: ["nc_maintaining"], minutes: 15, types: ["all"] },
-  { id: "legal-clinic", title: "Look into free legal help from a university law clinic", sources: ["nc_checklist"], minutes: 15, types: ["all"] },
-  { id: "legal-mentor", title: "Book a free mentor session to review your plan", sources: ["score_mentoring", "nc_sbtdc", "nc_sbcn", "edpnc_advisors"], minutes: 15, types: ["all"] },
+  { id: "legal-annual", title: "If you form an LLC or corporation, know your annual report duties", sources: ["nc_maintaining"], minutes: 15, types: ["all"], other: { title: "If you form an LLC or corporation, check your state's ongoing filing duties", sources: ["st_reg"] } },
+  { id: "legal-clinic", title: "Look into free legal help from a university law clinic", sources: ["nc_checklist"], minutes: 15, types: ["all"], other: null },
+  { id: "legal-mentor", title: "Book a free mentor session to review your plan", sources: ["score_mentoring", "nc_sbtdc", "nc_sbcn", "edpnc_advisors"], minutes: 15, types: ["all"], other: { title: "Book a free mentor session to review your plan", sources: ["score_mentoring", "st_help", "st_sba"] } },
   // Idea and customer (fixed)
-  { id: "fixed-lean-plan", title: "Write a one-page lean business plan", sources: ["sba_business_plan", "nc_checklist"], minutes: 45, types: ["all"], quadrant: "customer" },
+  { id: "fixed-lean-plan", title: "Write a one-page lean business plan", sources: ["sba_business_plan", "nc_checklist"], minutes: 45, types: ["all"], quadrant: "customer", other: { title: "Write a one-page lean business plan", sources: ["sba_business_plan"] } },
   // Pricing and costs (fixed)
   { id: "fixed-records", title: "Set up a simple system to track income and expenses", sources: ["irs_records"], minutes: 20, types: ["all"], quadrant: "pricing" },
   // Marketing (fixed)
@@ -429,9 +429,29 @@ export const LEGAL_STEPS = [
   { id: "fixed-data", title: "Protect any customer information you collect", sources: ["ftc_protect_info", "ftc_cyber"], minutes: 20, types: ["all"], quadrant: "marketing" },
 ];
 
-export function legalStepsFor(types = []) {
+/**
+ * Fixed steps for an idea's business types and state.
+ * Steps with an `other` variant use it outside North Carolina (other: null means NC only).
+ * @param {string[]} types
+ * @param {string} state  two-letter code; "NC" keeps the detailed NC steps
+ * @param {object} stSources  per-state sources (from stateSources) so missing links are dropped
+ */
+const TERRITORY = new Set(["PR", "VI", "GU", "AS", "MP"]);
+export function legalStepsFor(types = [], state = "NC", stSources = {}) {
   const set = new Set(types);
-  return LEGAL_STEPS.filter((s) => s.types.includes("all") || s.types.some((t) => set.has(t)));
+  const out = [];
+  for (const step of LEGAL_STEPS) {
+    if (!(step.types.includes("all") || step.types.some((t) => set.has(t)))) continue;
+    if (state === "NC" || !("other" in step)) { out.push(step); continue; }
+    if (!step.other) continue;
+    const sources = step.other.sources.filter((id) => SOURCES[id] || stSources[id]);
+    if (!sources.length) continue; // never show a step without an official source
+    // DC and the territories aren't states: say "territory" / "DC" in step titles.
+    const word = state === "DC" ? "DC" : TERRITORY.has(state) ? "territory" : "";
+    const title = word ? step.other.title.replace(/your state's/g, word === "DC" ? "DC's" : "your territory's").replace(/\bstate\b/g, word === "DC" ? "DC" : "territory") : step.other.title;
+    out.push({ ...step, title, sources });
+  }
+  return out;
 }
 
 export function sourceList(ids = Object.keys(SOURCES)) {

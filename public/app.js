@@ -18,6 +18,21 @@ const EXAMPLES = [
 ];
 const BUILD_LINES = ["Reading your answers", "Matching your idea to official guidance", "Drafting your four quadrants", "Writing small tasks that fit between classes", "Listing what has to be true"];
 let SOURCES = {};
+let STATE_NAMES = {}; // code -> name, from /api/states
+const TERRITORIES = ["DC", "PR", "VI", "GU", "AS", "MP"];
+// Library sources plus the open project's state office links (st_reg, st_tax, ...).
+const srcOf = (id) => SOURCES[id] || project?.stateSources?.[id];
+const lastState = () => { try { return localStorage.getItem("qf.state") || ""; } catch { return ""; } };
+function stateSelect(id, required = true) {
+  const pick = lastState();
+  const opt = (c) => `<option value="${c}" ${c === pick ? "selected" : ""}>${esc(STATE_NAMES[c])}</option>`;
+  const codes = Object.keys(STATE_NAMES).sort((a, b) => STATE_NAMES[a].localeCompare(STATE_NAMES[b]));
+  return `<select id="${id}" class="field state-select" ${required ? "required" : ""} aria-label="State or territory where you'll run your business">
+    <option value="" ${pick ? "" : "selected"} disabled>Where will you run it?</option>
+    <optgroup label="States">${codes.filter((c) => !TERRITORIES.includes(c)).map(opt).join("")}</optgroup>
+    <optgroup label="DC and U.S. territories">${codes.filter((c) => TERRITORIES.includes(c)).map(opt).join("")}</optgroup>
+  </select>`;
+}
 let project = null; // currently open project
 
 // ---------- utilities ----------
@@ -108,7 +123,7 @@ function submitOnModEnter(textarea, form) {
 }
 
 function srcTag(id) {
-  const s = SOURCES[id];
+  const s = srcOf(id);
   return s ? `<a class="tag src" href="${esc(s.url)}" target="_blank" rel="noopener" title="${esc(s.title)}">${esc(s.org)}</a>` : "";
 }
 
@@ -166,7 +181,7 @@ function startScreen(mode = "idea") {
         <form id="ideaForm" class="composer-box">
           <label class="sr" for="idea">Your idea</label>
           <textarea id="idea" maxlength="2000" required placeholder="Describe it in a sentence or two. What is it, and who is it for?"></textarea>
-          <div class="bar"><p class="help">A sentence is enough. You'll add details next.</p>
+          <div class="bar">${stateSelect("ideaState")}
             <button class="btn primary lg" type="submit">Build my plan <kbd>${MOD}↵</kbd></button></div>
         </form>
         <p class="err" id="ideaErr" hidden></p>
@@ -185,7 +200,7 @@ function startScreen(mode = "idea") {
     view.querySelectorAll("[data-ex]").forEach((b) => b.addEventListener("click", () => { ta.value = EXAMPLES[Number(b.dataset.ex)]; ta.focus(); }));
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      await createProject(ta.value, form.querySelector("button[type=submit]"), $("ideaErr"));
+      await createProject(ta.value, $("ideaState").value, form.querySelector("button[type=submit]"), $("ideaErr"));
     });
   } else {
     render(`<section class="start">
@@ -205,8 +220,11 @@ function startScreen(mode = "idea") {
           <div><label class="label" for="hours">Hours per week</label>
             <select id="hours" class="field"><option value="">Not sure</option><option>Under 3 hours</option><option>3 to 6 hours</option><option>6 to 10 hours</option><option>10+ hours</option></select></div>
         </div>
-        <div><label class="label" for="budget">Money to start</label>
-          <select id="budget" class="field"><option value="">Not sure</option><option>$0</option><option>Under $50</option><option>$50 to $200</option><option>$200 to $500</option><option>$500+</option></select></div>
+        <div class="form-row">
+          <div><label class="label" for="budget">Money to start</label>
+            <select id="budget" class="field"><option value="">Not sure</option><option>$0</option><option>Under $50</option><option>$50 to $200</option><option>$200 to $500</option><option>$500+</option></select></div>
+          <div><label class="label" for="findState">State or territory</label>${stateSelect("findState", false)}</div>
+        </div>
         <div><button class="btn primary lg" type="submit">${icons.spark}Suggest ideas</button></div>
         <p class="err" id="findErr" hidden></p>
       </form>
@@ -219,13 +237,15 @@ function startScreen(mode = "idea") {
   }));
 }
 
-async function createProject(text, btn, errEl) {
+async function createProject(text, state, btn, errEl) {
   errEl.hidden = true;
+  if (!state) { errEl.textContent = "Pick the state or territory where you'll run your business."; errEl.hidden = false; return; }
+  try { localStorage.setItem("qf.state", state); } catch { /* fine */ }
   btn.disabled = true;
   const label = btn.innerHTML;
   btn.innerHTML = `<span class="spinner"></span> Reading your idea`;
   try {
-    const data = await api("projects", { method: "POST", body: { idea: text } });
+    const data = await api("projects", { method: "POST", body: { idea: text, state } });
     store.add(data.id, data.title || "My idea");
     location.hash = `#/p/${data.id}/questions`;
   } catch (ex) {
@@ -264,7 +284,7 @@ async function findIdeas(e) {
       <p class="help" style="margin-top:14px">AI suggestions. Nothing here is checked against existing businesses, so look for similar ideas before you commit.</p>`;
     out.querySelectorAll("[data-idea]").forEach((b) => b.addEventListener("click", () => {
       const i = ideas[Number(b.dataset.idea)];
-      createProject(`${i.title}: ${i.oneLiner} Problem: ${i.problem} Customer: ${i.customer}. What's new: ${i.whatsNew}`, b, err);
+      createProject(`${i.title}: ${i.oneLiner} Problem: ${i.problem} Customer: ${i.customer}. What's new: ${i.whatsNew}`, $("findState").value, b, err);
     }));
     out.scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (ex) {
@@ -391,14 +411,27 @@ function sectionBlock(s, idx, { showHeader = true } = {}) {
       <div class="row"><span class="tag ai">AI draft</span>
         <div class="acts"><button class="btn ghost" data-edit="${s.id}">${icons.edit}Edit</button><button class="btn ghost" data-redo="${s.id}">${icons.redo}Redo with feedback</button></div></div>
     </div>
-    ${s.id === "legal" ? `<p class="state-note">${icons.shieldok}<span>These steps are written for <b>North Carolina</b>. Federal steps (IRS, FTC, USPTO) apply everywhere. In another state, use your state's official business and tax offices instead of the NC links.</span></p>` : ""}
+    ${s.id === "legal" ? stateNote() : ""}
     <div class="list">${tasks.map(taskRow).join("")}</div>
   </section>`;
 }
 
+// Legal section banner: NC has detailed rules; everywhere else links to the state's official offices.
+function stateNote() {
+  const code = project.state || "NC";
+  const name = project.stateName || code;
+  if (code === "NC") return `<p class="state-note">${icons.shieldok}<span>These steps are written for <b>North Carolina</b>. Federal steps (IRS, FTC, USPTO) apply everywhere.</span></p>`;
+  const KIND = { st_reg: "Register your business", st_tax: "State taxes", st_lic: "Licenses and permits", st_help: "Free business help", st_sba: "SBA district office", st_irs: "IRS list of all your state's business sites" };
+  const links = Object.entries(project.stateSources || {});
+  return `<div class="state-note">${icons.shieldok}<div><span>These steps link to <b>${esc(name)}</b>'s official offices. Quad Founders has not checked ${esc(name)}'s specific rules, so confirm what applies to you with these offices. Federal steps (IRS, FTC, USPTO) apply everywhere.</span>
+    ${links.length ? `<ul class="st-links">${links.map(([k, l]) => `<li><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(KIND[k] || l.title)}</a><span>${esc(l.org)}</span></li>`).join("")}</ul>` : ""}</div></div>`;
+}
+
 const SHORT_ORG = { "U.S. Small Business Administration": "SBA", "Internal Revenue Service": "IRS", "Federal Trade Commission": "FTC", "U.S. Patent and Trademark Office": "USPTO", "North Carolina Department of the Secretary of State": "NC Sec. of State", "North Carolina Department of Revenue": "NC Revenue", "North Carolina General Assembly": "NC law", "University of Alaska Fairbanks Center ICE": "NSF I-Corps Hub", "U.S. Department of Justice": "ADA.gov", "U.S. Consumer Product Safety Commission": "CPSC", "U.S. Food and Drug Administration": "FDA", "U.S. Copyright Office": "Copyright Office", "U.S. Department of Homeland Security": "DHS", "Economic Development Partnership of North Carolina": "EDPNC", "NC Community College System": "NC Small Business Centers" };
 function taskRow(t) {
-  const org = t.sources?.[0] && SOURCES[t.sources[0]]?.org;
+  const first = t.sources?.[0];
+  const ST_SHORT = { st_reg: "registration", st_tax: "taxes", st_lic: "licenses", st_help: "business help" };
+  const org = first && (ST_SHORT[first] ? `${project.state} ${ST_SHORT[first]}` : first === "st_sba" ? "SBA" : first === "st_irs" ? "IRS" : srcOf(first)?.org);
   return `<div class="rowi ${t.done ? "done" : ""}">
     <button class="status ${t.done ? "on" : ""}" data-toggle="${esc(t.id)}" aria-pressed="${t.done}" aria-label="${t.done ? "Mark not done" : "Mark done"}: ${esc(t.title)}">${t.done ? icons.done : icons.circle}</button>
     <a class="title" href="#/p/${project.id}/t/${esc(t.id)}" style="text-decoration:none">${esc(t.title)}</a>
@@ -824,8 +857,9 @@ function route() {
 
 (async () => {
   try {
-    const [status, src] = await Promise.all([api("status"), api("sources")]);
+    const [status, src, st] = await Promise.all([api("status"), api("sources"), api("states")]);
     SOURCES = src.sources || {};
+    STATE_NAMES = st.states || {};
     $("modeBadge").hidden = !status.testMode;
   } catch { /* still usable */ }
   window.addEventListener("hashchange", route);
