@@ -131,10 +131,10 @@ function mockReply({ kind, messages }) {
           { id: "legal-structure", applies: true, why: "Look into how each structure treats a one-person business like this." },
           { id: "legal-name", applies: true, why: "Look into whether the name is already in use." },
           { id: "legal-register", applies: true, why: "Look into what the state office says about registering a small service business." },
-          { id: "legal-ein", applies: true, why: "Look into the IRS page on when an EIN comes up. It's free from the IRS." },
+          { id: "legal-ein", applies: true, why: "Look into the official page on when an EIN comes up. It's free." },
           { id: "legal-sales-tax", applies: true, why: "Look into how sales tax treats a service like this." },
           { id: "legal-licenses", applies: true, why: "Look into what your county and city list for licenses." },
-          { id: "legal-taxes", applies: true, why: "Look into how the IRS treats earnings from your own business." },
+          { id: "legal-taxes", applies: true, why: "Look into how earnings from your own business are taxed." },
           { id: "legal-mentor", applies: true, why: "A free mentor can sanity-check your plan." },
         ],
         assumptions: [

@@ -297,3 +297,15 @@ footer a { text-decoration: none; color: var(--text-2); }
 footer a:hover { color: var(--text); }
 footer .legal { flex-basis: 100%; line-height: 1.6; max-width: 80ch; }
 .faq p a { color: var(--accent); text-underline-offset: 2px; }
+
+/* Independence statement (normal size, not fine print) */
+.indep { max-width: 760px; margin: 0 auto; text-align: center; display: grid; gap: 10px; }
+.indep .lead-in { font-size: 19px; font-weight: 600; letter-spacing: -0.02em; color: var(--text); margin: 0; }
+.indep p { font-size: 15.5px; line-height: 1.6; color: var(--text-2); margin: 0; }
+/* Plain citations in demos (no agency names or badges) */
+.float .cite-row { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; font-weight: 500; padding: 4px 0; }
+.float .cite-row + .cite-row { border-top: 1px solid var(--border-soft); }
+.float .cite-row em { font-style: normal; font: 500 10.5px var(--mono); color: var(--accent); white-space: nowrap; }
+.cites { display: grid; gap: 8px; }
+.cites div { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 9px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel); font-size: 13px; }
+.cites span { font: 500 11px var(--mono); color: var(--accent); }

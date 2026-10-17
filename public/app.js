@@ -126,9 +126,22 @@ function submitOnModEnter(textarea, form) {
   });
 }
 
+// Sources are shown as plain citations (the web address), never as agency names, logos, or badges.
+const domainOf = (url) => { try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return "source"; } };
+// "SBA: Choose a business structure" -> "Choose a business structure" (the topic, without the agency name)
+const topicOf = (s) => String(s.title || "").replace(/^[^:]{1,60}:\s*/, "");
 function srcTag(id) {
   const s = srcOf(id);
-  return s ? `<a class="tag src" href="${esc(s.url)}" target="_blank" rel="noopener" title="${esc(s.title)}">${esc(s.org)}</a>` : "";
+  return s ? `<a class="cite" href="${esc(s.url)}" target="_blank" rel="noopener" title="Opens ${esc(domainOf(s.url))} in a new tab">${esc(domainOf(s.url))}<span aria-hidden="true"> ↗</span></a>` : "";
+}
+const INDEPENDENT = "Quad Founders is an independent student project, not a government service. It isn't affiliated with or endorsed by any agency or organization it links to.";
+// The list of sources for one task: topic + web address, plus the independence statement in normal text.
+function sourceList(ids = []) {
+  const items = ids.map((id) => srcOf(id)).filter(Boolean);
+  if (!items.length) return "";
+  return `<section class="sources-box"><h3>Sources to read</h3>
+    <ul>${items.map((s) => `<li><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(topicOf(s))}</a><span>${esc(domainOf(s.url))}</span></li>`).join("")}</ul>
+    <p>${INDEPENDENT}</p></section>`;
 }
 
 // Safe mini-markdown for co-pilot replies: **bold**, "- " bullets, paragraphs, [source:id] tags.
@@ -424,22 +437,19 @@ function sectionBlock(s, idx, { showHeader = true } = {}) {
 function stateNote() {
   const code = project.state || "NC";
   const name = project.stateName || code;
-  if (code === "NC") return `<p class="state-note">${icons.shieldok}<span>These are topics to look into, not legal advice. They're written for <b>North Carolina</b>, and federal sources (IRS, FTC, USPTO) cover every state. Your city, county, and campus may have their own rules too. Confirm anything that affects you with the official office or a licensed professional.</span></p>`;
-  const KIND = { st_reg: "Register your business", st_tax: "State taxes", st_lic: "Licenses and permits", st_help: "Free business help", st_sba: "SBA district office", st_irs: "IRS list of all your state's business sites" };
+  if (code === "NC") return `<p class="state-note">${icons.shieldok}<span>These are topics to look into, not legal advice. They're written for <b>North Carolina</b>, and federal pages cover every state. Your city, county, and campus may have their own rules too. Confirm anything that affects you with the official office or a licensed professional. ${INDEPENDENT}</span></p>`;
+  const KIND = { st_reg: "Register your business", st_tax: "State taxes", st_lic: "Licenses and permits", st_help: "Free business help", st_sba: "Small business district office", st_irs: "Federal list of your state's business sites" };
   const links = Object.entries(project.stateSources || {});
-  return `<div class="state-note">${icons.shieldok}<div><span>These are topics to look into, not legal advice. They link to <b>${esc(name)}</b>'s official offices. Quad Founders has not checked ${esc(name)}'s specific rules, so confirm what applies to you with these offices. Federal sources (IRS, FTC, USPTO) cover every state, and your city, county, and campus may have their own rules too.</span>
-    ${links.length ? `<ul class="st-links">${links.map(([k, l]) => `<li><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(KIND[k] || l.title)}</a><span>${esc(l.org)}</span></li>`).join("")}</ul>` : ""}</div></div>`;
+  return `<div class="state-note">${icons.shieldok}<div><span>These are topics to look into, not legal advice. They link to <b>${esc(name)}</b>'s official offices. Quad Founders has not checked ${esc(name)}'s specific rules, so confirm what applies to you with these offices. Federal pages cover every state, and your city, county, and campus may have their own rules too. ${INDEPENDENT}</span>
+    ${links.length ? `<ul class="st-links">${links.map(([k, l]) => `<li><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(KIND[k] || topicOf(l))}</a><span>${esc(domainOf(l.url))}</span></li>`).join("")}</ul>` : ""}</div></div>`;
 }
 
-const SHORT_ORG = { "U.S. Small Business Administration": "SBA", "Internal Revenue Service": "IRS", "Federal Trade Commission": "FTC", "U.S. Patent and Trademark Office": "USPTO", "North Carolina Department of the Secretary of State": "NC Sec. of State", "North Carolina Department of Revenue": "NC Revenue", "North Carolina General Assembly": "NC law", "University of Alaska Fairbanks Center ICE": "NSF I-Corps Hub", "U.S. Department of Justice": "ADA.gov", "U.S. Consumer Product Safety Commission": "CPSC", "U.S. Food and Drug Administration": "FDA", "U.S. Copyright Office": "Copyright Office", "U.S. Department of Homeland Security": "DHS", "Economic Development Partnership of North Carolina": "EDPNC", "NC Community College System": "NC Small Business Centers" };
 function taskRow(t) {
-  const first = t.sources?.[0];
-  const ST_SHORT = { st_reg: "registration", st_tax: "taxes", st_lic: "licenses", st_help: "business help" };
-  const org = first && (ST_SHORT[first] ? `${project.state} ${ST_SHORT[first]}` : first === "st_sba" ? "SBA" : first === "st_irs" ? "IRS" : srcOf(first)?.org);
+  const n = (t.sources || []).filter((id) => srcOf(id)).length;
   return `<div class="rowi ${t.done ? "done" : ""}">
     <button class="status ${t.done ? "on" : ""}" data-toggle="${esc(t.id)}" aria-pressed="${t.done}" aria-label="${t.done ? "Mark not done" : "Mark done"}: ${esc(t.title)}">${t.done ? icons.done : icons.circle}</button>
     <a class="title" href="#/p/${project.id}/t/${esc(t.id)}" style="text-decoration:none">${esc(t.title)}</a>
-    ${org ? `<span class="tag">${esc(SHORT_ORG[org] || org)}</span>` : ""}
+    ${n ? `<span class="srcs-n">${n} source${n > 1 ? "s" : ""}</span>` : ""}
     <span class="mins">${t.minutes} min</span>
     <span class="chev" aria-hidden="true">${icons.chev}</span>
   </div>`;
@@ -661,9 +671,10 @@ async function taskScreen(id, taskId) {
   let guideError = "";
 
   const head = () => `<header class="task-head">
-      <div class="meta"><span class="qchip">${sec.short}</span><span class="tag num">${icons.clock}About ${task.minutes} min</span>${(task.sources || []).map(srcTag).join("")}${task.basis ? `<span class="tag">Based on: ${esc(task.basis)}</span>` : ""}</div>
+      <div class="meta"><span class="qchip">${sec.short}</span><span class="tag num">${icons.clock}About ${task.minutes} min</span>${task.basis ? `<span class="tag">Based on: ${esc(task.basis)}</span>` : ""}</div>
       <h1>${esc(task.title)}</h1>
       <div class="why">${md(task.why)}</div>
+      ${sourceList(task.sources)}
       ${task.legal ? `<p class="state-note legal-note">${icons.shieldok}<span><b>Legal topic: something to look into, not advice.</b> Quad Founders can show you what the official source says and help you list questions. It can't tell you whether this applies to you or what to do, and it can't write legal documents. For that, ask the official office or a licensed professional.</span></p>` : ""}
     </header>`;
 

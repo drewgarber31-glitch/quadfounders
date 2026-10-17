@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&display=swap">
   <link rel="stylesheet" href="/base.css?v=3">
-  <link rel="stylesheet" href="/landing.css?v=5">
+  <link rel="stylesheet" href="/landing.css?v=6">
   <script>document.documentElement.classList.add("js")</script>
 </head>
 <body>
@@ -73,7 +73,7 @@
         </div>
         <div class="float f2">
           <span class="k">Sources for this step</span>
-          <span class="src">IRS</span><span class="src">SBA</span><span class="src">NC Sec. of State</span>
+          <span class="cite-row">Business structures <em>official page ↗</em></span><span class="cite-row">Tax ID numbers <em>official page ↗</em></span>
         </div>
         <div class="float f3">
           <div class="bub"><span class="av"><svg class="mark" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7.5" fill="none" stroke-width="3.6" stroke-dasharray="9.78 2" stroke-dashoffset="1"/><path d="M16.5 16.5 21.5 21.5" stroke-width="3.6" stroke-linecap="round"/></svg></span>
@@ -110,7 +110,7 @@
                 <div class="tile" style="--c:var(--q0)"><div class="h"><i><svg viewBox="0 0 16 16"><circle cx="6" cy="5.5" r="2.5"/><path d="M1.5 13.5c.5-2.5 2.3-4 4.5-4s4 1.5 4.5 4"/></svg></i>Idea and customer<span>2/3</span></div><div class="bar"><b data-w="66%"></b></div><p class="n">Next: Ask 10 students how they get to the airport now</p></div>
                 <div class="tile" style="--c:var(--q1)"><div class="h"><i><svg viewBox="0 0 16 16"><path d="M2.5 8.5V3a.5.5 0 01.5-.5h5.5l5 5-6 6z"/></svg></i>Pricing and costs<span>1/3</span></div><div class="bar"><b data-w="33%"></b></div><p class="n">Next: Test two prices with real riders</p></div>
                 <div class="tile" style="--c:var(--q2)"><div class="h"><i><svg viewBox="0 0 16 16"><path d="M2.5 6.5v3h2l5 3v-9l-5 3z"/></svg></i>Marketing<span>1/4</span></div><div class="bar"><b data-w="25%"></b></div><p class="n">Next: Post your link in 2 group chats, count sign-ups</p></div>
-                <div class="tile" style="--c:var(--q3)"><div class="h"><i><svg viewBox="0 0 16 16"><path d="M8 2l5 2v4c0 3-2.2 5.2-5 6-2.8-.8-5-3-5-6V4z"/></svg></i>Legal and registration<span>1/6</span></div><div class="bar"><b data-w="16%"></b></div><p class="n">Next: Check which licenses and permits apply to you</p></div>
+                <div class="tile" style="--c:var(--q3)"><div class="h"><i><svg viewBox="0 0 16 16"><path d="M8 2l5 2v4c0 3-2.2 5.2-5 6-2.8-.8-5-3-5-6V4z"/></svg></i>Legal and registration<span>1/6</span></div><div class="bar"><b data-w="16%"></b></div><p class="n">Next: Look into which licenses and permits may apply</p></div>
               </div>
             </div>
           </div>
@@ -123,14 +123,10 @@
   <!-- SOURCES -->
   <section class="sources">
     <div class="wrap">
-      <p class="k reveal">Plans and legal topics link to official sources, including</p>
-      <div class="marquee reveal d1" aria-label="Official sources used">
-        <div class="track">
-          <span>U.S. Small Business Administration</span><span>Internal Revenue Service</span><span>Federal Trade Commission</span><span>U.S. Patent and Trademark Office</span><span>NC Secretary of State</span><span>NC Department of Revenue</span><span>NC State Extension</span><span>NSF I-Corps</span><span>SCORE</span><span>Consumer Product Safety Commission</span><span>Food and Drug Administration</span><span>U.S. Copyright Office</span><span>ADA.gov</span><span>NC SBTDC</span><span>State offices in all 50 states</span>
-          <span aria-hidden="true">U.S. Small Business Administration</span><span aria-hidden="true">Internal Revenue Service</span><span aria-hidden="true">Federal Trade Commission</span><span aria-hidden="true">U.S. Patent and Trademark Office</span><span aria-hidden="true">NC Secretary of State</span><span aria-hidden="true">NC Department of Revenue</span><span aria-hidden="true">NC State Extension</span><span aria-hidden="true">NSF I-Corps</span><span aria-hidden="true">SCORE</span><span aria-hidden="true">Consumer Product Safety Commission</span><span aria-hidden="true">Food and Drug Administration</span><span aria-hidden="true">U.S. Copyright Office</span><span aria-hidden="true">ADA.gov</span><span aria-hidden="true">NC SBTDC</span><span aria-hidden="true">State offices in all 50 states</span>
-        </div>
+      <div class="indep reveal">
+        <p class="lead-in">Every legal topic links to the public page it came from, so you can read it yourself.</p>
+        <p>Quad Founders is an independent student project. It's not a government service, and it isn't affiliated with, endorsed by, or approved by any agency or organization it links to.</p>
       </div>
-      <p class="fine reveal d2">Quad Founders is not affiliated with or endorsed by any of these organizations.</p>
     </div>
   </section>
 
@@ -191,12 +187,12 @@
           <button class="qtab" role="tab" aria-selected="false" data-q="2" style="--c:var(--q2)">
             <span class="ic"><svg viewBox="0 0 16 16"><path d="M2.5 6.5v3h2l5 3v-9l-5 3zM12 5.5a3.5 3.5 0 010 5"/></svg></span>
             <h3>Marketing</h3><p>How your first customers find you.</p>
-            <ul><li>Pick one place your customers already are<em>15 min</em></li><li>Write your first post<em>30 min</em></li><li>Learn the FTC rules for reviews and endorsements<em>20 min</em></li></ul>
+            <ul><li>Pick one place your customers already are<em>15 min</em></li><li>Write your first post<em>30 min</em></li><li>Look into rules for reviews and paid posts<em>15 min</em></li></ul>
           </button>
           <button class="qtab" role="tab" aria-selected="false" data-q="3" style="--c:var(--q3)">
             <span class="ic"><svg viewBox="0 0 16 16"><path d="M8 2l5 2v4c0 3-2.2 5.2-5 6-2.8-.8-5-3-5-6V4z"/></svg></span>
-            <h3>Legal and registration</h3><p>The official steps, each linked to the source.</p>
-            <ul><li>Choose a business structure<em>30 min</em></li><li>Decide whether you need a free EIN from the IRS<em>15 min</em></li><li>Check which licenses and permits apply to you<em>30 min</em></li></ul>
+            <h3>Legal and registration</h3><p>Topics to look into, each linked to its source.</p>
+            <ul><li>Look into business structures<em>30 min</em></li><li>Look into whether you need a tax ID<em>15 min</em></li><li>Look into which licenses may apply<em>30 min</em></li></ul>
           </button>
         </div>
       </div>
@@ -217,7 +213,7 @@
           <div class="demo"><div class="chat">
             <div class="me">How do I figure out what to charge?</div>
             <div class="ai"><span class="av"><svg class="mark" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7.5" fill="none" stroke-width="3.6" stroke-dasharray="9.78 2" stroke-dashoffset="1"/><path d="M16.5 16.5 21.5 21.5" stroke-width="3.6" stroke-linecap="round"/></svg></span>
-              <div>Let's do it in three small steps:<ol><li>List your one-time and monthly costs</li><li>Find your break-even point</li><li>Ask people what they pay for alternatives now</li></ol><span class="src">SBA</span></div></div>
+              <div>Let's do it in three small steps:<ol><li>List your one-time and monthly costs</li><li>Find your break-even point</li><li>Ask people what they pay for alternatives now</li></ol><span class="src">Source ↗</span></div></div>
           </div></div>
         </article>
         <article class="cell reveal d1" style="--c:var(--q0)">
@@ -232,8 +228,10 @@
         <article class="cell reveal" style="--c:var(--q3)">
           <h3>Sources you can check</h3>
           <p>Legal topics are a fixed list of things to look into, not AI guesses. Each one links to the official page.</p>
-          <div class="demo"><div class="srcs">
-            <span style="--c:var(--q0)"><i></i>SBA</span><span style="--c:var(--q1)"><i></i>IRS</span><span style="--c:var(--q2)"><i></i>FTC</span><span style="--c:var(--q3)"><i></i>USPTO</span><span style="--c:var(--q0)"><i></i>NC Sec. of State</span><span style="--c:var(--q1)"><i></i>NC Revenue</span>
+          <div class="demo"><div class="cites">
+            <div><b>Business structures</b><span>official page ↗ · checked Oct 2026</span></div>
+            <div><b>Tax ID numbers</b><span>official page ↗ · checked Oct 2026</span></div>
+            <div><b>Licenses and permits</b><span>official page ↗ · checked Oct 2026</span></div>
           </div></div>
         </article>
         <article class="cell span2 reveal d1" style="--c:var(--q2)">
@@ -274,7 +272,7 @@
         <div class="reveal d2"><span class="n">03</span><h3>Mark what you learned</h3><p>Confirmed or proven wrong. Both are progress.</p><div class="eg">Example: Confirmed: 7 of 10 left the same week.</div></div>
         <div class="reveal d3"><span class="n">04</span><h3>Adjust the plan</h3><p>Ask the co-pilot what to change when an assumption breaks.</p><div class="eg">Example: Focus on the Friday before break.</div></div>
       </div>
-      <p class="note reveal">This customer discovery approach comes from guidance published by an NSF I-Corps Hub at the University of Alaska Fairbanks. Quad Founders can't promise any idea will work. It helps you find out quickly and cheaply.</p>
+      <p class="note reveal">This customer discovery approach comes from published university guidance, linked in the app. Quad Founders can't promise any idea will work. It helps you find out quickly and cheaply.</p>
     </div>
   </section>
 
@@ -315,8 +313,9 @@
     <div class="wrap">
       <div class="sec-head center reveal"><span class="kicker">FAQ</span><h2>Questions, answered.</h2></div>
       <div class="faq">
+        <details class="reveal"><summary>Is Quad Founders connected to the government?</summary><p>No. Quad Founders is an independent student project. It isn't a government service, and it isn't affiliated with, endorsed by, or approved by any agency or organization it links to. It links to public pages so you can read the original source yourself.</p></details>
         <details class="reveal"><summary>Is this legal or tax advice?</summary><p>No. On legal and tax topics, Quad Founders only points out what to look into and links the official source so you can read it yourself. It never tells you whether a rule applies to you or what to do, and it doesn't write legal documents like contracts or privacy policies. For your situation, ask the official office or a licensed professional. Free mentors are available through SCORE.</p></details>
-        <details class="reveal"><summary>Does it work outside North Carolina?</summary><p>Yes. Pick your state or territory when you start: all 50 states, DC, Puerto Rico, the U.S. Virgin Islands, Guam, American Samoa, and the Northern Mariana Islands. Your legal steps then link to that state's official registration, tax, licensing, and free business help offices, found through the IRS and SBA state lists. North Carolina has the most detail so far. For other states, Quad Founders has not checked state-specific rules, so the co-pilot points you to those offices instead of guessing. Federal guidance, like the IRS, FTC, and USPTO pages, applies everywhere.</p></details>
+        <details class="reveal"><summary>Does it work outside North Carolina?</summary><p>Yes. Pick your state or territory when you start: all 50 states, DC, Puerto Rico, the U.S. Virgin Islands, Guam, American Samoa, and the Northern Mariana Islands. Your legal steps then link to that state's official registration, tax, licensing, and free business help offices, found through federal lists of state business offices. North Carolina has the most detail so far. For other states, Quad Founders has not checked state-specific rules, so the co-pilot points you to those offices instead of guessing. Federal pages apply everywhere.</p></details>
         <details class="reveal"><summary>What if nobody has done my idea before?</summary><p>That's what it's built for. Your plan is shaped around your idea instead of a template, and it starts with the assumptions that have to be true and a cheap way to test each one.</p></details>
         <details class="reveal"><summary>Do I need to know how to code?</summary><p>No. You describe your idea, answer a few questions, and ask for changes in plain English. The test site is written for you.</p></details>
         <details class="reveal"><summary>Can it build my app?</summary><p>No. Quad Founders builds a test site, not an app. A test site shows your idea and collects sign-ups, but it can't run logins, match people, take payments, or book appointments. If your idea needs those, like ride matching, your plan adds a launch path: run it by hand first, take payments through a hosted payment link from a payment company, try a no-code app builder, then cover privacy, accounts, code ownership, and insurance. Each step links to its source.</p></details>

@@ -67,6 +67,7 @@ There are no logins, so the daily limits are what stop a stranger from running u
 ## Safety rules built in
 
 - **Educational only.** Every AI call includes rules: no legal, tax, financial or investment advice, no promised results, and no debt management (`src/prompts.js`).
+- **No agency names, logos, or badges.** Sources show as plain citations (the page topic and its web address, like "Choose a business structure (sba.gov)"). A visible statement, not just fine print, says Quad Founders is an independent student project, not a government service, and isn't affiliated with or endorsed by anyone it links to. The AI is told never to imply otherwise.
 - **Legal topics are only flagged, never advised on.** Legal, tax, licensing, insurance, privacy, payments, IP, and immigration steps are worded as "Look into..." and always shown (the AI can't hide one as "doesn't apply"). The co-pilot never says what applies or what a student must do, and refuses to write legal documents. A server-side filter (`legalSafe` in `src/index.js`) also drops any sentence like "you don't need a license" from legal steps, summaries, walkthroughs, and chat replies.
 - **Never asks for** Social Security numbers, ID numbers, bank details or passwords.
 - **Verified sources only.** The AI can only cite sources in `src/sources.js` (SBA, IRS, NC Secretary of State, NC Dept. of Revenue, SCORE). Each was checked by hand and dated. Unknown citations are stripped out. Legal tasks are fixed steps, not invented by the AI.
