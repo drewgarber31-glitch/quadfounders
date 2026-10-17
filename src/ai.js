@@ -17,7 +17,12 @@ export function isTestMode(env) {
  * @returns {Promise<string>} the model's text reply
  */
 export async function callAI(env, opts) {
-  if (isTestMode(env)) return mockReply(opts);
+  return (await callAIRaw(env, opts)).text;
+}
+
+// Returns { text, stopReason } so callers can tell when an answer was cut off.
+async function callAIRaw(env, opts) {
+  if (isTestMode(env)) return { text: mockReply(opts), stopReason: "end_turn" };
 
   const provider = env.AI_PROVIDER || "anthropic";
   if (provider !== "anthropic") {
@@ -55,21 +60,27 @@ export async function callAI(env, opts) {
     .map((b) => b.text)
     .join("");
   if (!text) throw new AIError("The AI sent an empty answer. Try again.");
-  return text;
+  return { text, stopReason: data.stop_reason };
 }
 
 /** Calls the AI and parses a JSON reply, retrying once if the JSON is broken. */
+// If an answer is cut off for length, the retry gets twice the room (up to 8000 tokens).
 export async function callAIJson(env, opts) {
+  let maxTokens = opts.maxTokens || 1500;
   for (let attempt = 0; attempt < 2; attempt++) {
-    const text = await callAI(env, opts);
+    const { text, stopReason } = await callAIRaw(env, { ...opts, maxTokens });
     const parsed = extractJson(text);
     if (parsed) return parsed;
+    // Shows up in `npx wrangler tail` so we can see why parsing failed.
+    console.error("AI JSON parse failed", JSON.stringify({ kind: opts.kind, attempt, stopReason, maxTokens, length: text.length, start: text.slice(0, 200), end: text.slice(-200) }));
+    if (stopReason === "max_tokens") maxTokens = Math.min(maxTokens * 2, 8000);
   }
   throw new AIError("The AI's answer came back in the wrong format. Try again.");
 }
 
 export function extractJson(text) {
   if (!text) return null;
+  text = text.replace(/```(?:json)?/gi, ""); // drop markdown code fences if the model adds them
   const start = text.indexOf("{");
   const end = text.lastIndexOf("}");
   if (start === -1 || end <= start) return null;

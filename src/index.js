@@ -58,7 +58,7 @@ async function api(request, env, url) {
       throw new HttpError(400, "Tell us at least one problem you've noticed or something you're good at.");
     }
     await useQuota(request, env);
-    const out = await callAIJson(env, { kind: "ideas", build: true, maxTokens: 2500, ...ideaFinderPrompt(input) });
+    const out = await callAIJson(env, { kind: "ideas", build: true, maxTokens: 4000, ...ideaFinderPrompt(input) });
     const ideas = (out.ideas || []).slice(0, 4).map((i) => ({
       title: clean(i.title, 60),
       oneLiner: clean(i.oneLiner, 240),
@@ -80,7 +80,7 @@ async function api(request, env, url) {
     const text = clean(idea, LIMITS.idea);
     if (text.length < 10) throw new HttpError(400, "Tell us a little more about your idea (at least a sentence).");
     await useQuota(request, env);
-    const out = await callAIJson(env, { kind: "followup", ...followUpPrompt(text), maxTokens: 800 });
+    const out = await callAIJson(env, { kind: "followup", ...followUpPrompt(text), maxTokens: 1500 });
     const questions = (out.questions || []).slice(0, 5).map((q, i) => ({
       id: `q${i + 1}`,
       text: clean(q.text, 200),
@@ -112,7 +112,7 @@ async function api(request, env, url) {
     const out = await callAIJson(env, {
       kind: "plan",
       build: true,
-      maxTokens: 3000,
+      maxTokens: 6000,
       ...planPrompt(project.idea, project.types, project.questions, cleanAnswers, project.novelty),
     });
     const plan = normalizePlan(out, project.types);
@@ -129,7 +129,7 @@ async function api(request, env, url) {
       await useQuota(request, env);
       const out = await callAIJson(env, {
         kind: "quadrant",
-        maxTokens: 600,
+        maxTokens: 1000,
         ...regenerateQuadrantPrompt(project, q, clean(feedback, LIMITS.instruction)),
       });
       project.plan.quadrants[q].summary = clean(out.summary, LIMITS.summary);
@@ -179,7 +179,7 @@ async function api(request, env, url) {
         content: m.content,
       }));
       const reply = sanitizeSources(
-        await callAI(env, { kind: "chat", system: taskChatSystem(project, task), messages, maxTokens: 700 })
+        await callAI(env, { kind: "chat", system: taskChatSystem(project, task), messages, maxTokens: 1000 })
       );
       const now = new Date().toISOString();
       await env.DB.batch([
@@ -208,7 +208,7 @@ async function api(request, env, url) {
 
     if (parts.length === 3 && method === "POST") {
       await useQuota(request, env);
-      const out = await callAIJson(env, { kind: "site", build: true, maxTokens: 3000, ...sitePrompt(project) });
+      const out = await callAIJson(env, { kind: "site", build: true, maxTokens: 5000, ...sitePrompt(project) });
       const site = normalizeSite(out, project.site);
       await save(env, id, { site });
       return json(publicProject({ ...project, site }));
@@ -219,7 +219,7 @@ async function api(request, env, url) {
       const text = clean(instruction, LIMITS.instruction);
       if (!text) throw new HttpError(400, "Describe the change you want.");
       await useQuota(request, env);
-      const out = await callAIJson(env, { kind: "siteEdit", build: true, maxTokens: 3000, ...siteEditPrompt(project, text) });
+      const out = await callAIJson(env, { kind: "siteEdit", build: true, maxTokens: 5000, ...siteEditPrompt(project, text) });
       const site = normalizeSite(out, project.site);
       await save(env, id, { site });
       return json(publicProject({ ...project, site }));
