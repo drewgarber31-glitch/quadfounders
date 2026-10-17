@@ -174,8 +174,8 @@ function startScreen(mode = "idea") {
       </div>
       <div class="feature-row">
         <div class="feature"><span class="ic" style="background:var(--q0)">${icons.spark}</span><b>Built for new ideas</b><span>Plans for ideas nobody has tried, starting with what has to be true.</span></div>
-        <div class="feature"><span class="ic" style="background:var(--q1)">${icons.shieldok}</span><b>Sources you can check</b><span>Every legal step links to the official government page.</span></div>
-        <div class="feature"><span class="ic" style="background:var(--q2)">${icons.clock}</span><b>Fits between classes</b><span>Tasks take 15 to 60 minutes. AI drafts are labeled and editable.</span></div>
+        <div class="feature"><span class="ic" style="background:var(--q1)">${icons.shieldok}</span><b>Sources you can check</b><span>Every legal step links to its official source.</span></div>
+        <div class="feature"><span class="ic" style="background:var(--q2)">${icons.clock}</span><b>Fits between classes</b><span>Tasks are sized at about 15 to 60 minutes. AI drafts are labeled and editable.</span></div>
       </div>
     </section>`, { crumbs: [{ label: "New idea" }] });
     const form = $("ideaForm");

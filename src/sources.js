@@ -355,6 +355,27 @@ export const SOURCES = {
     summary: "Websites of businesses open to the public should be accessible: alt text, contrast, captions, keyboard access.",
     checked: "2026-10-17",
   },
+  nc_maintaining: {
+    title: "NC Secretary of State: Maintaining your registration",
+    org: "North Carolina Department of the Secretary of State",
+    url: "https://sosnc.gov/Guides/launching_a_business/maintaining_registration",
+    summary: "Annual reports for corporations and LLCs, due dates, and reporting registered agent changes within 60 days.",
+    checked: "2026-10-17",
+  },
+  nc_checklist: {
+    title: "NC Secretary of State: New business checklist",
+    org: "North Carolina Department of the Secretary of State",
+    url: "https://sosnc.gov/Guides/launching_a_business/new_business_checklist",
+    summary: "NC checklist with business plan, research, licenses, IP, free legal clinics, taxes, and employee resources.",
+    checked: "2026-10-17",
+  },
+  fincen_boi: {
+    title: "FinCEN: Beneficial Ownership Information",
+    org: "Financial Crimes Enforcement Network",
+    url: "https://www.fincen.gov/boi",
+    summary: "Current BOI reporting status; U.S. companies are exempt under the final rule effective August 14, 2026.",
+    checked: "2026-10-17",
+  },
   dhs_intl_entrepreneurs: {
     title: "Study in the States (DHS): International students and entrepreneurship",
     org: "U.S. Department of Homeland Security",
@@ -380,9 +401,9 @@ export const LEGAL_STEPS = [
   { id: "legal-cosmetics", title: "Check FDA rules if you make or sell cosmetics", sources: ["fda_cosmetics"], minutes: 20, types: ["beauty", "product"] },
   { id: "legal-children", title: "Check safety rules if you sell products for kids 12 and under", sources: ["cpsc_cpc", "cpsc_small_batch"], minutes: 20, types: ["product", "online", "invention"] },
   { id: "legal-textile", title: "Check label rules if you sell clothing or textiles", sources: ["ftc_textile"], minutes: 15, types: ["product", "online"] },
-  { id: "legal-made-usa", title: "Check the rules before saying \"Made in USA\"", sources: ["ftc_made_usa"], minutes: 10, types: ["product", "online", "invention"] },
+  { id: "legal-made-usa", title: "Check the rules before saying \"Made in USA\"", sources: ["ftc_made_usa"], minutes: 15, types: ["product", "online", "invention"] },
   { id: "legal-shipping", title: "Set honest shipping times and a refund policy", sources: ["ftc_mail_order"], minutes: 20, types: ["online"] },
-  { id: "legal-marketplace", title: "Learn what marketplaces must collect from sellers", sources: ["ftc_inform"], minutes: 10, types: ["online"] },
+  { id: "legal-marketplace", title: "Learn what marketplaces must collect from sellers", sources: ["ftc_inform"], minutes: 15, types: ["online"] },
   { id: "legal-ip", title: "Learn how to protect your idea (patent, trademark, copyright)", sources: ["uspto_ip_types", "uspto_provisional", "copyright_faq"], minutes: 30, types: ["invention", "digital", "product"] },
   { id: "legal-trademark", title: "Learn when to use TM and whether to register your brand", sources: ["uspto_trademark"], minutes: 15, types: ["all"] },
   { id: "legal-coppa", title: "Check children's privacy rules if kids under 13 might use it", sources: ["ftc_coppa"], minutes: 20, types: ["digital"] },
@@ -393,7 +414,11 @@ export const LEGAL_STEPS = [
   { id: "legal-insurance", title: "Check which insurance makes sense", sources: ["sba_insurance"], minutes: 20, types: ["all"] },
   { id: "legal-hiring", title: "If anyone will help you, learn employee vs. contractor rules", sources: ["irs_contractor", "sba_hire"], minutes: 20, types: ["all"] },
   { id: "legal-intl", title: "International students: check work rules before you start", sources: ["dhs_intl_entrepreneurs"], minutes: 15, types: ["all"] },
+  { id: "legal-annual", title: "If you form an LLC or corporation, know your annual report duties", sources: ["nc_maintaining"], minutes: 15, types: ["all"] },
+  { id: "legal-clinic", title: "Look into free legal help from a university law clinic", sources: ["nc_checklist"], minutes: 15, types: ["all"] },
   { id: "legal-mentor", title: "Book a free mentor session to review your plan", sources: ["score_mentoring", "nc_sbtdc", "nc_sbcn", "edpnc_advisors"], minutes: 15, types: ["all"] },
+  // Idea and customer (fixed)
+  { id: "fixed-lean-plan", title: "Write a one-page lean business plan", sources: ["sba_business_plan", "nc_checklist"], minutes: 45, types: ["all"], quadrant: "customer" },
   // Pricing and costs (fixed)
   { id: "fixed-records", title: "Set up a simple system to track income and expenses", sources: ["irs_records"], minutes: 20, types: ["all"], quadrant: "pricing" },
   // Marketing (fixed)

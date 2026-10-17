@@ -26,7 +26,7 @@ export const KNOWLEDGE = [
     quadrant: "customer",
     source: "sba_market_research",
     points: [
-      "Market research confirms and improves a business idea and reduces risk before money is spent.",
+      "SBA says market research blends consumer behavior and economic trends to confirm and improve your business idea, and lets you reduce risks.",
       "Check six things: demand (do people want it?), market size (how many would be interested?), economic indicators (income range, employment), location (where customers are and where you can reach), market saturation (how many similar options exist), and pricing (what customers pay for alternatives).",
       "Secondary research uses existing sources for general, quantifiable questions like trends, demographics, and household income.",
       "Primary research asks customers directly through surveys, questionnaires, focus groups, or interviews. It gives a nuanced view of your specific audience but can be time-consuming.",
@@ -68,7 +68,7 @@ export const KNOWLEDGE = [
       "Customer discovery is the process of understanding customers' needs, then using what you learn to change the product or the target customer.",
       "Test your assumptions by interviewing potential customers and people in the industry before building much.",
       "In the NSF I-Corps Hub program at the University of Alaska Fairbanks, each team must conduct a minimum of 20 interviews over the 6- to 7-week program. That's one program's requirement, not a universal rule.",
-      "For a brand-new idea, the most important early question is whether people actually have the problem and how they solve it today.",
+      "Quad Founders suggests (not from this source): for a brand-new idea, first find out whether people actually have the problem and how they solve it today.",
     ],
   },
 
@@ -123,8 +123,8 @@ export const KNOWLEDGE = [
       "Describe the target market in detail: size, demographics, unique traits, and trends.",
       "Describe the competitive advantage: a better product, lower price, or better customer experience.",
       "Write a sales plan: how customers actually buy, step by step, after deciding to.",
-      "Set specific goals for the next year, choose channels, set pricing and promotions, and budget every marketing cost.",
-      "Compare marketing costs to the revenue they bring in (return on investment) and review the plan at least once a year.",
+      "Describe your marketing and sales goals for the next year, list your marketing channels, explain your pricing and promotions, and include a complete breakdown of the costs of your marketing plan.",
+      "Plan to compare marketing and sales costs to the revenue they generate. SBA says marketing plans should be maintained on an annual basis, at minimum.",
     ],
   },
   {
@@ -154,7 +154,7 @@ export const KNOWLEDGE = [
       "Partnership: simplest structure for two or more owners; unlimited personal liability unless set up as an LP or LLP.",
       "LLC: protects owners from personal liability in most instances, with pass-through taxes; SBA notes it suits medium- or higher-risk businesses.",
       "Corporations give the strongest liability protection but cost more to form and require more record-keeping.",
-      "Choosing a structure has legal and tax effects. Students should confirm with the NC Secretary of State and a qualified professional.",
+      "Quad Founders suggests (not from this source): structure affects legal and tax matters, so confirm your choice with the NC Secretary of State and a qualified professional.",
     ],
   },
   {
@@ -164,7 +164,7 @@ export const KNOWLEDGE = [
     quadrant: "legal",
     source: "uspto_search",
     points: [
-      "USPTO says to do a clearance search for similar trademarks before applying to register one, and it's smart to search before settling on a name. A common reason trademark applications are rejected is that the name is too similar to an existing one and customers could be confused.",
+      "USPTO says to do a clearance search for similar trademarks before applying to register one, and Quad Founders suggests searching before you settle on a name. A common reason trademark applications are rejected is that the name is too similar to an existing one and customers could be confused.",
       "The USPTO only checks the federal database, so also search state records (NC Secretary of State) and the internet.",
     ],
   },
@@ -191,7 +191,7 @@ export const KNOWLEDGE = [
       "You are generally self-employed if you run your own business, including part-time or gig work.",
       "The IRS says you must file a tax return if your net earnings from self-employment were $400 or more.",
       "Self-employment tax covers Social Security and Medicare. Self-employed people generally pay estimated taxes quarterly (Form 1040-ES).",
-      "Students should confirm their own situation with the IRS or a tax professional.",
+      "Quad Founders suggests (not from this source): confirm your own situation with the IRS or a tax professional.",
     ],
   },
   {
@@ -233,7 +233,7 @@ export const KNOWLEDGE = [
       "The home kitchen must be inspected by NCDA&CS before selling. NCDA&CS does not charge for the inspection, and a permit is not issued.",
       "Homes with any pets, even pets that only come inside at night, cannot make food for sale.",
       "Labels are required for self-service sales and must include the product name and all \"Top 9\" allergens by common name.",
-      "This summary is from NC State Extension (updated April 23, 2024). Confirm current rules with NCDA&CS before selling.",
+      "This summary is from NC State Extension (page updated April 23, 2024). Quad Founders suggests confirming current rules with NCDA&CS before selling.",
     ],
   },
   {
@@ -281,7 +281,7 @@ export const KNOWLEDGE = [
       "A provisional patent application sets an official U.S. filing date and allows \"Patent Pending\" for 12 months. It is not examined and won't become a patent unless a full (nonprovisional) application follows within 12 months. The 12 months can't be extended.",
       "USPTO warns that publicly disclosing an invention can cost you rights. Students should be careful about posting or pitching an invention's details publicly before getting advice.",
       "USPTO warns that some invention promotion firms misuse the provisional process and leave inventors with no patent.",
-      "Fees change yearly. Patent questions should go to the USPTO or a registered patent attorney or agent.",
+      "USPTO says fees are subject to change annually. Quad Founders suggests taking patent questions to the USPTO or a registered patent attorney or agent.",
     ],
   },
   {
@@ -293,7 +293,7 @@ export const KNOWLEDGE = [
     points: [
       "North Carolina law (G.S. 88B-22) says no person may practice cosmetic art for pay or reward without a license from the NC Board of Cosmetic Art Examiners, except as the law provides.",
       "License types include cosmetologist, esthetician, natural hair care specialist, and manicurist. The law also bars practicing for pay outside a licensed shop, except as the chapter provides.",
-      "Students offering hair, nail, skin, or similar services for pay must check licensing rules with the Board before starting.",
+      "Quad Founders suggests (not from this source): anyone offering hair, nail, skin, or similar services for pay should check licensing with the NC Board of Cosmetic Art Examiners before starting.",
     ],
   },
   // ---------- Added 2026-10-17 ----------
@@ -305,7 +305,7 @@ export const KNOWLEDGE = [
     source: "sba_location",
     points: [
       "SBA says your location determines the taxes, zoning laws, and regulations your business is subject to.",
-      "Zoning is typically controlled locally. Zoning ordinances can restrict or ban specific kinds of businesses in an area. Check with your city or county planning office.",
+      "SBA says zoning is typically controlled at the local level, so check with your department of city planning, or similar office. Zoning ordinances can restrict or entirely ban specific kinds of businesses in an area.",
       "SBA says you might have fewer zoning restrictions with a home-based business, but zoning ordinances can still apply to home-based businesses.",
     ],
   },
@@ -353,7 +353,7 @@ export const KNOWLEDGE = [
     quadrant: "pricing",
     source: "irs_records",
     points: [
-      "The IRS says good records help you monitor the progress of your business, prepare financial statements, and support items on your tax return.",
+      "The IRS says good records help you monitor the progress of your business, prepare your financial statements, identify sources of income, keep track of deductible expenses, prepare your tax returns, and support items reported on your tax returns.",
       "You can use any recordkeeping system that clearly shows your income and expenses.",
       "The IRS says to keep records as long as needed to prove the income or deductions on a tax return.",
     ],
@@ -379,7 +379,7 @@ export const KNOWLEDGE = [
     points: [
       "The IRS looks at all evidence of control and independence, in three categories: behavioral, financial, and type of relationship.",
       "The IRS says if you treat an employee as a contractor without a reasonable basis, you may be held liable for employment taxes for that worker.",
-      "SBA's hiring steps include getting an EIN, checking state tax IDs, Form I-9, Form W-4, reporting new hires to the state directory within 20 days, and workers' compensation [source:sba_hire].",
+      "SBA's hiring steps include getting an EIN, checking whether you need state or local tax IDs, and having new employees complete a Form W-4. In SBA's example, the owners complete Form I-9 and report new employees to their state directory within 20 days of the hire date [source:sba_hire].",
     ],
   },
   {
@@ -540,6 +540,41 @@ export const KNOWLEDGE = [
     points: [
       "FTC's five principles: take stock of the personal information you have, scale down to what you need, lock it, pitch what you no longer need, and plan ahead for incidents.",
       "FTC cybersecurity basics include updating software, backing up files, strong passwords, multi-factor authentication, and encryption [source:ftc_cyber].",
+    ],
+  },
+  {
+    id: "k_nc_annual",
+    title: "Keeping an NC LLC or corporation in good standing",
+    types: ["all"],
+    quadrant: "legal",
+    source: "nc_maintaining",
+    points: [
+      "The NC Secretary of State says corporations, LLCs, LLPs, and LLLPs must file an annual report, and it is due whether or not the company is actually doing business.",
+      "For an LLC, the first annual report is due April 15 of the year after it is created, then by April 15 each year.",
+      "Registered agent name or address changes must be reported within 60 days. Not complying may be grounds for administrative dissolution.",
+      "These duties apply only if you form one of these entities. A sole proprietor doesn't file an annual report with the Secretary of State.",
+    ],
+  },
+  {
+    id: "k_free_legal_nc",
+    title: "Free or low-cost legal help in North Carolina",
+    types: ["all"],
+    quadrant: "legal",
+    source: "nc_checklist",
+    points: [
+      "The NC Secretary of State's new business checklist lists university legal clinics, including Elon University's Small Business & Entrepreneurship Clinic, and clinics at Campbell, Duke, UNC, and Wake Forest. It says to apply before each semester and that there are no summer services.",
+      "It also lists NC Central University's Intellectual Property Clinic for patents and trademarks, the NC Bar Association's Entrepreneurs Assistance Program, and NC Free Legal Answers.",
+      "It lists NC LIVE, a library-provided database, for industry, competitor, and customer research.",
+    ],
+  },
+  {
+    id: "k_boi",
+    title: "Beneficial ownership (BOI) reports",
+    types: ["all"],
+    quadrant: "legal",
+    source: "fincen_boi",
+    points: [
+      "FinCEN says U.S. companies are exempt from Beneficial Ownership Information (BOI) reporting requirements (final rule effective August 14, 2026). Some older guides still say most businesses must file, so go by FinCEN's current page.",
     ],
   },
 ];

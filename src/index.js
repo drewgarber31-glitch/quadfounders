@@ -352,6 +352,7 @@ function normalizePlan(out, types = []) {
 
 function normalizeSite(out, previous) {
   const p = out?.pages || {};
+  const clean = (v, max) => String(v ?? "").replace(/\u0000/g, "").replace(/\s*\[source:[^\]]*\]/gi, "").trim().slice(0, max);
   const prevContact = previous?.pages?.contact || {};
   const list = (arr, n, map) => (Array.isArray(arr) ? arr.slice(0, n).map(map) : []);
   return {
