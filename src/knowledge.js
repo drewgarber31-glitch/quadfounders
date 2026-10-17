@@ -180,6 +180,7 @@ export const KNOWLEDGE = [
       "Activities regulated by a federal agency need a federal license or permit. SBA's examples include alcoholic beverages, firearms, aviation, and radio and television broadcasting.",
       "States regulate more activities than the federal government, and counties or cities may require their own licenses. Check state, county, and city rules.",
       "Some licenses expire; track renewal dates.",
+      "Quad Founders note (not from this source): if you'll sell, advertise, deliver, or meet customers on a college campus or in campus housing, your school's own rules are something to look into too, for example in the student handbook or with the student activities or student involvement office. Quad Founders doesn't know any specific school's rules.",
     ],
   },
   {

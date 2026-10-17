@@ -577,6 +577,12 @@ async function loadProject(env, id) {
       t.title = st.title;
       if (st.legal) { t.legal = true; t.why = legalSafe(t.why, LOOK_DEFAULT); } else delete t.legal;
     }
+    // Legal topics added since the plan was made (and any the AI used to hide) are always shown.
+    for (const st of current.values()) {
+      if (!st.legal || p.plan.tasks.some((t) => t.id === st.id)) continue;
+      p.plan.tasks.push({ id: st.id, quadrant: st.quadrant || "legal", title: st.title, why: LOOK_DEFAULT, minutes: st.minutes, sources: st.sources, ...(st.launch ? { launch: st.launch } : {}), legal: true, done: false });
+    }
+    p.plan.tasks.sort((a, b) => QUADRANTS.indexOf(a.quadrant) - QUADRANTS.indexOf(b.quadrant));
     if (p.plan.quadrants?.legal) p.plan.quadrants.legal.summary = legalSafe(p.plan.quadrants.legal.summary, "These are the legal and registration topics to look into for your idea. Each step links to its official source.");
   }
   // Sites made before live links existed get a public id the first time they're opened.

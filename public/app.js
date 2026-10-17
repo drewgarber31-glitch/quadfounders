@@ -424,10 +424,10 @@ function sectionBlock(s, idx, { showHeader = true } = {}) {
 function stateNote() {
   const code = project.state || "NC";
   const name = project.stateName || code;
-  if (code === "NC") return `<p class="state-note">${icons.shieldok}<span>These are topics to look into, not legal advice. They're written for <b>North Carolina</b>, and federal sources (IRS, FTC, USPTO) cover every state. Confirm anything that affects you with the official office or a licensed professional.</span></p>`;
+  if (code === "NC") return `<p class="state-note">${icons.shieldok}<span>These are topics to look into, not legal advice. They're written for <b>North Carolina</b>, and federal sources (IRS, FTC, USPTO) cover every state. Your city, county, and campus may have their own rules too. Confirm anything that affects you with the official office or a licensed professional.</span></p>`;
   const KIND = { st_reg: "Register your business", st_tax: "State taxes", st_lic: "Licenses and permits", st_help: "Free business help", st_sba: "SBA district office", st_irs: "IRS list of all your state's business sites" };
   const links = Object.entries(project.stateSources || {});
-  return `<div class="state-note">${icons.shieldok}<div><span>These are topics to look into, not legal advice. They link to <b>${esc(name)}</b>'s official offices. Quad Founders has not checked ${esc(name)}'s specific rules, so confirm what applies to you with these offices. Federal steps (IRS, FTC, USPTO) apply everywhere.</span>
+  return `<div class="state-note">${icons.shieldok}<div><span>These are topics to look into, not legal advice. They link to <b>${esc(name)}</b>'s official offices. Quad Founders has not checked ${esc(name)}'s specific rules, so confirm what applies to you with these offices. Federal sources (IRS, FTC, USPTO) cover every state, and your city, county, and campus may have their own rules too.</span>
     ${links.length ? `<ul class="st-links">${links.map(([k, l]) => `<li><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(KIND[k] || l.title)}</a><span>${esc(l.org)}</span></li>`).join("")}</ul>` : ""}</div></div>`;
 }
 
