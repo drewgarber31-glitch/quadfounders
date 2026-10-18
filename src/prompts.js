@@ -81,7 +81,7 @@ export function planPrompt(idea, types, questions, answers, novelty = "common", 
     .map((q) => `Q: ${q.text}\nA: ${(answers && answers[q.id]) || "(skipped)"}`)
     .join("\n\n");
   // Only business steps go to the AI. Legal topics are a fixed list the AI never sees or explains.
-  const legal = legalStepsFor(types, state, stateSources(state)).filter((s) => !s.legal).map((s) => `- ${s.id} (${s.quadrant || "legal"}): ${s.title}`).join("\n");
+  const legal = legalStepsFor(types, state, stateSources(state)).filter((s) => !s.legal && !s.about).map((s) => `- ${s.id} (${s.quadrant || "legal"}): ${s.title}`).join("\n");
   return {
     system: `${GUARDRAILS}
 
@@ -118,6 +118,9 @@ Quadrants (each "summary" is 2-4 short sentences, specific to this idea):
 (There is no legal summary: the legal section is a fixed list written by Quad Founders, not by you.)
 
 Tasks:
+- Task titles are short imperative sentences under 80 characters.
+- Never write tasks that take orders, bookings, deposits, or payments, or that sell to anyone. Write tasks that test interest instead (ask who would want it, collect sign-ups). The plan has a fixed step for going through the legal topics list before a first sale.
+- Don't write tasks about the test site, its sign-up form, or setting up forms to collect sign-ups: fixed steps cover those.
 - For customer, pricing, and marketing: 4 to 7 concrete business tasks each (never legal topics), ordered so earlier tasks come first. Cover the full journey for that area (for example customer: who has the problem, how they solve it today, interviews, competitors, a one-sentence value proposition; pricing: startup costs, monthly costs, break-even, test prices, funding; marketing: where customers are, first offer, first posts, how people will buy, measuring results). Each task should follow a best practice from the library and name it in "basis" by its card title. Don't duplicate the fixed steps below.
 - "minutes" is an honest estimate for a college student doing this for the FIRST time, including reading, setup, messaging people, and waiting on replies. Round to 15, 30, 45, 60, 90, 120, 180, or 240. Never shrink an estimate to make a task look quick; if a task would take more than 4 hours, split it.
 - Fixed business steps: these are added to the plan automatically (the quadrant is in parentheses). For each, explain in one sentence why it fits this idea, and mark applies:false only when it clearly can't fit. Use these exact ids:

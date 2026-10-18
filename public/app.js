@@ -448,18 +448,25 @@ function cycleLines() {
 }
 
 // Progress ring: one colored arc per quadrant.
-function qring(tasks) {
+function qring(allTasks) {
+  const tasks = allTasks.filter((t) => !t.legal); // legal topics are tracked separately
   const R = 70, C = 2 * Math.PI * R, GAP = 7, SEG = C / 4 - GAP;
   const arcs = SECTIONS.map((s, i) => {
     const all = tasks.filter((t) => t.quadrant === s.id);
     const frac = all.filter((t) => t.done).length / Math.max(all.length, 1);
     const rot = -90 + i * 90 + (GAP / C) * 180;
+    if (s.id === "legal") {
+      const lt = allTasks.filter((t) => t.legal);
+      const lf = lt.filter((t) => t.done).length / Math.max(lt.length, 1);
+      return `<circle class="track" cx="84" cy="84" r="${R}" fill="none" stroke-dasharray="${SEG} ${C}" transform="rotate(${rot} 84 84)"/>
+      <circle class="arc" cx="84" cy="84" r="${R}" fill="none" stroke="var(--q${i})" stroke-dasharray="${SEG} ${C}" stroke-dashoffset="${SEG}" data-to="${SEG * (1 - lf)}" transform="rotate(${rot} 84 84)"/>`;
+    }
     return `<circle class="track" cx="84" cy="84" r="${R}" fill="none" stroke-dasharray="${SEG} ${C}" transform="rotate(${rot} 84 84)"/>
       <circle class="arc" cx="84" cy="84" r="${R}" fill="none" stroke="var(--q${i})" stroke-dasharray="${SEG} ${C}" stroke-dashoffset="${SEG}" data-to="${SEG * (1 - frac)}" transform="rotate(${rot} 84 84)"/>`;
   }).join("");
   const done = tasks.filter((t) => t.done).length;
   return `<div class="qring"><svg viewBox="0 0 168 168" role="img" aria-label="${done} of ${tasks.length} tasks done">${arcs}</svg>
-    <div class="center"><b class="num">${Math.round((done / Math.max(tasks.length, 1)) * 100)}%</b><span class="num">${done} of ${tasks.length} tasks</span></div></div>`;
+    <div class="center"><b class="num">${Math.round((done / Math.max(tasks.length, 1)) * 100)}%</b><span class="num">${done} of ${tasks.length} business tasks</span></div></div>`;
 }
 function animateRing() {
   requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -472,7 +479,11 @@ const LEGAL_GROUPS = ["Every business", "If anyone will help you", "If you're an
 function legalList(tasks) {
   const groups = new Map(LEGAL_GROUPS.map((g) => [g, []]));
   for (const t of tasks) (groups.get(t.group) || groups.get("Free help")).push(t);
-  return [...groups].filter(([, list]) => list.length).map(([g, list]) => `<h3 class="lg-h">${esc(g)}</h3><div class="list">${list.map(taskRow).join("")}</div>`).join("");
+  // Same list for everyone. "Every business" starts open; students open the other groups themselves.
+  return [...groups].filter(([, list]) => list.length).map(([g, list]) => {
+    const done = list.filter((t) => t.done).length;
+    return `<details class="lg" ${g === "Every business" ? "open" : ""}><summary><span>${esc(g)}</span><span class="lg-n">${done}/${list.length}</span></summary><div class="list">${list.map(taskRow).join("")}</div></details>`;
+  }).join("");
 }
 
 // One plan section: summary card + task rows.
@@ -618,6 +629,7 @@ async function overviewScreen(id) {
             <option value="wrong" ${a.status === "wrong" ? "selected" : ""}>Proven wrong</option>
           </select><div class="how"><b>Test</b><span>${md(a.test)}</span></div></div>`).join("")}
       </section>` : ""}
+      ${saveLinkCard()}
       ${launchCard()}
       ${SECTIONS.map((s, i) => sectionBlock(s, i)).join("")}
       <section class="danger">
@@ -630,6 +642,10 @@ async function overviewScreen(id) {
     animateRing();
     wirePlan(draw);
     wireLaunch(() => draw(true));
+    $("copyPlan")?.addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText($("planLink").value); toast("Link copied"); }
+      catch { $("planLink").select(); toast("Press Ctrl+C to copy"); }
+    });
     $("delPlan").addEventListener("click", async () => {
       if (!confirmDelete) { confirmDelete = true; draw(true); return; }
       try {
@@ -651,6 +667,16 @@ async function overviewScreen(id) {
     }));
   };
   draw();
+}
+
+// There are no accounts, so the private plan link is the only way back. Make saving it easy.
+function saveLinkCard() {
+  const link = `${location.origin}/app#/p/${project.id}`;
+  const mail = `mailto:?subject=${encodeURIComponent("My Quad Founders plan link")}&body=${encodeURIComponent(`My private Quad Founders plan (don't share it):\n${link}`)}`;
+  return `<section class="savelink">
+    <div><h3>${icons.shieldok}Save your private plan link</h3><p>There's no account, so this link is the only way back to your plan on another device. Keep it private: anyone with it can open and edit your plan.</p></div>
+    <div class="linkbox"><input class="field mono" readonly value="${esc(link)}" aria-label="Your private plan link" id="planLink"><button class="btn" id="copyPlan">Copy</button><a class="btn ghost" href="${esc(mail)}">Email it to myself</a></div>
+  </section>`;
 }
 
 // The launch path: for ideas that need a real app, the order to go from test site to a working first version.
@@ -725,7 +751,7 @@ async function taskScreen(id, taskId) {
     await load(id);
     const t0 = project.plan?.tasks.find((t) => t.id === taskId);
     // Legal topics never use the co-pilot, so there are no messages to load.
-    msgs = t0?.legal ? [] : (await api(`projects/${id}/tasks/${taskId}/messages`)).messages;
+    msgs = t0?.legal || t0?.noAI ? [] : (await api(`projects/${id}/tasks/${taskId}/messages`)).messages;
   } catch (e) { return errorScreen(e.message); }
   let task = project.plan?.tasks.find((t) => t.id === taskId);
   if (!task) return errorScreen("That task doesn't exist.");
@@ -784,9 +810,15 @@ async function taskScreen(id, taskId) {
       <p class="help" style="margin:0">When you've looked into it, mark this step done.</p>
     </section>`;
 
+  const preSale = () => `<section class="guide">
+      <div class="g-hd"><div class="grow"><span class="eyebrow">Before your first sale</span><h2>Go through your legal topics list</h2></div></div>
+      <p class="help" style="margin:0">Open each topic that could relate to your business, read the official page, and write down your questions. The co-pilot doesn't cover legal topics.</p>
+      <div><a class="btn primary" href="#/p/${id}/s/legal">Open your legal topics list ${icons.arrow}</a></div>
+    </section>`;
+
   const draw = (quiet) => {
-    if (task.legal) {
-      const html = `<div class="page" style="${qc(idx)}">${head()}${legalSteps()}</div>`;
+    if (task.legal || task.noAI) {
+      const html = `<div class="page" style="${qc(idx)}">${head()}${task.legal ? legalSteps() : preSale()}</div>`;
       const opts = { crumbs, actions: `<button class="btn ${task.done ? "" : "primary"}" id="doneBtn">${task.done ? icons.done + "Done" : icons.check + "Mark done"}</button>` };
       quiet ? quietRender(html, opts) : render(html, opts);
       $("doneBtn").addEventListener("click", () => setTaskDone(!task.done));
@@ -875,7 +907,7 @@ async function taskScreen(id, taskId) {
   }
 
   draw();
-  if (!task.guide && !task.legal) startGuide();
+  if (!task.guide && !task.legal && !task.noAI) startGuide();
 }
 
 async function siteScreen(id) {
@@ -1001,6 +1033,7 @@ async function siteScreen(id) {
           <form class="card" id="editForm">
             <h3>${icons.spark}Change something</h3>
             <textarea id="instr" class="field" rows="3" maxlength="500" placeholder="Shorten the home headline and add a team discount service."></textarea>
+            <p class="help" style="margin:0">Test sites can't add logins, accounts, payments, bookings, or reviews, so requests for those are skipped.</p>
             <div style="display:flex;justify-content:flex-end"><button class="btn primary" type="submit">Update site <kbd>${MOD}↵</kbd></button></div>
           </form>
           <div class="card">

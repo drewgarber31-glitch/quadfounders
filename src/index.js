@@ -37,6 +37,16 @@ const LOOK_DEFAULT = "Look into the official source to see what it says about th
 const LEGAL_SUMMARY = "This is a fixed list of legal topics, the same for every student. Quad Founders doesn't pick which ones apply to you or explain the rules. Read each official page, and take questions about your situation to the office listed there or a licensed professional.";
 const NO_LEGAL_AI = "The co-pilot doesn't cover legal topics. Read the official pages listed on this step, and take questions about your situation to the office listed there or a licensed professional.";
 // Fixed fields for a legal topic task (same for everyone).
+const fixedTask = (st, prev = {}) => ({ id: st.id, quadrant: st.quadrant, title: st.title, why: st.about, minutes: st.minutes, sources: st.sources, noAI: true, ...(st.first ? { first: true } : {}), done: Boolean(prev.done), ...(prev.actual ? { actual: prev.actual } : {}) });
+// Cut long text at a word boundary instead of mid-word.
+function shorten(text, max) {
+  const t = String(text || "").trim();
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max);
+  return cut.slice(0, Math.max(cut.lastIndexOf(" "), max * 0.6)).replace(/[,;:\s]+$/, "") + "…";
+}
+// Order tasks by quadrant; steps marked `first` go to the top of their quadrant.
+const orderTasks = (tasks) => tasks.sort((a, b) => (QUADRANTS.indexOf(a.quadrant) - QUADRANTS.indexOf(b.quadrant)) || ((b.first ? 1 : 0) - (a.first ? 1 : 0)));
 const legalTask = (st, prev = {}) => ({ id: st.id, quadrant: "legal", title: st.title, why: st.about, group: st.group, minutes: st.minutes, sources: st.sources, legal: true, done: Boolean(prev.done), ...(prev.actual ? { actual: prev.actual } : {}) });
 
 // Sign-up questions may never ask for sensitive information.
@@ -160,9 +170,9 @@ async function api(request, env, url) {
     const tasks = project.plan.tasks.filter((t) => !fixedIds.has(t.id) || allowed.has(t.id));
     for (const st of steps) {
       if (tasks.some((t) => t.id === st.id)) continue;
-      tasks.push(st.legal ? legalTask(st) : { id: st.id, quadrant: st.quadrant || "legal", title: st.title, why: "Read the official source to learn more.", minutes: st.minutes, sources: st.sources, ...(st.launch ? { launch: st.launch } : {}), done: false });
+      tasks.push(st.legal ? legalTask(st) : st.about ? fixedTask(st) : { id: st.id, quadrant: st.quadrant || "legal", title: st.title, why: "Read the official source to learn more.", minutes: st.minutes, sources: st.sources, ...(st.launch ? { launch: st.launch } : {}), done: false });
     }
-    tasks.sort((a, b) => QUADRANTS.indexOf(a.quadrant) - QUADRANTS.indexOf(b.quadrant));
+    orderTasks(tasks);
     project.plan.tasks = tasks;
     project.types = types;
     await env.DB.prepare("UPDATE projects SET idea = ?, plan = ?, updated_at = ? WHERE id = ?")
@@ -266,7 +276,7 @@ async function api(request, env, url) {
     }
     // POST /api/projects/:id/tasks/:taskId/guide  -> build the walkthrough once and start the chat
     // Legal topics never go to the AI: no walkthrough and no chat.
-    if (task.legal && (parts[4] === "guide" || parts[4] === "messages")) throw new HttpError(403, NO_LEGAL_AI);
+    if ((task.legal || task.noAI) && (parts[4] === "guide" || parts[4] === "messages")) throw new HttpError(403, NO_LEGAL_AI);
     if (parts[4] === "guide" && parts.length === 5 && method === "POST") {
       if (!task.guide) {
         await useQuota(request, env);
@@ -414,7 +424,7 @@ async function api(request, env, url) {
 
 async function preview(env, url) {
   const [, id, pageRaw] = url.pathname.split("/").filter(Boolean);
-  if (!/^[0-9a-f-]{36}$/.test(id || "")) return new Response("Not found", { status: 404 });
+  if (!/^[0-9a-f-]{36}$/.test(id || "")) return notFound(env, url);
   const project = await loadProject(env, id);
   if (!project.site) return new Response("No site yet", { status: 404 });
   const page = PAGES.includes(pageRaw) ? pageRaw : "home";
@@ -450,8 +460,8 @@ function normalizePlan(out, types = [], state = "NC") {
     tasks.push({
       id: `${t.quadrant}-${counts[t.quadrant]}`,
       quadrant: t.quadrant,
-      title: clean(t.title, 120),
-      why: legalSafe(sanitize(clean(t.why, 240))),
+      title: shorten(clean(t.title, 300), 110),
+      why: legalSafe(sanitize(clean(t.why, 240))) || "A step toward testing whether this idea works.",
       basis: clean(t.basis, 80),
       minutes: clampMinutes(t.minutes),
       sources: basisSources(t.basis),
@@ -461,6 +471,7 @@ function normalizePlan(out, types = [], state = "NC") {
   const legalAI = new Map((out?.legal || []).map((l) => [l.id, l]));
   for (const step of legalStepsFor(types, state, stSources)) {
     if (step.legal) { tasks.push(legalTask(step)); continue; } // fixed text, never AI
+    if (step.about) { tasks.push(fixedTask(step)); continue; } // fixed business step, never AI
     const ai = legalAI.get(step.id);
     if (ai && ai.applies === false) continue;
     tasks.push({
@@ -474,7 +485,7 @@ function normalizePlan(out, types = [], state = "NC") {
       done: false,
     });
   }
-  tasks.sort((a, b) => QUADRANTS.indexOf(a.quadrant) - QUADRANTS.indexOf(b.quadrant));
+  orderTasks(tasks);
   const assumptions = (Array.isArray(out?.assumptions) ? out.assumptions : []).slice(0, 5).map((a, i) => ({
     id: `a${i + 1}`,
     text: sanitize(clean(a?.text, 240)),
@@ -588,13 +599,16 @@ async function loadProject(env, id) {
       const st = current.get(t.id);
       if (!st) return t;
       if (st.legal) return legalTask(st, t); // fixed text, same for everyone; progress kept
+      if (st.about) return fixedTask(st, t);
       const { legal, group, ...rest } = t;
       return { ...rest, title: st.title };
     });
     for (const st of current.values()) {
-      if (st.legal && !p.plan.tasks.some((t) => t.id === st.id)) p.plan.tasks.push(legalTask(st));
+      if (p.plan.tasks.some((t) => t.id === st.id)) continue;
+      if (st.legal) p.plan.tasks.push(legalTask(st));
+      else if (st.about) p.plan.tasks.push(fixedTask(st));
     }
-    p.plan.tasks.sort((a, b) => QUADRANTS.indexOf(a.quadrant) - QUADRANTS.indexOf(b.quadrant));
+    orderTasks(p.plan.tasks);
     if (p.plan.quadrants) p.plan.quadrants.legal = { summary: LEGAL_SUMMARY };
   }
   // Sites made before live links existed get a public id the first time they're opened.
@@ -629,6 +643,12 @@ async function saveSite(env, id, site) {
 async function signupList(env, projectId) {
   const { results } = await env.DB.prepare("SELECT id, name, email, answer, created_at FROM signups WHERE project_id = ? ORDER BY id DESC").bind(projectId).all();
   return results || [];
+}
+
+// The styled 404 page, with a real 404 status.
+async function notFound(env, url) {
+  const page = await env.ASSETS.fetch(new Request(new URL("/404.html", url)));
+  return new Response(page.ok ? await page.text() : "Not found", { status: 404, headers: { "content-type": page.ok ? "text/html; charset=utf-8" : "text/plain" } });
 }
 
 async function projectByPublicId(env, publicId) {
@@ -693,7 +713,7 @@ async function signup(request, env, url, publicId) {
 async function liveSite(env, url) {
   const [, publicId, pageRaw] = url.pathname.split("/").filter(Boolean);
   const project = await projectByPublicId(env, publicId);
-  if (!project?.site) return new Response("Not found", { status: 404, headers: { "content-type": "text/plain" } });
+  if (!project?.site) return notFound(env, url);
   if (!pageRaw && !url.pathname.endsWith("/")) return Response.redirect(`${url.origin}/s/${publicId}/`, 301);
   const page = PAGES.includes(pageRaw) ? pageRaw : "home";
   const href = (pg) => `/s/${publicId}/${pg === "home" ? "" : pg}`;

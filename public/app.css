@@ -498,3 +498,19 @@ a.cite:hover { text-decoration-color: var(--accent); }
 .time-opts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .time-opts .btn { justify-content: center; }
 @media (max-width: 420px) { .time-opts { grid-template-columns: repeat(2, 1fr); } }
+
+/* Save your plan link */
+.savelink { display: grid; gap: 10px; margin: 8px 0; padding: 14px 18px; border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--panel); }
+.savelink h3 { display: flex; align-items: center; gap: 8px; font-size: 14px; margin: 0; }
+.savelink h3 svg { width: 16px; height: 16px; color: var(--ok); }
+.savelink p { margin: 4px 0 0; font-size: 12.5px; color: var(--text-2); }
+.savelink .linkbox { flex-wrap: wrap; }
+/* Collapsible legal groups */
+details.lg { margin-top: 10px; }
+details.lg > summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--panel); font-size: 13.5px; font-weight: 600; }
+details.lg > summary::-webkit-details-marker { display: none; }
+details.lg > summary::after { content: "Show"; font: 500 11.5px var(--mono); color: var(--accent); }
+details.lg[open] > summary::after { content: "Hide"; }
+details.lg[open] > summary { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+details.lg[open] > .list { border-top-left-radius: 0; border-top-right-radius: 0; border-top: 0; }
+.lg-n { margin-left: auto; font: 500 11.5px var(--mono); color: var(--text-3); }

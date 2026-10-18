@@ -509,7 +509,9 @@ export const LEGAL_STEPS = [
   { id: "fixed-reviews", title: "Look into federal rules for reviews and paid posts", sources: ["ftc_endorsements"], minutes: 15, types: ["all"], quadrant: "marketing" },
   { id: "fixed-access", title: "Look into website accessibility guidance (ADA)", sources: ["ada_web"], minutes: 20, types: ["all"], quadrant: "marketing" },
   { id: "fixed-data", title: "Look into protecting customer information", sources: ["ftc_protect_info", "ftc_cyber"], minutes: 20, types: ["all"], quadrant: "marketing" },
-  { id: "fixed-waitlist", title: "Share your test site and collect your first sign-ups", sources: ["sba_market_research", "ftc_start_security"], minutes: 20, types: ["all"], quadrant: "marketing" },
+  { id: "fixed-before-sale", title: "Before your first sale, go through your legal topics list", sources: [], minutes: 60, types: ["all"], quadrant: "marketing", first: true,
+    about: "Every plan has a list of legal topics to look into, the same for every student. Go through it before you take orders, bookings, or money, and take questions about your situation to the office listed on each page or a licensed professional." },
+  { id: "fixed-waitlist", title: "Share your test site and collect your first sign-ups", sources: ["sba_market_research"], minutes: 30, types: ["all"], quadrant: "marketing" },
   // Launch path: only for ideas that need a real app (accounts, matching, payments, live features).
   // Order matters: this is the order the launch path shows them in.
   { id: "app-concierge", title: "Run your service by hand before building the app", sources: ["pg_dont_scale", "google_forms"], minutes: 45, types: ["app"], quadrant: "customer", launch: 1 },
@@ -522,7 +524,7 @@ export const LEGAL_STEPS = [
 ];
 
 // Steps that are business coaching, not legal topics. Every other fixed step is a legal topic.
-const NOT_LEGAL = new Set(["legal-mentor", "fixed-lean-plan", "fixed-waitlist", "app-concierge", "app-nocode"]);
+const NOT_LEGAL = new Set(["legal-mentor", "fixed-lean-plan", "fixed-waitlist", "fixed-before-sale", "app-concierge", "app-nocode"]);
 
 // Legal topics are a fixed library: the SAME list and the SAME text for every student.
 // No AI writes, picks, or explains them. `about` says only what the source covers.
