@@ -228,15 +228,20 @@ section { position: relative; }
 .site-demo p { font-size: 11px; color: #55545f; }
 .site-demo u { display: inline-block; margin-top: 12px; height: 26px; line-height: 26px; padding: 0 14px; border-radius: 999px; background: #6d28d9; color: #fff; font-size: 11px; font-weight: 700; text-decoration: none; }
 .ideas-fan { position: relative; height: 150px; }
-.ideas-fan div { position: absolute; left: 50%; top: 10px; width: 210px; padding: 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); box-shadow: var(--shadow); font-size: 12px; transition: transform .5s var(--ease); }
+.ideas-fan div { position: absolute; left: 50%; top: 10px; width: 176px; margin-left: -88px; padding: 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); box-shadow: var(--shadow); font-size: 12px; transition: transform .5s var(--ease); }
 .ideas-fan div b { display: block; font-size: 13px; margin: 4px 0 2px; }
 .ideas-fan div em { font: 500 10px var(--mono); color: var(--c); font-style: normal; }
-.ideas-fan div:nth-child(1) { transform: translateX(-150%) rotate(-6deg); --c: var(--q0); }
-.ideas-fan div:nth-child(2) { transform: translateX(-50%) translateY(-6px); z-index: 2; --c: var(--q1); }
-.ideas-fan div:nth-child(3) { transform: translateX(50%) rotate(6deg); --c: var(--q2); }
-.cell:hover .ideas-fan div:nth-child(1) { transform: translateX(-158%) rotate(-9deg); }
-.cell:hover .ideas-fan div:nth-child(3) { transform: translateX(58%) rotate(9deg); }
-@media (max-width: 760px) { .ideas-fan div:nth-child(1), .ideas-fan div:nth-child(3) { display: none; } }
+/* Four ideas, fanned: the app always returns exactly four */
+.ideas-fan div:nth-child(1) { transform: translateX(-160%) rotate(-7deg); --c: var(--q0); }
+.ideas-fan div:nth-child(2) { transform: translateX(-54%) translateY(-6px) rotate(-2deg); z-index: 2; --c: var(--q1); }
+.ideas-fan div:nth-child(3) { transform: translateX(54%) translateY(-6px) rotate(2deg); z-index: 2; --c: var(--q2); }
+.ideas-fan div:nth-child(4) { transform: translateX(160%) rotate(7deg); --c: var(--q3); }
+.cell:hover .ideas-fan div:nth-child(1) { transform: translateX(-168%) rotate(-9deg); }
+.cell:hover .ideas-fan div:nth-child(4) { transform: translateX(168%) rotate(9deg); }
+@media (max-width: 1100px) {
+  .ideas-fan { height: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .ideas-fan div, .ideas-fan div:nth-child(n) { position: static; width: auto; margin: 0; transform: none; }
+}
 .times { display: flex; flex-wrap: wrap; gap: 8px; }
 .times span { height: 34px; padding: 0 14px; border-radius: 999px; display: inline-flex; align-items: center; gap: 8px; font: 600 13px var(--mono); border: 1px solid var(--border); background: var(--bg); }
 .times span i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
